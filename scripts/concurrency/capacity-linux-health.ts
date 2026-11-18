@@ -1,7 +1,7 @@
 import { samplerTimingSchema } from './root-sampler-timing-contracts';
 import { z } from 'zod';
 import {
-  linuxEngineeringGuards as g,
+  executionProfileGuards,
   executionProfileDigest as sha,
   requireExecutionProfile,
   type ExecutionProfileAuthority,
@@ -122,7 +122,8 @@ export const validateLinuxCapacityHealth = (
   authority?: ExecutionProfileAuthority,
 ): LinuxCapacityHealth => {
   const h = linuxCapacityHealthSchema.parse(input),
-    a = requireExecutionProfile(h.executionProfileSha256, authority) ?? fail();
+    a = requireExecutionProfile(h.executionProfileSha256, authority) ?? fail(),
+    g = executionProfileGuards(a);
   const reasons = new Set(h.reasons);
   if (reasons.size !== h.reasons.length) fail();
   if (
@@ -201,6 +202,7 @@ export const createLinuxCapacityHealth = (
   authority: ExecutionProfileAuthority,
 ) => {
   const a = requireExecutionProfile(authority.sha256, authority) ?? fail(),
+    g = executionProfileGuards(a),
     profile = a.profile;
   let host: Collected<z.infer<typeof linuxHostSampleSchema>> | null = null,
     backend: Collected<z.infer<typeof linuxBackendSampleSchema>> | null = null;

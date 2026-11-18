@@ -2096,13 +2096,11 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 限制：重用 Local stack 的完整 pgTAP 有 018／050／052／067 失敗，全域 fixture 筆數受既有 integration 資料影響，完整 DB PASS 必須由 clean CI 確認；沒有改無關測試或跳過 assertion。Browser enrollment journey 首跑在新增重登入導致歷史連線多一列時失敗，定位撤銷操作改為精準選取未撤銷列；focused login regression 隨後 PASS，不冒稱整段 security journey 全綠。
 - 下一步：建立 bounded PR，required checks／exact SHA approval → 只套用唯一待推 migration → 合併至 Staging → 驗證正式 marker 與 hosted fresh-login state。dry-run 已確認只有該 migration；Production 不在範圍。
 
-
 ### 2026-11-15 — C3 ACCEPTED 9e85053，準備共同freeze與首次真functional
 
 - Final9e85053a282bb65b9ad4adcfaa0cf8e2b646fda9／clean，唯一review兩P2同輪清除，僅4delta121+/10−。40/60郵件前綴精確綁cohort／alias／account；批准scope/helpers先strictparse再deepEqual，保留實際bytes hash與extra/missing/value拒絕。產品／DB／C1C2／native三模組／門檻未改。
 - Worker61files461tests PASS14.45s、full lint/type/format/import/diff0；root初61files448tests PASS9.94s、delta3files34tests PASS0.716s、全部27file hashes相符，actual-export postcontrols確認sorted批准接受／40與60不同prefix，0真requests。PacketSHA39b8e598a67b722ee3dd3c42939c137c72b427620ddda7e13a4408f376c52ce3；root c3-root-final-review-summary.json記1round／0unresolved。原RED與初交收據保留。
 - 下一步由root只複製本次自有新design/plan/brief/review文件進隔離clone並append focused handoff，共同commit凍結後才更新Local review pointer、build--manifest／entryproof／綁all37functions及六身份functional。初次真流程尚未開始，不能稱全站功能／40或60容量PASS。原7protected與handoff原prefix再次比對均保持；未push／PR／Hosted寫入／部署。
-
 
 ### 2026-11-15 — Local recovery origin修補 ACCEPTED d228f37，第二代準備新candidate真功能
 
@@ -2111,7 +2109,6 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Root第二代context colima-colorplay-whole-site-g2／4CPU6GiB25GiB／project cp-whole-site-261115，current runtime仍live-recovery-runtime/whole-site-261115；新keys與containerIDs不同於舊，三listeners僅127.0.0.1、120migrations/71allRLS、Auth/classes/ledger/media全0、canonical seeds已齊。Lima config SHA53ba268dddea5af9afa0a5e75042b8de3415c76de016308141e48eb130c66a50；禁止Colima resume後沿用attestation。原VM colorplay-live-task2停機保留29containers/volumes；原runtime完整archive於同parent whole-site-261115-first-failure，不得刪/reset。第一次真FAIL receipt SHAa342b38d27d0c819064bf1b44410708dcbe963a53fa97dc58fee612aef20892f不變。
 - 只加入本修補新brief＋focused append handoff共同freeze後，由root更新Local reviewed pointer/build/entryproof/all37runtimehash，再以新runID/新rootapproval真functional；未push/PR/Hosted寫入/部署，尚未升容量。新Local額度實際四值已唯讀assert與第一代相同，不調quota；首次寫receipt的chmod錯用file object已保留空檔，以v2紀錄原成功觀察、未追加Docker讀取/寄信。
 
-
 ### 2026-11-15 — Auth observation ACCEPTED e49a078，真實診斷通過，準備第三代 Local
 
 - Final e49a078b0d5177123a00a8fdc8374a4aefa602a7／clean；root 唯一 review 的 1 項 P2 同輪清除，註冊與重設密碼完成時的產品自動 signout 現在由實際 helper 在 click 前宣告 exact token／phase；14 file hashes 相符。Worker 55 files／425 tests、lint／type／format／import／diff 通過；root delta 5 files／80 tests 通過。產品／DB／依賴修改 0。Root final-review-summary 已記 ACCEPTED／1 round／0 unresolved。
@@ -2119,14 +2116,12 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Actual blank native close postcontrol 12.06 秒：unready preflight 正確拒絕、0network／fixture；正常 Context fulfilled 後 Browser fulfilled，closeCode null。Root physical closed true／remaining0／stderr0。原失敗紀錄不改判。之前用 ServerUTC 對 Host mtime 推論 logout actor 的 readonly-v2 未校準時鐘，不能作 actor／phase 確證；目前來源接線與 exact CDP token／phase 證據取代該推論。
 - Owner 已提供受控 Gmail 作未來 Staging 註冊信集中收件（完整地址僅 private runtime 0600）；這不是 Hosted 寄信或測試 window 批准，現在 0Hosted mail／writes。下一步只複製本次自有 auth-observation brief＋focused handoff 到隔離 clone 共同 freeze，保留 G1／G2 完整檔案、VM／volumes，建立全新 G3 後 build／all37 Edge bind／真六身份 functional；成功才執行容量15legs。
 
-
 ### 2026-11-15 — Recovery shell ACCEPTED 3b051a9，準備新共同候選
 
 - Base8ddf491→final3b051a96ac8319691ffbede990e5c3c0422080bf／clean；exact兩檔289+，產品僅AppShell22行、max423，新actual-component regression267行。Root唯一review Standards／Spec／trust boundary findings皆0，ACCEPTED／1round／0unresolved。只在exact/reset-password保留同一public RouteWorldStage／Outlet，Auth與profilepending／student／teacher／admin／error變化不再重建密碼表單，其他shell原bytes相同；SDKsession／invalid-link／API／role guards不變，無password persistence／refill／sleep／retry。
 - 真元件RED3fail／2pass→GREEN，worker26files240tests PASS4.34s，原full lint無排除／type／format／diff0；packet SHA7c74a036c09587bcee47443be224eabed1b74c4961e4a8b43a5bac50e838e47e。Root獨立4files46tests PASS1.70s、兩source與所有validation log hashes相符。原root兩generated control檔被full lint收集，root保bytes／hash搬到.git/root-recovery-remount-evidence，未修改lint規則，原失敗log與relocation manifest均保留。
 - 這修正已被確證的component remount產品缺陷；G3原FAIL沒有完整click trace，不能追認因果或PASS。三代原FAIL／VM／volumes／alljournals保留；現在才解除先前「停止新世代」的診斷暫停，準備本次自有新brief＋focused handoff共同freeze後新空白G4真functional，不重跑非空G3，也不放寬fresh／health／deadline。
 - Root clone外的capacity plan／oneleg preparers已備，僅語法與兩個invalid-args guards通過／0有效plan／0capacity。Gmail profile-only確認連接的是Owner所提供受控信箱，0信件讀取／0寄信；完整mailbox僅private receipt。仍無Hosted測試寫入／push／PR／merge／部署。
-
 
 ### 2026-11-15 — Codex sole-review continuation: student/image fixes and Hosted guard preparation accepted
 
@@ -2138,13 +2133,11 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Next: this owned-doc freeze becomes one common source revision, then preserve current G4 runtime intact and stop only its preview/8containers/VM; new dedicated G5, same8 image IDs/new keys, loopback before services. Build/marker/entry-gzip/all37Edgehash binding and fresh6-identity functional first. True root PASS plus VERIFIED process-close required before15 Local capacity legs (anonymous3/10/20,fresh40/60,existing3/10/20/40/60,protocol3/10/20/40/60). No rerun on populated G4, no unsafe ledger/media deletion, no threshold relaxation.
 - No Hosted writes/mail/settings/load, no push/PR/merge/deploy yet; Production forbidden. Preserve original dirty checkout and7protected files/handoff prefix. Reports stay Codex.
 
-
 ### 2026-11-16 — G5集中tools ACCEPTED；準備新空白Local G6
 
 - Accepted source cd65df066c6284509d6ef11c45ce83c442734cd2；base3bfc→ca0初交15paths／1167+161−，同輪P2 delta4paths292+101−，final17paths／max500。Root唯一review1round／1finding cleared／unresolved0，驗17source／41logs，worker60files636tests14.78s、full checks0；root initial6files113tests3.92s＋delta2files76tests2.66s，same-document public-health root control兩組proof1/health0。Finalreview SHAd7f94c589db2ca8408622873d1943691d0c2c50215b4419e3a5e8e4e340a4d30，delta packet SHA758aeaccc146052d95df948fc7ac6c6e6e174f08b8c44d2140396e27fd380466。
 - 修Live real session1..20 authority/full loop與Native正常inside-confirm、image精確有界history／main loader／SPA history-fragment、Admin exact password/details/unauthorized與新Request read binding、functional-only bounded networkidle/fonts。產品／DB／配額／SDK／Native timing/barrier／health policy不改；worker idle。原G5總FAIL及registration health1 UNKNOWN保留，Media0uploads待fresh真驗。
 - Root只將本次自有brief/review與focused clone handoff固定共同版本；不複製原dirty root handoff。之後正常停止僅G5 preview／8containers／VM，保留volumes與全部資料／證據到fifth-failure，再新空白G6／同8image IDs／新keys／loopback先驗／build與37Edge綁新SHA，真六身份functional。新media6slots approval事先準備，root安全side-channel只診斷，不覆寫verdict；只有truePASS＋rootcloseVERIFIED才15容量legs。尚未新G6／容量／Hosted writes／Gmail讀寄／push／PR／deploy。
-
 
 ### 2026-11-16 — G6 followups root唯一review ACCEPTED1449561，固定共同G7
 
@@ -2152,13 +2145,11 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 真SQL oldschema12223505 RED；每次migration+07632/12110/12220合62 GREEN後ROLLBACK，106表/原schema/extensions hash同，migration未persist；SQLreceipt27d058176ecd5c5e6a6b136b4f2cd1d3bc460a01a96619490d360f309de02440。真teacher9.143s全health0；controlled ownedS2 refresh15.053s expectedReject1/errors0並await/login；兩browser physicalclosed/remaining0/stderr0、0newusers/mail。Tools144956/Appb084分列，非原G6整體PASS。
 - 本common只新增自有G6brief、更新自有review及此focused append，原dirtyroot handoff未整檔複製。下一步Root保留G6全部files/data/volumes並正常停ownedpreview/8containers/VM，再新空白G7同8images/新keys/loopback/121migrations/真build37Edge共同綁定；7media slots/5verified2aborted/5assets11variants/16objects/2drafts/4intentionaldrops。只有新fulltruePASS+RootcloseVERIFIED才15容量legs；未G7/容量/Hosted寫入寄信/push/PR/merge/deploy，原6代FAIL和300sprobe保留。
 
-
 ### 2026-11-16 — S發布格式整合ACCEPTED088ab08，G7最終共同freeze
 
 - Baseba6→088ab08d386da2913f9a0b654bef7106d3788e97，17paths520+250−；16Live純formatter固定點，CSS非空白bytes不變、TS emit/括號正規化AST等價；唯一2個testassert僅容許colon/comma空白，值/順序/mobile等不變。Round JSX617行為formatter展開理由，未擴產品重構。Root核17source24logs/proofs與原G6修正21hashes未變，summary e1b07be2c17245d4f6539e4d7cbfe9448ed43e0ec6a3848769d8ed43a9e0a263。
 - Actual format:check/lint/type/diff0；原suite28files196tests有195pass/1單行CSSassert fail，final styles2綠，其餘27files194cases未變，196distinct皆綠，不稱原fullsuite重跑PASS。兩handoff在S期間bytes全同；.prettierignore依AGENTS明確保護append-only歷史，未skip功能assert。額外.impeccable/artifact API診斷falsepositives未改。
 - G6所有files/volumes與8containers/VM已正常停止留存sixth-failure，前6代總69containers保留。新G7 4CPU/6GiB/25GiB/同8imageIDs/新keys已備、0pull/delete/reset，但無DB服務/fixture/build。VM setup使用ba6初receipt不回填，這次finalsource另綁NEW next-reviewed-candidate-final後才loopback/121服務/真build37Edge/完整functional7slots16objects；PASS+Rootclose才容量。0Hosted writes/mail/Gmail讀信/push/PR/merge/deploy。
-
 
 ### 2026-11-16 — G7集中診斷完成，journal/status兩S ACCEPTED，固定G8共同版本
 
@@ -2167,25 +2158,21 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Root既有A1獨立UI19.960s已5asset11variant2draft，原statuslocator UNAVAILABLE留存；只讀16bytes hashes/6quarantine缺席/canonical同。剩餘ZIPcancel另session6.524s精確1upload/pre-drop/abort、0asset/draft/import request，舊6run/5asset/2draft metadata與16objects bytes全同；S2refresh15.410s拒絕並回/login。0新帳信/reenroll/遊戲mutation/刪除，未偽造fresh brand或ownerMatch。多context分段不稱同一fresh7slotPASS；短DOMv1資源INCONCLUSIVE保留，v2正常，5process全residual0。
 - Manifest0d7d249d4eebf26ee4774dd14440ec62f293016b670122a17ab4ec0589f94da3。Root只更新自有review及此focusedappend，不複製原dirtyroot大handoff。下一G8正常停G7 preview/8containers/VM、全部留seventh-failure（共77priorcontainers），新空白121/same8images/新keys/loopback/真build37Edge同source。fulltruePASS+Rootclose才容量；0Hosted/Gmail讀寄/push/PR/merge/deploy。
 
-
 ### 2026-11-16 — G8 final common source preparation; protected merge guard ACCEPTED
 
 - Code71fe78332d7268a30735098af8bcc83d5364c1fb/base8aed56477ecb8195b3f244600dbd2b6b0664c929, exact5paths/max357; Root only review Standards0/Spec0/Security0. Worker6files190tests1.66s/fullchecks0; Root independently6files190tests1.71s plus5source/26logs and8unchanged Local/workflow hashes. Rootsummary e9df16aa973471b6e46516245190162c81ddf0088323bda7222839eafe1aac7c. SAME_SHA or independently pinned protected merge proof preserves Local original SHA/hash; actual Git/GitHub/full chains and deployed fingerprints still require Root verification, executionAuthority NONE. Synthetic proof is not Hosted authority.
 - G8 dedicated services started68s/121migrations/71allRLS/zero actors-ledgers-media; actual old digest UNIQUE absent and valid nonunique index present. Loopback127.0.0.1:58321/58322/58324,8ownedcontainers,77prior containers and allfiles/data retained. Original8aed emptyVM/setup receipts retained; this source-only guard correction changes no SQL/product, finalsource is bound before first build/fixture.
 - Root binds this final clean common SHA in a new private reviewed receipt, builds/entry-proof/all37Edge hashes, then one fresh six-identity full functional7media slots/16objects. Only true fullPASS plus Root closeVERIFIED permits15 Local capacity legs/40baseline/60target. G7 fullFAIL and partial diagnostics remain unchanged. No current functional/capacity PASS, Hosted writes/mail/Gmail read/push/PR/merge/deploy. Original dirty checkout protected.
 
-
 ### 2026-11-16 — 免費Linux M1 ACCEPTED，唯一round P2已解
 
 - Basead256；exact16source/test，worker66files781tests／fullchecks綠，Root12files128tests及6actualexport controls綠。Root唯一round發現首sample Node/browser PID可混用，僅2paths修互斥＋兩回歸案例；Standards0／Spec1resolved0unresolved／ProductSecurity0，max486行。
 - V2 e92d5d501404f69dfac9cdc7008f0ebf4db230d5dd1096fb60c6f04d05c4ce75；Root summary e57868ca6b02ac1ecbae1940c749ce2f4426ef363e4bed9ddedb5ad60682fd5e，原packet/46logs/14unchanged paths與Rootdocs保留。詳見本次review；尚未真Linux／60人／Hosted，M2 runtime與Root operator待接，原G8與85containers不動，花費USD0。
 
-
 ### 2026-11-16 — 免費Linux M2 Root唯一審查ACCEPTED
 
 - Base425af2f，exact21source/test；worker69files836tests／fullchecks綠，Root12files167tests與8actualexport controls綠，Standards0／Spec0／ProductSecurity0，一輪無finding。最大496行；13file closure／fresh challenge／Linux獨立--approve／真backend collector與Mac舊形狀接線完成task級。
 - Workerpacket5001aed57551a1c230dbaeae27e4f2066fc009d201bdef98bba184582f8ae213／Rootsummaryc1dfebe18ffbefc02dc084396cc2553a8b6e9b78ae5098a580044a9c6c9de808。逐hash核61logs／11protected／Rootdocs。Root新增review並記pure fixture helper extension，稍後精確stage/commit；真13helpers／kernel／physicalclose／60人／Hosted仍NOT_RUN，0付費資源，G8/85containers保留。
-
 
 ### 2026-11-16 — Linux M3 export 唯一review ACCEPTED，真 age 合成 roundtrip通過
 
@@ -2193,18 +2180,15 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Manifest獨立批准、strict Local與安全路徑/owner-mode/inode/hash、wx、120s/2GiB/100MiB、failure owned child回收；結果僅CIPHER_ARCHIVE_CREATED/retention UNVERIFIED。Root另已離線port7 business helpers/2publishers與outside-cgroup monitor草稿，32pure/tempFS/Darwin拒絕checks綠；真Linux/kernel/cgroup calibration/bootstrap仍待，不能當60人PASS。
 - 原G8 functionalPASS249.524s與3/10容量PASS/20INCONCLUSIVE不重標，85containers/資料保留停機；0雲端資源/費用/Hosted寫入寄信/Gmail內容讀/push/PR/merge/deploy。新DO帳號有付款方式/$5且兩查區64GB unavailable的觀察另記，未啟用計費。
 
-
 ### 2026-11-16 — Linux M4唯一review ACCEPTED，Root operator仍獨立草稿
 
 - Workerexact4files1123行／33tests1.391s/fullchecks綠；Root唯一一輪Standards0/Spec0/產品Security N/A/工具未解0，34logs與4source hash全核，獨立33tests1.556s與8actual public-export controls全綠。Packet8e2a0884ab158deeee723dd54ca747cc2a0bf7d79f7a28d5b6508432bb9b85d4，Rootcontrols7704b5ca45613010b047fe813ad98116799174cc50d7acb98330623a95670530。皆合成外部ports/真tempFS，非NativeLinux／Docker／SQL。
 - M4只空job→8個固定digest服務／共同4CPU6GiB/loopback/freshHMAC+JWK/readonly基線，最大READY_PENDING_ROOT_PROFILE/NONE/retentionUNVERIFIED；首次空初始化CLI上游可能自刪新volumes的限制已核准addendum，不能宣稱全部留存，不影響原G8/85。Root operator package/profile/kernel calibration/bind/export/workflow屬另外草稿，未算此4檔review，尚需整合。
 - Root package當前34pure/tempFS/Darwin checks綠、7publication controls綠、52business functionAST保持；新增pinner只PIN_PENDING，必真kernel六controls後才生成reviewed-candidate ACCEPTED供首次build/functional，不允許未校準直接建立身份。真Native／60人／雲端資源／費用／Hosted／寄信／push／PR／merge／deploy皆0或NOT_RUN。
 
-
 ### 2026-11-16 — M4 EOF衛生更正，原cached check失敗保留
 
 - M4本機commit fb333449e440442a9027cf06287f7e3fa72d1f54 前cached diff --check抓contracts.py多空行exit2，但Root cell未以check結果gate提交；非全部檢查綠之聲明，錯誤已記。後續只移1byte newline／AST同／source hash c8e374892b3ba710e707f2c18f751740f3c5f82e228b568e90d86fb4da9deffa，Root report同步追加，原worker/log/hash不抹去。無行為或產品變更、無第二review輪、0push/Native/Hosted。
-
 
 ### 2026-11-16 — Root免費Linux整體接線草稿／M5交付前最後checks
 
@@ -2214,12 +2198,10 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Root僅擴M4 bounded optional checked=True保留原default，explicitFalse回code/raw以私有保存failed-stage結果，納Root本task審查，不由worker改。Root新增branch限定contents:read/無Hostedsecrets/固定ActionsSHA/1day只cipher workflow草稿；M3成功且ownedProcessClosed才立export-complete marker避免partial.age被誤傳。M5失敗可一次PARTIAL診斷加密，unknown逐列omission、retention UNVERIFIED/整體NOT_VERIFIED，不重試/裁資料/raisecap。
 - 仍未commit/push這批草稿，0真Linux job/60人/雲端費用/Hosted信件/Gmail內容/PR/merge/deploy；原root七protected與handoff575959B prefix再核相同，G8/85資源停機保留。接下來M5唯一review與Root整體review接受後才精確stage/commit/push新test branch；不把工具綠當容量PASS。
 
-
 ### 2026-11-16 — M5唯一Root review ACCEPTED，待本機精確commit
 
 - Worker四檔source＋31logs逐一hash核對，packet820c87e12a2a2114043ad41d4b46dd2dc1abcd6dbd7ffa040b042dbeb973a6e0；Standards0/Spec0/工具blocker0，Root唯一review無往返修正。Root獨立17tests0.911s＋4 M5→M3真本機age加解密完整census controls綠，7d7bc38d1522e6e89669c71b83789ef413f7f1b9b2c83dc7fb2f934f0db17369。summary606575956d4ae9c933c2a14ae49b539cc8930f0079c017b78284e6530706aad8；report docs/reviews/2026-11-16-linux-local-snapshot-m5-review.md。
 - Task source契約完成，外部kernel/DB/HTTP仍合成、Native Linux/真DB export/60人NOT_RUN、retention UNVERIFIED。Root最初harness case parent缺失在seam前停止，修harness才跑，保留說明不當產品finding。Root接整體operator/workflow唯一review，未外部push/資源/Hosted/費用；原WIP/G8/85不改。
-
 
 ### 2026-11-16 — Root operator／suite唯一review允許一次免費Native Local，待精確commit
 
@@ -2227,11 +2209,9 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Root62受影響Python（38+3+3+1+17M4）、lint/type/changedformat/syntax綠；真M4 package admission確認42listed/32installed相容，manifest34cc8763c87fe034b3f2011b79053d010a202daed00a7c7cf6c2fc0c84605a55。17Darwin拒絕與7publication controls/52business AST僅工具證據；沒有native或60人PASS。Root早期測試一個自行寫錯的預期digest改為已知abc向量，原失敗列資格，不當產品RED。
 - Root即將只新建codex/local-capacity-linux-20261116測試branch／推此reviewed source，branch-specific Vercel auto-deploy disabled；不改staging/main或remote settings。workflow固定standard4/16、contents:read、無Hostedsecrets，先真kernel6controls才business、15legs fail-stop、M5/M3固定limits、只成功cipher1day artifact。任一步未知不升級，不GH rerun/自動重試；PARTIAL診斷不能retention或容量PASS。此時仍remoteWrites0/費用USD0，原root WIP/G8/85保護不變；下一步核新branch不存在後push並跟到run/下載解密Root審查。
 
-
 ### 2026-11-16 — Root suite提交前EOF gate確實阻止commit
 
 - cached diffcheck exit2，capacity-root-readonly.py檔尾多1byte newline；本次未commit，修該byte/AST相同，manifest 65816b8617998ffcda436ea4c36b4cb66d79a2b71c136dc2f8daaa9370e80760、v2 packet 5335b80cf11a556fd952910bc94d7035e48ab3ec2e755e053ab4ffe28b4db532；原v1/34cc記錄保留。Source行為不變，無Native/remote/費用；精確restage check0後才commit。
-
 
 ### 2026-11-16 — 首次免費Linux run在bootstrap停，診斷缺口M7委派
 
@@ -2240,12 +2220,10 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Root從connector實讀logs，真正M4code/stage只在ephemeral private result，父層只印LOCAL_SUITE_STAGE_REJECTED，原因UNKNOWN；prebusiness未profile/snapshot authority，沒有假profile或上傳raw secrets，留存UNVERIFIED。原joblog private SHA38472420363df97af1467c795b2f3359b0d2331126da4097b4391fdcce016cf6；upstream首次自清理actual survivors未知，不假0刪除/全部保留。費用US$0/無DO資源、Hosted、寄信、Production操作。
 - 同worker M7限bootstrap bounded optional stderr/Native safe command classification、suite strict diagnostic propagation與新contract test，只改3source+1test；default/非0拒絕/byte cap/deadline/命令順序/limits不變，Root sole review。不是修初始化或救PASS；Root先拿安全原因才作修復決策，無GH rerun/自動retry。原root WIP/G8/85不改，下一步M7交付唯一review後新Source有界Local診斷。
 
-
 ### 2026-11-16 — M7唯一review ACCEPTED，準備下一次新Source Local診斷
 
 - Worker4source/16logs/8protected hash核對，packetac8c3bcd9bd8ff4788de642909194255d487172f4bb61f7b6bc1c6623f53c392；Root唯一review Standards0/Spec0/toolblocker0，獨立44 tests（9M7+1bounded+17M4+17M5）全綠。Rootsummary528e1e0836cb5071e418c6783a6d6e66bfc894d9cdcef09609bcbc1570cde157；report docs/reviews/2026-11-16-linux-bootstrap-diagnostics-m7-review.md。
 - optional stderr capture/default不變、Native固定分類/數字hash/真hardware、父層strict安全outcome可見；非0仍拒，私有raw不公開。首次run原因仍UNKNOWN，這不是初始化修復或容量PASS。Root下一步精確stage/commit與test branch head lease核對後才一個新Local job，不GH rerun；0費用/Hosted/Production，G8/85與原WIP保護。
-
 
 ### 2026-11-16 — 第二次新Source Local診斷已定位到CLI start，仍缺完整錯誤；M8加密留存
 
@@ -2253,13 +2231,11 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 真hardware4CPU/4affinity/MemTotal16760348672/freeDisk88743981056/Ubuntu24.04/cgroup2/pidfd/PSS/PSI全通；不是機器低於既定profile證據。沒有business actor/functional/15容量legs，不能宣稱產品FAIL或PASS。原始CLI stderr未留存，原因UNKNOWN；不以HOME等假說修復，不再只憑分類猜。費用US$0，無DO/Hosted/Production/Gmail操作。
 - 同worker M8限M3 strict schema2 PREBUSINESS_DIAGNOSTIC/null executionProfile＋獨立bootstrap request/job rawSHA、M4真admission後first bounded raw stdout/stderr wx600、Root無profile/無business時一次cipher匯出；原v1/fullSnapshot與caps/default不變。既有workflow只成功cipher1day，原失敗仍exit1/retentionUNVERIFIED，不假profile、不做完整DB留存聲稱。Root唯一review、新Source接受後才一個新診斷job；未GH rerun/auto retry，原WIP/G8/85保護不變。
 
-
 ### 2026-11-16 — M8唯一review接受加密診斷，下一個新Source job前
 
 - 核5source/18logs/10protected，packet835da6680d471033bb9dfcef3d8b5b66eed5dc16b8546172bb013d720b44e192；Root唯一review新Standards0/Spec0/toolblocker0，source summarycab335e640d5f35c65e5d467cf958adef202d63c40b9ee7e3620280af49858b2。Root獨立36tests＋3真Mac age/full ZIP-tar census/source-job-request綁定controls綠（9d4c45bc13fae229110e27270507ff2f9c99e833e720a8ac211fdf12820cb008）。
 - 原第一76batch Mac killpg PermissionError保留/未定位；bounded AST與HEAD相同，single0.304s與一次第二76batch3.504s綠，未修cleanup/改skip/覆寫原FAIL。新v2 diagnostic nullProfile/NONE，不當容量或完整留存PASS；原v1 caps與收據不變。
 - Root將精確8paths commit並只快轉test branch，啟動一個新Local診斷job保存CLI完整raw（只cipher1day）；下載本機解密後才定位，原兩run不GH rerun。此刻仍初始化原因UNKNOWN/functional與15容量NOT_RUN/費用US$0，G8/85/原WIP/Hosted/Production不變。
-
 
 ### 2026-11-16 — M8真密文下載／根因已證：漏supabase-go，M9完整工具鏈修復
 
@@ -2267,13 +2243,11 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 真stderr1069B/SHAaf00d2721603be22738f0d91b96a0b1153732cb280665a8872b9046eedcdf70f與第二run同：shim找不到supabase-go。Root installer只抽supabase且--version掩蓋缺companion，是已證漏項；不是HOME/LCA推論，首run無raw不回填。Root另只讀查固定官方archive73,663,269B/36d87b…exact兩members：shim109,918,528B/e9c1c332…與Go100,909,240B/d10d8059…，未Mac執行Linux ELF。
 - M9同worker限dual-bin co-location/獨立Go pin＋toolchain schema2/真正Go版本與help probe、C/pinner/Fixture/必要enum，Root sole review，詳細brief docs/superpowers/plans/2026-11-16-supabase-dual-toolchain-m9-brief.md。M3/M5/產品/DB/imagepins/SLO/workflow與其他假說不改。這是首次直接修已證初始化原因；Root Native新run前先review，不盲重跑舊三run。0business/functional/容量，費用US$0/無DO/Hosted/Production/Gmail變動，原WIP/G8/85保持。
 
-
 ### 2026-11-16 — M9雙程式完整工具鏈唯一review ACCEPTED，待新Local驗證
 
 - 核9source/23logs-proofs/9protected，packet50a147b7cedf385e1a946ad824e5bd0d0e694ed6a19e70062a43b530d1c3f9a7；Root唯一review Standards0/Spec0/newblocker0，summary91eb7225a656766281d8d0d03844ece20f574f5b9e0e8b8b7e56dc7eb15fa69f，report docs/reviews/2026-11-16-supabase-dual-toolchain-m9-review.md。Worker86/4.262s與lint/type/format/static/diff綠，Root54 tests綠。
 - Root以真正原official archive production-default實測兩ELF co-locate/hash/owner700/nlink1＋防覆寫，control11b10fed7773b4edc5c2cda4a0e7b26dec27601bba0d91a5d1b33e8d9394aedb；只FS不執行Linux。toolchain schema2獨立pin Go，三處Go版本/help probe，真start一次/ENV/產品/SLO不動；manifest僅pinnerentry變，新SHA124556a5c84a9ac9280230a6a475276c49d92e34c7fafec0ea22130a9da3f2ae。
 - Native修復後/容量仍NOT_RUN，原Maccleanup PermissionError資格保留未修；Root將精確12paths commit/核test branch head後快轉新Source，一個新Local run，原三run不重跑。費用US$0，G8/85/原WIP/Hosted/Production/Gmail保持。
-
 
 ### 2026-11-16 — M9 Native dual-bin通過；新config依賴缺口M10完整閉包修復
 
@@ -2282,20 +2256,17 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Root只讀config盤點後，M10同worker限6paths project-input closure/preflight-before-mutation/copy/Fixture/contract；proofSchema1 sourceConfig/pathrefs/anchor/hash/generated/nonFS，source-bindingsflat相容且增config/template。真TOML是magic_link+confirmation同template，Root先前誤說recovery已核正，不改Source；seed anchor supabase-dir、template anchor project-root、URL/DBpaths分清，unknown active filesystem refs明確拒。這次一次完整依賴盤點，不逐漏檔微修。Root唯一review後新Source Local，原run不GH rerun。
 - 費用US$0，只有diagnostic加密留存已驗，不是DB/容量PASS；原root WIP/G8/85、Hosted/Production/Gmail都不動。下一步M10交付唯一review及真初始化／kernel gates。
 
-
 ### 2026-11-16 — M10完整config依賴唯一review ACCEPTED，待新Local初始化
 
 - Worker6source/22logs-proofs/17protected逐hash核符，packetd3f637a35419ad0a213fb70da646a463630815d642c6b00a649d558e52230db1；Root唯一review Standards0/Spec0/newblocker0，summary7f2489309dff80756fb7bb2b627e1938a50bd1b2e8c816eff2911fd76472226a，report docs/reviews/2026-11-16-linux-project-inputs-m10-review.md。Worker95/5.639s＋final9/0.676s及lint/type/static/diff全0；Root獨立9/0.780s＋17/1.387s PASS。
 - 4seed＋共用template=5依賴、保兩template refs/正確anchor，pre-mutation capture/pin，dependency-proof.json/admission SHA＋flat source-bindingsconfig/template，Source及copy hash複驗。未知path/缺檔/untracked/links/owner/漂移拒；原config/template/ENV/start/M3/M5/operator/workflow/產品不動。原audit-only檔名準備FAIL保留，Maccleanup舊風險未修且今次不重現。
 - 原root7protected＋handoff575959B prefix再核符；G8/85停機保留。Native/functional/15容量NOT_RUN、retention UNVERIFIED、費用US$0/Hosted NONE。Root接精確9paths commit、核test branch exact834c後正常快轉，只一個新Source Local job，不GH rerun/main-staging/Production。
 
-
 ### 2026-11-16 — M10 Native template/DB成功前進，Auth signing key阻塞唯讀定位
 
 - d97e6babbb055e24cef7e536eae65478a124ac13核test branch exact834c後正常快轉，新run43802274350/job133085070485（attempt1/push），沒有GH rerun。Source config template已通，真stderr明確121 migration＋4 seed後進Starting containers／health checks，Auth repeated9次 `Failed to load configuration: no signing key found`／unhealthy，start exit1。不是容量結果，也不是回填舊run原因。
 - Cipher artifact14197520332/4458B，GitHub ZIP SHA79b41dfbc9d98d95027ad7ec1bf654ee5b03ea9dc9079f43ca4783c67fa52e76；Root本機age/census8files13628B/source-job-request驗證成功，cipher61c04cdcb49cd0806de4fef0a7862f6acc96c0185aba9014775bd61b210e9b96／manifest3c44c10a8bc2a7ab6c4b5c386fd0c75b17737871e0b957602c7c833bb2614fd8；stderr10621B SHA40cf9937bfd0de154853b16495e7faa4ec79f52b93972b453a6724795a590eaf。Root下載verifier首次relative output拒於mkdir前，改absolute即通、無code修改或覆寫；不當產品finding。
 - 同worker僅readonly查固定CLI2.109.1→Auth2.192.0 signing key契約與最小repro設計，不得先改Source/Native/Rootprivate/G8。Root sole reviewer，先查明生成／CLI序列化／Auth選key落差；疑點「合法EC私鑰即符合Auth」尚待證，暫不修猜想。原upstream實際survivors UNKNOWN、無business/functional/15legs、retention UNVERIFIED，費用US$0/Hosted NONE、原WIP/G8/85不動。
-
 
 ### 2026-11-16 — M11官方函式精確重現已RED，三檔Local修復授權
 
@@ -2304,13 +2275,11 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Root獨立核diagnostic manifest72d0fcaf4afa820b22066bd4b50b5998b40bbaef363c361e11cd8b607c3aae62的24檔/7原文segments，frozen generator對git d97 rawliteral相同；親跑expectedRED＋5controls，Rootreceipt1643be95827c9768a1fcfb323b7ecca8b265f0874b7c19d14056480003d3a593。只證官方函式契約，不當NativeAuth／容量PASS。
 - Root直接授權同worker M11 exact3paths：B.NODE_JWK加sign/verify ops與admission、Fixture、新test_linux_signing_key.py；brief904004093827414374832a53e689d0725c7aef2beaa184f7405d90985d544215。先Node RED再fix/Go GREEN，Root唯一review/unstaged。不改M3/M5/ENV/CLI命令/產品/limits/其他假說。Native run5已completed failure，joblog21800B SHAef90096d2d316ffff06b4425cbd76f195d2dfe1d17dc4d83357e94ddc35329b1；bootstrap169.815s/CONFIG_PARSE，0business/functional/15legs。費用US$0、原WIP/G8/85與Hosted/Production邊界保持。
 
-
 ### 2026-11-16 — M11簽章操作契約唯一review ACCEPTED，待真Local驗證
 
 - Worker3source/34records/17protected hash核符，packet124800e5781682ce75a01e65c6af8478d1a32861bf1180c6f6a5a9f9a97b611b；Root唯一review Standards0/Spec0/toolblocker0，summary990c329a3639a84c78aeeb589f91348bc267dbc7d49025146aca7e82614709f5，report docs/reviews/2026-11-16-linux-signing-key-m11-review.md。Root32tests（6/2.231s＋17/1.847s＋9/1.201s）全綠，worker101/8.386s及lint/type/static/diff全0。
 - fresh private JWK加sign/verify ops並生成後strict admission，錯誤在key/secret發布與CLI start前拒；新測試先actualNode RED再GREEN，Root獨立actual修後Source→exact官方Go函式selected/VALID。原Go setupFAIL/早期assertion KeyError資格保留，舊Maccleanup未修且未重現；不冒稱完整Auth startup。
 - 原root7protected＋handoff575959B prefix再核符，G8/85保持。Root將精確6paths commit、核remote exactd97後只快轉test branch，一個新Source Native Local job；無GH rerun/staging-main/Production/Hostedmail。此時修後Native/functional/15容量NOT_RUN、retention UNVERIFIED、費用US$0。
-
 
 ### 2026-11-16 — M11 Native CLI健康啟動成功，status契約阻塞；暫停修補做完整診斷
 
@@ -2319,7 +2288,6 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 連續三次init修復後Root明示停止新增修補，疑點是「CLI實際採用值符合移植工具fresh預期」。同worker READONLY盤點固定CLI2.109.1 status全欄/ENV優先序/role-token產生→驗簽；已證後續custom ES256 APIkeys與B僅HS256不相容，但非本輪第一STATUS_INVALID精確原因。尚不改／放寬驗證，先集中完整契約與必要safe witness，再定界一次修復。
 - Kernel唯讀audit：nonroot cgroup移動需dest及LCA procs寫權，Source僅chown leaf；真LCA/權限/errno仍未Native驗證，僅條件式前提，不回填本輪status根因。不改LCA/delegation/架構；首次kernel gate需fixed安全witness可另定界。費用US$0（repo live仍public）、原WIP/G8/85／Hosted/Production/Gmail不操作；原run不GH rerun。
 
-
 ### 2026-11-16 — M12完整compat診斷閉合並授權集中11paths，Root同輪P2修正中
 
 - Run6 first mismatch仍UNKNOWN，未以推論回填。Root獨立核CLI/Viper private診斷44records/7protected/5原文segments，original absent-field expected-match RED exit1、5-row matrix逐row assert ValueMatches/rolefield matches，Rootreceipt3fc6c3dfb25b62b8725275931dc07c27137f717289fb21b66ad4f446a32cff34；官方函式field seam非整個CLI/status。已證explicit jwt_secret field可採freshenv，以及custom ES256 APIroles與舊HS256 guard不符。Root選明確private local env-reference＋嚴格freshEC簽驗，僅新Linux bootstrap supersede M4舊API HS256假設，保HMAC-match/roles/kid/URL/DB/AuthJWKS gates；不關ES256、不放寬limits。
@@ -2327,13 +2295,11 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Worker v1 freeze packet a31b7cbc5efde0294c04f3192fcf6552e2fbdfffaadff34c58e2adb04a904f23：11raw/51records/18protected核符，112Python/9.887s與lint/type/format/static/diff綠。Root獨立status7/1.005s＋kernel4/.044s綠、actualB-derived-field→Go matches真；manifest只calibrate entry。Root唯一review Standards0/Spec1 P2：parent接受database PASS但全None或不符baseline counts，Root合成control .git/m12-root-parent-pass-red.json實際RED exit1（非capacity bypass，屬未知不能假PASS）；同輪限定修strict semantic+直接positive/negative，不開新review或擴scope，等待v2。
 - Root另只讀整合基準：Staging分支/公開marker/Vercel dpl_H1XfHX2WpTPV3czy1MrQFqXgrMjf均d92be82ba188c3bf6618f1d70cd92f63a4eabfac，project prj_Ovywu34q8URtgOQCtc5WwCNFz7oo／Supabase onkxnkzeixpezetkmocf active。120remote versions與names無missing/divergence，120個historical SQL Source對deployedGit未改，只pending121 content_media_manifest_digest_index／4379d0cefd8b7493a64c17420944ce7e1e754e51beabe4a0679eec13662fc76b；沒有比Hosted ledger SQLchecksum，不把此prep當releaseGate。私有preflight85e3a85a86521fc83bb6e3b49d18ec9ba5d75efbf6940331c4ffd9a4acbae5db；118productdiff files/7762+1424-僅摘要，Staging是candidate ancestor。0Hosted mutation/寄信/Production操作，Local容量仍NOT_VERIFIED，費用US$0，原WIP/G8/85保持。
 
-
 ### 2026-11-16 — M12唯一review同輪P2 cleared，準備新Native Local
 
 - Final11source/v1 51records/v2 12records/18protected核符，v2packet64fab49ad2dcc05727670065aa56fed587cf7656703d6550372d52c01daf4a2b；Root唯一一輪Standards0/初SpecP2 1→cleared/剩0，summaryec3c3395b829bfefa7038efef3b7b1a4cfaa335faa8d16a59da8bd9d33443723，report docs/reviews/2026-11-16-linux-status-contract-m12-review.md。Root44tests全綠（status8/.875s、kernel4/.044s、bootstrap17/1.195s、signing6/1.709s、projectinput9/.840s），worker113/9.275s及lint/type/static/import/EOF/diff綠。
 - P2三檔delta以共用EXPECTED_BASELINE要求database PASS必須16項true int exact，Root實跑canonical收／None-wrong PASS拒／UNKNOWN保留，receipt3fd814f1571790edde14d49bc6191d595ba9621379f102b1f3cc2b97843c81e9；原v1/RED與其餘8source/18protected不變。Node真crypto+actual B-derived field Go evidence分開，合成ports與原setupFAIL/舊Maccleanup資格保留；原run6 firstfield仍UNKNOWN。
 - Root將精確14paths commit、核remote exacte8後快轉一個新Source Local job，原6runs不重跑。Manifest僅calibrate entry新SHAd189b5d9e5f849d290b1e3db05ca74775d21ef8376f26aaaf0a7788e474a8cb5，原OwnedProcess/權限/guards/M3/M5/業務/SLO/caps不變；profile後kernel錯誤也可safe summary保errno，不假cleanup或Native PASS。此時functional/15容量NOT_RUN、retention UNVERIFIED、費用US$0/Hosted NONE，原WIP/G8/85保持。
-
 
 ### 2026-11-16 — M12 Native完整bootstrap/profile成功；M13先設計有界privileged attach
 
@@ -2342,14 +2308,12 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Root同worker M13先DESIGN-ONLY，不Sourcefix：既有fresh VM sudo能力下固定helper只移本輪新gated/parent-held-unreaped child入原nonce-owned leaf，須job/source/ctx/leaf inode/UID/boot/PID-start-parent-exe/cmdline/pidfd與helper物理close綁定。原observer外部／producer不能逃leaf／foreignPID不受影響；不chown/chmodglobalLCA、不移observer／不改sudoers/guards/cleanup/SLO。Root核exactfiles與testseam/brief後才實作，不先大開權限救PASS。
 - 費用US$0，原WIP/G8/85未操作，Hosted/Production/寄信不動。下一步M13有界設計→Source實作/唯一Rootreview→一個新Source Native六controls；目前全站40/60仍未驗證。
 
-
 ### 2026-11-16 — M13有界attach設計定案／7paths實作授權
 
 - 同worker唯讀比較：root-open FD的file->f_cred可越LCA權限，但pidfd_getfd在ptrace允許時複製同file，僅close_fds不足證producer不可取得；未pinYama/dumpable/LSM，不採FD能力方案。選一次性root-owned/hash-pinned helper＋root-pinned suite/job/context/boot/nonce/leaf policy，Root以SO_PEERCRED/真正直接parent＋固定三observer script/argv hashes核身份，免逐observer PID預註冊／upperGate。這是公開kernel語義，不冒稱runner所有LSM已查。
 - Root授權exact7paths：新privileged-attach.py、新linux_attach_authority.py、linux_owned_process.py、linux_suite_support.py、package-manifest.json、新test_privileged_attach.py、test_linux_owned_process.py。Root只docs/brief/唯一review，worker不是獨自作業且不得revert。READY ACK、direct held-unreaped child/pidfd/pipe核、單次owned leaf write/readback、root supervisor/worker物理退出後才release；cancel/late/unknown均拒；不globalLCA委派、不observer搬移、不Root FD入producer，不改原budget/guards/M3/M5/業務/SLO。
 - Brief初寫capacity-run-N只1..15，worker核指出實際runner range(15)，Root實讀驗正後修為既有0..14（拒其他N/leading zeros），不改leg順序。最新brief docs/superpowers/plans/2026-11-16-linux-owned-attach-m13-brief.md SHA5174493af7f0630d3c016f04625ab81d73672cde15fdc659d16e6be71f5c5a74；manifest原42僅更owned_process/既有test，新增helperOPERATOR+新testTEST，其他40不變，總44。先有效RED/Source實作與完整checks，再Root唯一review，尚無M13 Native/commit/push。
 - 成本仍US$0，原WIP/G8/85／Hosted/Production/mail未動；Native已過初始化/profile，kernel/functional/40-60仍未完成，未把工具設計當實證。
-
 
 ### 2026-11-16 — 全站unit 3785 PASS；M13同輪P1禁止過早reap
 
@@ -2358,7 +2322,6 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 唯一Root review同輪BLOCK一P1：client未知writerclose/timeout向外throw後run_child except仍stop/poll/wait/reap gate。Root真普通Python gate＋外部synthetic authority控制exit1，helperClosed=false已producer-reap、Node未執行；初reviewreceiptad518d1719df598b8bc2079cc9ecee9276b0f40a9edf9fdc433914795439b36a。交同worker原8paths修正前先設計最終deadline策略，不以global保留Popen/增加budget/自報closed蒙混。
 - worker提出PTRACE_SEIZE+O_EXITKILL的kernel-held身份，Root已讀官方v6.8 exit/wait/ptrace語義；尚未批准新primitive，須先解pre-seize UNKNOWN本身numeric PID reuse race。現僅read-only設計/官方契約，不新Source/第9path/Native。原base d3b920549fe94ad2b2565972a82ad6a772fced6a、specialremote同SHA；0新business/functional/15legs；費用US$0，G8/85、原7protected/handoffprefix、Hosted/Production/mail保持。
 
-
 ### 2026-11-16 — M13同輪P1修正設計定案：self0＋pre-exec能力關閉
 
 - Root排除PTRACE_SEIZE：入口仍numeric PID lookup，pre-seize UNKNOWN可重現同race，且EXITKILL/detach額外控制不解根因。採固定root helper只open/send既有nonce leaf procsFD，不對任何PID寫/ptrace/signal；取得FD且helper已物理close後才Popen direct ordinaryUID1001 fixedgate，parent立即closecap，gate只write b'0'+newline給自己、finally closecap再ACK/block。parent/child目標inode FD census零、identity/membership/inventory及原cancel/budget全部核後才release Node。
@@ -2366,14 +2329,12 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - readonly design-v2 SHAd0d916b23f97a82b11b08c5dc0a66989b7127bb8a520faef88853f90ed8a0d7e；Root書面addendum已落原brief，最新SHAf1fb1cbb2be6eb455b9d96894d59d72b0c95891406de44dedb4db0cf7010147f，明確取代舊numericwriter/held-unreaped協定；same8paths同worker/唯一Rootreview同輪delta，base仍d3b9205，v1packet/原RED/EPERM/setupFAIL全部留存。未核Source delta前不Native/commit/push。
 - 全unit3785PASS/0fail與Local synthetic build exit0已存正式S級report；build logf9d85a431a2d8f04174ca1ffa307b2b4095d2f5a1e7215dd7092b5e94a145e4b（Vite521ms，既有chunk提示未改門檻）。費用US$0，40/60及15legs仍NOT_RUN，原WIP/G8/85/Hosted/Production/mail不變。
 
-
 ### 2026-11-16 — M13同輪唯一Root review ACCEPTED_SOURCE_ONLY；待新Linux Local run
 
 - v2 frozen packetcac02217a5ddc52660d1fe78ef79302e860c0f74b5c9cdcea0a36ce34233c262；Root核8source/94records/52protected、manifest44/原其他40相同、max424行。Root獨立operator61/0.182s＋kerneldiag4/0.121s PASS；另4真Source gate普通FS/Python/Node控制success capcopies0、不release/ACKlost/write-reject皆無Node，AST核server無numericmutator/gate唯一self0。Standards0open、Spec初1P1已clear/0open、同SecurityP1已clear；summary647fd5d878cb6fbc914ece9bfa0ad22a010b572fc17bbfa8b53ad49053245d61，review docs/reviews/2026-11-16-linux-owned-attach-m13-review.md。Native f_cred/cgroup/六controls仍NOT_RUN。
 - worker受影響65PASS/0.322s、fullPython113PASS/10.079s、lint/type/format/static/import/EOF/diff0；v1 EPERM原FAIL與所有setup/RED資格保留，不當修好Mac cleanup。Root同輪Source核對另發現workflow alias+relative argv不符INSTALL原absolute guard；Root S級單行canonical launcher，actual workflow→actual installer AST RED1→GREEN0，不放寬installer。此Root第三S檔/唯一workflow例外已寫brief；worker8paths與52protected不變，原2TS設定＋三檔formatPASS，全unit3785PASS/Local synthetic build0維持。
 - Root private只讀artifact watcher已驗：oldrun7 completed/noartifact→exit2 UNVERIFIED；oldrun5小cipherZIP下載到新私有controlfolder，API digest與既有79b41dfbc9d98d95027ad7ec1bf654ee5b03ea9dc9079f43ca4783c67fa52e76相符，未解密/未讀key/未CI rerun。預備新run自動留cipherZIP，仍須Root全解密/manifest完整核對才稱retained。費用US$0；原7protected/handoff575959Bprefix與G8/85保持，Hosted/Production/mail NONE。
 - 下一步Root精確分開commit S設定與M13＋自有docs、核remote仍exactd3b9205後僅正常FF specialtestbranch，一個新Source/attempt1免費Local job；不得GH rerun或把Source review當40/60已PASS。
-
 
 ### 2026-11-16 — M13新Native已過kernel六控制；下一阻塞為snapshot-plan型別契約
 
@@ -2383,14 +2344,12 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 同workerREADONLY已找到確定Source落差：activate-candidate processStart由linux_proc.parse_stat回str，S.create_snapshot_plan卻int(procstart)==str，正常值永False。該呼叫在edge S.stage成功後但phase未改，故snapshotplan錯也誤標edge；binder真正result LOCAL_EDGE_SOURCE_BOUND與expected吻合。Native firstfailedguard仍UNKNOWN，不臆補已丟的原stdout。Root要求一次有限stage results/消費欄位契約矩陣（含functional/capacity/snapshot/encrypt）＋最小離線repro，再寫一個合併M14brief，不逐字microfix。
 - Root將把已知0business/指定prebusiness phase的requests-only cipher診斷留存併同修；仍Purpose PREBUSINESS/manifestnullprofile/NONEauthority，不大改M3/M5、不冒稱完整backup、不寬Quota/SLO/barrier。此時worker未Source修改/Native重跑。主機US$0；原WIP/G8/85、Hosted/Production/mail保持。
 
-
 ### 2026-11-16 — M14階段契約／prebusiness requests-only唯一Root review ACCEPTED_SOURCE_ONLY
 
 - brief b117cebb373fed592d32357b4e2420a4384291de3a9deee897c1f2e13e865659，exact4paths，base82dc693。一次canonical str→trueint同供proc比較/plan.preview.startTicks、snapshot-plan獨立phase；known prebusiness閉集/NOT_RUN/int0legs/無businessmarker才requests-only export，Runtime/profile/DB/volumes不捕捉，nullprofile/NONE/UNVERIFIED保持。M13/13helpers/M3/M5/產品/JWT/SQL/workflow/SLO/caps均raw不變。
 - frozen packet05139b0d057bafa54bbef54c586758be57354cdd157773bfd16be5c7ad6992e2；Root核4raw/32records/56protected actualGitbytes/44operatorentries/max447。worker fullPython121/8.812s與lint/type/static/import/EOF/diff全0；Root21/1.797s＋6獨立admission/metadataFS控制PASS。Standards/Spec/Security各0，summarydf78a61465bc5d4ceccae3f8bf55f0a09a6a019f1017d1c0c5479f0306881eb8；report docs/reviews/2026-11-16-linux-stage-contracts-m14-review.md。
 - 原兩有效RED／中途錯誤碼FAIL／NameError和pnpm路徑setup資格皆留，Root packet protected.files形狀TypeError純讀檢查更正，非Source失敗。離線actual producer/M5parser與合成crypto stream不當Native/realage；Native8真firstguard仍UNKNOWN，未倒填來源。下一Root精確7paths commit/check，再核specialremote82後正常FF單一新Source attempt1 Local run，不GH rerun。
 - 唯讀重驗Staging branch與公開marker仍d92be82ba188c3bf6618f1d70cd92f63a4eabfac，沒有部署。全unit3785與Localbuild既有PASS維持，40/60仍待真實執行。主機US$0；原7protected/handoff575959Bprefix/G8/85、Hosted/Production/mail保持。
-
 
 ### 2026-11-16 — Native9部分診斷已保留；M15限定零business準備／停機診斷
 
@@ -2401,13 +2360,11 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Root已寫M15brief42205f14ff9986d69907cceb49ec2e78c361e04c59ced7124e558f7746185b70，sameworker exact8paths：prepare/manifest1entry、snapshot native/wrapper、suite/workflow Root diagnostic flag、新2tests。固定privileged-read＋原byteSHA，root600不變；固定phase/errno/pathKind、approved stop意圖/allowance/closure/安全state/topology/log枚舉，原signal/--timeout-1/90/600/1800/exit判定皆不改。下一job無論prepare成功/失敗都不進functional-run/capacity，只診斷正常停機，再憑證據另bounded修復，不自動開business。Root唯一review，Source實作尚在進行。
 - 主機費US$0；functional/15legs/40-60未驗，Staging仍d92/no deploy，原WIP/G8/85/Hosted/Production/mail保持。
 
-
 ### 2026-11-16 — M15唯一Root同輪P2已clear；只核零business Native診斷
 
 - frozen v2packet afa14d9129b0e7315352b5139626ac9383a4b6fbe553c1a80af93c9ceb340f49；Root核8raw/54records/53protected actualGitbytes、manifest44/其他43、7strategy symbols/max328。Worker fullPython134PASS/12.148s及lint/type/static/EOF/diff全0；Root獨立prep7/0.292s＋shutdown6/0.197s、actualmethod CLI表格RED→GREEN、barrier/workflowenv控制PASS。唯一Spec P2（CLI文字表被當Engine JSON）同輪2檔修正clear，Standards/Spec/Security現0open；review docs/reviews/2026-11-16-linux-prebusiness-diagnostic-m15-review.md，Rootsummary c3995e3462483e5429ecc8cc2fd980b0acb8b6a624837eb9e0c2f3f4d2fb7f2d。
 - 所有stop策略/signal/90/600/1800/exit15拒與Source保護不變；下一新Source/attempt1 job只diagnostic，prepare成功仍business-barrier停止，不創玩家/不functional/不15legs。必須收實際PID1/parent/signal/stop role/errno證據後才另bounded修復及恢復normal。Native9真firstcall仍UNKNOWN，原RED/setupFAIL/Root只讀packet shape KeyErrors保留。
 - 原7protected與handoff575959Bprefix核符，G8/85仍停止保留；主機US$0；40/60未通過，Hosted/Production/mail NONE。下一Root exact11paths commit/check0、核remote仍ab5再正常FF specialtestbranch，不GH rerun。
-
 
 ### 2026-11-16 — M15新Native準備成功；停機阻塞已證實為Edge shell PID1
 
@@ -2417,7 +2374,6 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Root確認M15daemon privileged-read修正已真Linux通過。固定CLI2.109.1自行覆寫shell heredoc；Docker官方亦指shell不forwardsignals。已交同workerREADONLY合併M16可行方案，先查最小startup exec入口，無法則比較嚴格owned身份下正常SIGTERM方案；尚未核signal/exit15/策略或Source修改，不可proxyDocker/重建CLI/force/prune/delete/擴containerinventory。
 - 主機US$0；原WIP/G8/85停止保留，Staging未部署，Hosted/Production/mail NONE。依證據寫bounded brief後同worker實作/Root唯一review，再一個新Source零business診斷，不能直接開60。
 
-
 ### 2026-11-16 — M16已核exact5paths：固定Edge pidfd正常SIGTERM
 
 - Native10 completed failure，最終Rootreceipt0f4262d4dfa299233ca4240c6143323d65066a60e5f02513d1260457cad0a73a；joblog21935B/93a000edfc6e20146b8f4ca7a4c43aa623a08fa05364b5d665550482d29d8d47，原holdreceipt保留。daemonread已過，Edge shellPID1停機失敗證據明確。
@@ -2425,20 +2381,17 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Root官方OCI只下載59MB執行檔層，manifest/config/layerdigest核、binary165260008B/SHA3b7c6b9cc472f49fa7719a7f8988d099b1196d8fd0890cf2bd81c9480de57826/ELFAMD64，未執行/Docker；proof70052e98c53beda9ef47e557acd5eba03122a3c898966853edec44440669cf3a供獨立exe綁定。brief 5a5b413bebd23612d3991e8bd2a161f0dc395278b6d3aac5366e42d93591f6a2。
 - 下一job仍M15diagnosticonly/0actors，只證正常停機與完整冷備份；未核Source不push、不恢復business。主機US$0，40/60未通過；原WIP/G8/85、Hosted/Production/mail保持。
 
-
 ### 2026-11-16 — Staging Auth/SMTP唯讀前置門檻；未做Hosted負載
 
 - UI fixedonk ref已啟Resend SMTP/465，token150、verify30、signup300 requests/5m/IP、peruser60s、IPforwardingfalse；email/hour與sender masked維持UNKNOWN、帳密未讀、Resendplan未知。一次publickeyhealthGET200顯GoTruev2.197.0，fingerprint287e53db...；users/mail/settings/Production均0。
 - 官方tag4eee58f296d9698a1c2c0ae14d7a0b379c7622d3 Token/Verify/Signup burst30。Rootactualconstructor＋同tollbooth5.1.1/xTime0.9.0離線40同key允30拒10、60同key允30拒30；提高rate3000仍30/30，60不同記憶體key60/0，80–145us。只是程式碼/離線控制，未觀測Hosted60失敗、未fullGo1.27編譯/managedbinaryattest。
 - report docs/reviews/2026-11-16-staging-auth-capacity-readonly.md，private receipt 3d8c5f8ce2a508797771b53c2577d6cf207ec6fd9ac1f8f5896c56bb811956fb。LocalIPheader旁路/Mailpit不能當Hosted同NAT/真郵件證據；WB5仍需exactcandidate/資料窗口及真正limit處理方案，不能以調rate/假IP/測試錯峰造PASS。M16同worker實作繼續，未改產品/Hosted；主機US$0。
 
-
 ### 2026-11-16 — M16唯一Root review ACCEPTED_SOURCE_ONLY；下一新Source仍0business
 
 - packetd81e02e0eb7f0edfc30412ca54f6e6a759b2b27253d154216e1fcffae58305df，Root核5raw/31records/57protected actualGit/operator44全部same/max360。Worker direct17/fullPython145PASS/9.665s及lint/type/static/EOF/diff0；Root8selector/.711s＋9snapshot/.311s與9獨立adversarial controls PASS，AST唯一pidfdSIGTERM/officialexeSHA核；Standards/Spec/Security各0findings。review docs/reviews/2026-11-16-linux-edge-graceful-stop-m16-review.md；Rootsummaryc02946f3b3c15d9ae22cf68de5cedbb890629dda539f4a57debaa7f28818ac09。
 - fixedRootliteral獨立plan/context/job/nonce/boot/exactCIDderivedCG/ns/startUID/PPID/165260008B binarySHA核、只唯一child pidfdSIGTERM；helper10與原dockerstop共90，未知不續，原600/1800與其他7stop不變。Edge15受限完整proof及正向SIGTERM/no-known-drainfailure，非全roles放寬；SENT後取消保留UNATTESTED。all8before-stop安全census及failurestage enum已併入。
 - 下一Root exact9paths（5Source＋brief/review/handoff/Staging唯讀report）commit/check0，核remote仍7966再正常FF一個新Source attempt1，M15diagnostic flag保持；無functional/15legs/40-60。原RED/setup/144/145保留；原7protected/handoffprefix與G8/85持續保護，主機US$0，Hosted/Production/mail NONE。
-
 
 ### 2026-11-16 — Native11已保留273files；M17三服務合併正常停止brief
 
@@ -2448,13 +2401,11 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Root官方OCI完整必要層hash/ELF/UIDGID proof1baeeb59830840bb8c08c2218746db25d0606fe7bd1a7645ff3228cba26ba75c；PGwrapped11284888B/3794a95b.../UID100GID101(initRoot)，Kong14996672B/854b17f3.../UID100GID65533，busyboxbase皆已核。初始Nixwrapper ELFassert/regexsetup資格保留，無大層重下載/執行/Docker。briefSHA3aab2be11dae6ea1926a5f05bbf1a9f3bed9eb7e92fbbd7012d7c4b030fe20ae，worker尚未Source修改。
 - 主機US$0；40/60未過，原WIP/G8/85、Hosted寫入/Production/mail保持0。
 
-
 ### 2026-11-16 — Staging整合前置再次唯讀核對
 
 - Staging ref與公開marker仍d92be82ba188c3bf6618f1d70cd92f63a4eabfac/markerSHA3d7f3ea3a4f773370bc5c24ce0e73a1b9cea08e2ca53a11f3c102e282c119f78。remote migration120版本名稱有序對Source前120，本地121、exactpending20261116000100內容索引/4379d0cefd8b7493a64c17420944ce7e1e754e51beabe4a0679eec13662fc76b；原120SQLraw與deployedGit一樣，remoteSQLchecksum未比。App src/Functions/migrations仍與acac9bc先前Localfunctional一致，工具變更無產品delta。preflight2fbeb53db213d0926496ca12377d22a386140e0184239eeaf6f6d6a3a7076ba2。
 - owner-approval/staging-deploy/runbook同deployedGit；merge會自動Staging exactSHA部署/monitoring+schedule/全部trackedFunctions/prealias synthetic auth/HostedfixtureE2E與human real-device gate，**不自動apply pendingmigration**。sideeffectreceipt 2c0e4450b0140ab03547d703de6c96e007533652fc4d866e79553e927e6db486。未dispatch/PR/merge/deploy/Hostedwrites，不把重建reset流程當整合；新reviewbranch可能Git部署，優先保specialtestbranch不擴自動部署範圍。
 - M17same5paths實作中，Root已承認M16 transformedfixture漏actualoptionalJSONshape，M17actualNativeinspect讀取方法覆蓋absent/null/false/type與三角色身分；仍0business/40-60未過，主機US$0。
-
 
 ### 2026-11-16 — M17唯一Root review已接受；下一新Source仍零business
 
@@ -2462,17 +2413,14 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - plaininspect明確Init缺欄/null/false；只新job ownedDB/Kong privateintent→一次restart=no/readback→固定binary/UIDGID/namespace/cgroup/pidfd正常INT/QUIT（EdgeTERM）→helper實體close→同90內讀等自然exit→原Dockerstop。其他5stop、600/1800、資料/卷/order/SLO/caps與Edge15限制不擴。未知拒、SENT不倒填。Source最大403，原RED/setup資格保留。
 - 原7protected/handoff575959Bprefix現核符；Root exact8paths commit後核specialremote仍d775，再正常FF新Source attempt1，diagnostic flag保持0business，不GHrerun。須核實際三角色stop與完整冷備份才另bounded恢復business。40/60未過，主機US$0，G8/85保持停止保留，Hosted/Production/mail NONE。
 
-
 ### 2026-11-16 — Root M17報告尾端空行修正（文件S級）
 
 - M17 exact8paths commit271baf6已建立；Root新review文件多一個EOF空行，cached diff-check拒絕後提交命令未被工具流程阻止。這是Root命令串流程錯誤，非產品/worker測試失敗；不回寫綠結果、不amend既有commit。僅去掉Root新report多餘EOF空行，另正常followup記錄，再核cached check0/clean才push最新Source。M17五個Source hash與review接受結果不變；尚未push/Native。
-
 
 ### 2026-11-16 — M17新Source已正常FF，Native12診斷執行中
 
 - Root文件S級followup20c4656c10a6d1ad4e5a6b7627f1280b033bb9f4，cached check0/clean/5Sourcepacket hashes核後，remoteexactd775核再正常FF；run43865468673/job133292759689/push/attempt1，仍COLORPLAY_LOCAL_DIAGNOSTIC_ONLY=1。Root watcher session60845只收matching encryptedartifact；不GHrerun。此時bootstrap進行中，未稱停機/備份/容量通過。
 - 同worker只READONLY準備恢復business最小paths/checks，沒有M18修改授權；須Root實際核Native12完整冷備份才bounded實作。US$0，Hosted/Production/mail NONE。
-
 
 ### 2026-11-16 — Native12已真驗Edge/Kong正常退出；唯一REST255阻擋
 
@@ -2480,17 +2428,14 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 7nonDBstop皆RETURNED_SUCCESS/stoppedtrue/noOOM/restartCount0。EdgeTERM proof/identity/pidfds/helperclose/bindings/positiveSIGTERM與naturalexit全部Root獨立核/exit15符合原eligible；KongQUIT同核、privateintent/after exactrestart=no核/exit0。Auth/Mail/Realtime/Storage各0；REST actualfixed public.ecr.aws/supabase/postgrest:v14.14/configde2f4d042d5efb5d1362d98c11e5e0773bedc1376bafcdb4ec863fc18d25f52d/defaultTERM，Dockerstop0.101862s但containerExit255。Root真stopped()逐role獨立核，只有REST拒SNAPSHOT_STOP_UNKNOWN，M5non_db_stop未過，DBstop/dump/volume未跑。
 - 已請同workerREADONLY精確v14.14 code/退出契約與可否證診斷，禁止直接allow255。恢復business最小2paths已盤點但尚未批准M18；本輪prepare176.056s/fixtures0、functional/15legs均NOT_RUN。主機US$0，原WIP/G8/85、Hosted/Production/mail保持。
 
-
 ### 2026-11-16 — 待整合migration語意補充
 
 - 唯一pending20261116000100不只是增加內容索引：先drop content_media_assets_manifest_sha256_key UNIQUE，再建非唯一manifest_sha256索引，允許獨立owned upload runs的相同可信內容digest各自保有UUID。Source出自1449561133081c93b49c6b6eba56ada00626c817、已納入acac產品基線；沒有Hosted套用。最終migration批准要明列取消唯一性及DDL鎖風險，不可簡稱純效能index。Root product inventory相對Staging d92共118paths（78非tests/40tests），私有receipt33689992efdfb8ecc73fb1b913557c605fbc8350d7ff6bf198682ba688c7dbdc；不是重新審查或容量PASS。
-
 
 ### 2026-11-16 — Native12 final failure與REST退出機制假說
 
 - GitHub job133292759689現completed/failure，upload/10min保留hold正常完成。finalRootreceipt30aa4b593585ff487e88050f1142a7d96131ef7666351299cae3c9fdebfb0fe0；joblog21916B/52ab24c0b9f11a305a3ef348297ff621590a0db08c63f5ce755df841388b7a9b。初holdreceipt保留，未rerun。
 - 真REST Config.Entrypoint=null/Cmd=['/bin/postgrest']/defaultTERM；beforecensus singlePID1 OTHER1/Runningtrue/exit0；全6kernelcontrols真LinuxPASS但capacityProof=false。worker唯讀精確v14.14→UserInterrupt→GHC9.4.8自SIGINT→PID1忽略→exit0xff鏈可解釋255，尚非Native12 causal trace或vendor實際compilerattest；原通用「正常只0或128+signal」假設過窄，不能直接allow255。正在freeze官方SHA/正向日誌完整行parser與minimalpredicateproposal；business保持停止。
-
 
 ### 2026-11-16 — M18已授權sameworker，固定REST有證據的255辨識
 
@@ -2498,11 +2443,9 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - brief docs/superpowers/plans/2026-11-16-linux-rest-interruption-m18-brief.md 現SHA2ad3c79871c61d197b269cc89a05143845c4103b4149025d61810d8a34783204/6697B。初稿0bfba845...末段誤寫保護M17五檔，已改成未授權helper與其test兩檔；ownership始終exact5（newREST純module/test＋native/wrapper/既有diagnosticstest），策略未擴。
 - 原RESTDockerstop不改；新增strict actualtop單PID1/固定imageCmd/planjobnonce/前後restartstate/physicalclose與bounded rawlog byteprefix/new suffix恰一條精確timestampTERM；其他newunknown/fatal/INT/多行/rotation不eligible255。rawlogs只private memory，0/143與其他role/Edge15/DB0/helper/operator44/workflowdiagnostic/caps均不擴。先behaviorRED，再同worker實作/freeze/Root唯一review，禁止workerNative/雲端。下一newSource仍0business，必須完整冷備份真驗才另恢復15legs；US$0，Hosted/Production/mail NONE。
 
-
 ### 2026-11-16 — M18接口決策落地
 
 - brief最新0fdb88c46c51a18ae77083066ef58b853b19a1c91b528477496517f99464ab2f/7319B（前2ad3保留歷史）：logs不足但client正常close/identity-binding/deadline有效仍原單次stop，原0/143不加proof要求、255必拒；取消/closureUNKNOWN/identity錯/過期不送stop，proof保存失敗不以memorysuccess補255。緊鄰當次stop_one之REST前後觀測與stop共90s、timeout限remaining，不能從all8census起算；其他roles不變。worker已收到，Source仍same5，沒有business/Native授權。
-
 
 ### 2026-11-16 — WB5唯讀執行接線盤點（未改產品／Hosted）
 
@@ -2510,12 +2453,10 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - WB5具體Hosted窗口批准前仍須備妥可審核Root adapter：remote freshness/exactartifact/source/nonce reservation、controlled mailbox真OTP讀取、批准帳號/保留政策與各級前序收據的實際接線；不得複製connector OAuth或把Local Mailpit當Hosted信箱。這是原WB5未完成範圍，非M18擴項；當前優先完成Local備份阻擋與60人，不做任何Hosted寫入。
 - M18 brief計數修正最新df1b0583f95d4d9bf96576e1b2106831b497de2035121e46aac8351f745d19fe/7355B：REST之外普通4roles（auth/inbucket/realtime/storage）＋M17三roles保持，舊0fdb誤寫5只文字，ownership/行為無擴。
 
-
 ### 2026-11-16 — WB5真實註冊route補核（唯讀）
 
 - 當前account-flows.ts91/104：fresh先signInWithOtp(shouldCreateUser=true)→verifyOtp(email)→student-register，不是直接/signUp。固定Auth4eee58f296d9698a1c2c0ae14d7a0b379c7622d3官方api.go244–245把/otp綁limiterOpts.Otp；已釘raw apilimiter.go232–239把Otp與Signups皆設同newLimiterPer5mOver1h(RateLimitOtp)/burst30。先前Signup300離線對照是同constructor控制，不冒稱已跑真/otp。
 - 因此burst關聯仍有Source支持，但最終需沿真/otp→/verify→student-register與auth-login/token路線取Hosted證據，SMTP/投遞/HostedIP聚合仍UNKNOWN。未寄信/註冊/HostedAPI負載，沒有產品改動，M18same5paths不擴。
-
 
 ### 2026-11-16 — M18唯一Root review接受，下一新Source仍0business
 
@@ -2524,14 +2465,12 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Root初finalizer8/9為no-op bootmutation（fixture已all-e），原script/output保留，guaranteed-different v2全9/9，非Source問題。原workerRED/deadlinefixture setup保留。原7protected與handoffprefix現核符，max445。
 - Root將exact8paths gated commit/check0，核remoteexact20c4656再FF新Source attempt1零business診斷。須REST正向proof與DB/完整冷備份真過才另恢復functional/15legs。40/60未過、US$0，G8/85與原WIP保護；Hosted/Production/mail NONE。
 
-
 ### 2026-11-16 — M18新Source／Native13已真驗REST255，目前DBcensus阻擋
 
 - Root exact8paths gated cachedcheck0/commit/clean bcc23094772240a497b679a472890db31b438846；remoteexact20c核後正常FF，新run43874686084/job133324528667/attempt1（jobmetadata connector transient斷線改既有gh唯讀取得，非Source或job失敗）。watcher65620已下載匹配artifact14229466920；ZIP1556581B/ecb68d5f5f0c5a776cd48fa568ad9c83f31d9dd915a78bb356cb6821353d53ba API核，cipher1556443B/0fcad9d99a8ccaceb7ca8fb3046b14ee6aee0b99a8282c2d497da26a240dfc82，manifest9c53bbc6d7bb47eb2ee7b7e650273bb4dd3b2d39ef0ccbd10c6d5a65e9ba0e75/298files/10942999B真age逐檔核；當時10minhold待final。
 - 7nonDB全RETURNED_SUCCESS/stoppedtrue/noOOM/noRestart/emptyError。Root獨立核EdgeTERM/15與KongQUIT/0完整identity/closure/naturalexit/planjobnonceproof；REST255 current R.eligible255真PASS、private receiptfileSHA與terminal一致，唯一新增datedTERM/append-only且完整scope/單PID1/stopclose/90證據。M18此次新Source實際通過，Native12仍不回填正常；不稱v16drain/poolcompleted。
 - M5database已寫_supabase.dump1228B、postgres.dump1899246B與兩config tar及globals/key，但before!=after→SNAPSHOT_DATABASE_CHANGED拒，DBstop/volumes未到。after在比較後才write所以未留下；目前不能區分值漂移或排列差。Rootbefore真127tables/keys唯一、_supabase0/roles31，before array不是schema/table字典序；Source unordered json_agg/UNION ALL可疑但因果UNKNOWN。初Rootreceipt0268c05cf98cc0466a3c19de081054e263f733fb3df0f7a112a9eea0389db11d。
 - 已請sameworker READONLY整體census/背景變動/自身觀測盤點，候選合併after-beforecompare保存與純排序/嚴格count/hash相等，禁止未查證放寬值或資料保留。尚無M19 Source修改授權；diagnosticOnly1/fixtures0，functional/15legs/40-60 NOT_RUN，fullretention NOT_ATTESTED。主機US$0，G8/85/原WIP與Hosted/Production/mail保持。
-
 
 ### 2026-11-17 — Native13 final與M19唯一Root review接受
 
@@ -2541,7 +2480,6 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 只排序table arrays，count/hash/roles/database/table-set全值驗證與duplicates/invalid拒；raw after先wx600保存、再safe delta；真值漂移與writer失敗仍FAIL/DBstop-volumes0。NativeIO全bytes與M17/M18/operator/workflowdiagnostic1/全部額度保持。pnpm初錯旗標registrylookup/非TTYsetupfail保留，未install/lockfile改，既有命令重跑綠；Native13不回填。
 - 原7protected/handoff575959Bprefix現核符。Root exact7paths gated commit後核remote仍bcc再FF一個新Source attempt1/0business診斷，冷備份Root真核過才另恢復functional/15legs。40/60未過、US$0，原WIP/G8/85與Hosted/Production/mail保持。
 
-
 ### 2026-11-17 — Native14完整cold capture/transfer已Root核，M20恢復Local suite已授權
 
 - M19 exact7paths/check0/clean commite866e30861bfd93eb11fbf334113d781865a5db4；remoteexactbcc核後正常FF，run43882406503/job133351465442/attempt1。artifact14231764002 ZIP24693926B/5160b564c5ea4e311769266d8a578054498948e4ef4c892d298746627b2e4119，cipher24693788B/870375e0faaeb93057c827ccc23af05dc3dd9f5a72a45d97c8a0cf0e57006a01，outermanifest8cb57640430db84f1a731726126ce3b459675986f1057520bb1fb8703e4a22c9/282files/153661324B真age全檔核；snapshotmanifest42c5216ea68511459e1cc76ce9fe8ae1d65f1032c4205748660d220c9c09e640/259files另核。
@@ -2550,7 +2488,6 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 已授M20 sameworker exact2paths：workflow移除diagnostic env、test_native_preparation_diagnostics.py新無flag契約；其他Source/產品/operator44/全部caps保持。brief docs/superpowers/plans/2026-11-17-linux-full-suite-restore-m20-brief.md SHAd4d32f2daf8120791f70cc36408c9906540e5aabb720b40f194855abae3b3241/4781B。先checks/freeze/Root唯一review，下一newSource才正常six-person＋15legs（fresh40/60與106Local身份原計畫），新SHA重綁profile/build/receipt。
 - 原WIP/G8/85維持；40/60仍NOT_RUN，主機US$0/US$5上限保留。Hosted/Production/真寄信0；WB5仍有pure guard未接Hosted執行、真SMTP/限流/Owner exactSHA窗口等待辦，不以Local替代。
 
-
 ### 2026-11-17 — M20已接受，下一新Source恢復正常Local
 
 - Native14 final jobcompleted/failure只因預定diagnostic barrier；finalRootreceipt5097c815167df533ce81c06f75cec7a695faa371f591d4cc17440dd23bc072e3，joblog21956B/cb149a9861d889e4116a70f3a7ebc9b4e3220336ac7b0d60cf4c0602a62f3801；capture/transfer PASS但restore/functional/capacity未跑。
@@ -2558,13 +2495,11 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Root將exact5paths gated commit/check0/clean、remoteexacte866核後FF新Source push/attempt1。下一job正常six-person→15legs（anon3/10/20/fresh40/60/existing與backend3/10/20/40/60），fresh60的59＋T1及R1 outsider原106Local身份保持；每新SHA重建profile/build/request/receipt，不carry前級當容量PASS，非PASS即停升級。不為補結果報告任意改已測Source SHA。
 - 原WIP/G8/85保護，40/60仍未驗，US$0／US$5上限保留。Hosted/Production/真寄信NONE；WB5仍須具體Hostedadapter/OTP/限流與Owner exactSHA窗口，Local不替代Hosted。
 
-
 ### 2026-11-17 — 正常Local run15已啟動，Source4051凍結
 
 - M20 exact5paths/check0/clean commit4051b4007768d9db0e50cd89cf41bd5a0972ef09；remoteexacte866核後正常FF，新push/attempt1 run43888488403/job133372980592，正常six-person→15legs，未GHrerun。Root加密artifact watcher21559監看matchingSource下載，當時setup/bootstrap進行；functional/40/60仍未宣稱通過。
 - 暫不改已測候選Source補報告；Root統籌結果留private receipts/本handoff，PR description呈現結果。Sameworker僅READONLY查固定HostedAuth2.197真OTP/verify/passwordgrant/refresh路由與limiter連線，不Source改動／HostedAPI／寄信／settings，不讀Root私有輸入。WB5尚未進執行。
 - 本輪如任一級非PASS原runner停升級並完整保留；US$0/US$5 cap、原WIP/G8/85與Production/Hosted真寄信NONE保持。
-
 
 ### 2026-11-17 — Native15確定官方映像限流；M21同worker窄修正已授權
 
@@ -2573,7 +2508,6 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - HostedAuth2.197 pinned Source路由readonly16官方檔與repo/SDK全SHA Root核，manifest71bc8f64e3fca41ad9904c6917652a19b318dc15246605bf247a57c5073d402f、Rootreceipt131f3e9b16e0b77adbeaabb1f307e4d06de38684e949735997b3ebc81073618d。真UI送碼走Otp，不重入/signup路由；password與refresh共Token limiter；verify獨立Verify。合法admincaptcha例外不免Token；gateway/header/key聚合與SMTP/Hosted60真測仍UNKNOWN，未API負載/寄信/settings。
 - 已查看使用者更新帳號對應DigitalOcean舊tab，仍顯示Session has expired；點Sign back in now未前進。未核得免費額度／未建主機或付款，不影響現有GitHub免費runner路線。主機US$0/US$5上限、原7protected/handoff575959Bprefix現核符；原WIP/G8停止85/Hosted/Production/mail NONE保持。
 
-
 ### 2026-11-17 — M21唯一Root review接受；準備新Source正常Local測試
 
 - M21 frozenpacket a549de3cf8e5baa84c7f46eeecf20d3642eadc80a63862ba75634ec34366ea2a；exact4Source、27records SHA核；worker9direct/183Python與lint/type/static/import/EOF/diff0，66protected actualGit/operator44與另1917unowned non-docs保持。Root9/0.716s＋75獨立precise-byte/exit-type/cancel/late-writer/later-unknown保存控制PASS，0findings，summary52182787241dbfbd39226628554663f2578affd1c9433917ac624f277cd24526。review docs/reviews/2026-11-17-linux-ecr-pull-m21-review.md，最大462行。
@@ -2581,13 +2515,11 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Root將exact7paths gated cachedcheck0/commit/clean，核remote仍4051後正常FF，一個新Source/newpush/attempt1。完整cold capture/transfer前級Native14已核，不重開零業務gate；下一先six-person，再原15分立legs，非PASS停止升級，Source/profile/build/receipts新綁定。
 - Root另備private offline下載business receipt revalidator d346576139b738bf75a0890aea73862b304127720dc6a52bcf4045888b2cda17；Native14真NOT_RUN控制拒冒充business PASS，AST0。首次用relative argument被自身絕對路徑guard拒、改正命令通；不為此改Source。75以外的真完整15chain尚待實際artifact資格，不當新kernel／restore證據。US$0、40/60尚未驗、原WIP/G8停止85／Hosted／Production／真寄信NONE。
 
-
 ### 2026-11-17 — M21新Source已啟動正常Native16
 
 - Root exact7paths gated cachedcheck0/commit/clean：68b87006e36f2bc57b4dd94b3d30f46078b3812e；核specialremote仍4051b4007768d9db0e50cd89cf41bd5a0972ef09後正常FF。新push/attempt1 run43894234282/job133393317333，當時toolchain進行，正常six-person→15legs不變；非GH rerun。Root watcher42667僅監看matchingSource、下載加密artifact，未碰Hosted。
 - sameworker接續僅READONLY WB5實際Hosted runner／Root connector收OTP至免費CI私密有界轉送的最小ports/paths方案盤點，不Source改動。現pureguards沒有execution，禁止先變更Local-only workflow／複製connector OAuth／索取新keys／真寄信或Hosted API；Root保持唯一review。
 - Source凍結，後續結果留private receipts／append-only handoff與PR description，不為報告另改已測SHA。Native15原failure保留；40／60仍未驗，US$0／US$5 cap、G8停止85／原WIP／Hosted／Production／真寄信NONE保持。
-
 
 ### 2026-11-17 — Native16註冊失敗與完整資料保留已Root核
 
@@ -2597,7 +2529,6 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 同worker先完成WB5 readonly38Sourcehash Root核：manifest82fb10092c22ead89ac64a9790f590e5074f6eab7e2308849cc6f515d0730a93、plan4f5a0f7ce1c0fb9e066caa56f5fad8de67ab9d2d77ba0bd25b9b6fd78461aaf8。純guard/Local brands仍不能直接Hosted；Gmail sessionconnector不能出口OAuth至CI，真OTP轉送尚未實作或證30s延遲；提案PR密文comment仍須明確發送批准與通知/外部app sideeffect核，data/newcarrier branch未被Vercel禁止不可先push。六人functional含admin另需Hosted批准契約。僅研究，不是Source審查通過或執行授權。
 - 新優先請同worker僅READONLY提出一次完整registration細步診斷最小paths/interface；未授Source修改，禁止盲修產品/跳OTP/提高timeout與mail quota。Root初count inspector誤將postgres array當map而停，原private probe保留；依實際array修正於custody verifier，非Source問題。主機US$0、40/60未驗；原WIP/G8停止85/Hosted/Production/真寄信NONE保持。
 
-
 ### 2026-11-17 — Native16 final已記錄；M22一次完整註冊診斷已授權
 
 - Native16 completed/failure，finalRootreceipt1f2efd5bac3877775554287e4ec00b362fc175083ff29aa91c1f42a39ab72ba7；joblog21925B/b57985656d5ccb9d56a68c35219c8f52e8b399ae30aca862f815d1d6fd801b1c。原holdreceipt保留，未rerun；6Auth與全部cold資料保持。Root無可用pg_restore，沒有安裝或另起DB；未知註冊細步不由count反推。
@@ -2605,16 +2536,13 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 只固定phase/code/errorType/elapsed與safe mail reason/count/statusClass/recipientExact/otpCount，無新IO，OTP/mailID/地址/URL/body/message/stack/cause/帳密及低熵digest不得記錄。started write先成功才action，confirmed write失敗不PASS；operationfailed原erroridentity保留/failed writer不遮蔽、不續；abort/late停。原publicAUTH mapping、mailpoll30x1s/timeout、所有API/guards/SLO/保留與正常six-person→15legs不改，不先修產品或跳OTP。
 - 先有效caller RED→GREEN與受影響TSchecks/freeze，Root唯一review後才exactpaths commit/newSource/newpush/attempt1；不為此重開0businessgate、不GHrerun。原WIP/G8停止85、US$0/US$5 cap、40/60未驗、Hosted/Production/真寄信NONE保持。
 
-
 ### 2026-11-17 — M22註冊登入的abort窄接口補充
 
 - sameworker指出只包post_registration_login外層step，無法阻止內部await fill期間abort後下一click；Root准同owned auth-journey.ts的loginFunctionalPage optional synchronous admit callback/default原行為不變，register傳原signal檢查。每既有await返回／下一動作前check；不加Page/API、其他caller/timeout/publicfallback不變，已發inflight動作不稱可撤銷。exact5paths/≤500保持，增deferred fill→abort→無下一click actualcaller控制；不是產品Auth lifecycle修改。
 
-
 ### 2026-11-17 — M22單檔505行明示窄例外
 
 - actualcaller有效RED→初GREEN3files15tests後，Prettier顯auth-journey505行。Root依AGENTS超500可說明理由，准exact同一檔最多505，其餘仍500；為完整14steps＋必要login admit保原同檔API/Recovery與可讀性，不為5行另拆／擠行／刪斷言。exact5paths保持，brief/static/packet/review明列單檔例外；不是測試或runtime/SLO放寬。若再超505先回報。
-
 
 ### 2026-11-17 — M22唯一Root review接受，準備新Source正常Local
 
@@ -2623,12 +2551,10 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 原RED與fixture/lint/單一parser/static setup失敗保留；Root初stale-success-http假設被真scopedFetch synthetic503/504否證，原probe留，非Source finding；mail statusClass也含該wrapper合成回應，不冒稱上游HTTP實證。Native16原FAIL/根因UNKNOWN、6Auth/fullcold資料保持，未restore；M22只工具診斷接受，尚未真Native或註冊修復PASS。
 - Root將exact8paths gated cachedcheck0/commit/clean、remote核仍68b87006e36f2bc57b4dd94b3d30f46078b3812e再正常FF，新Source/newpush/attempt1正常six-person→15legs，不GHrerun、不重開0businessgate。任一非PASS停升級，40/60仍未驗。原7protected/handoff575959Bprefix現核符，G8停止85／US$0與US$5 cap／Hosted／Production／真寄信NONE保持。
 
-
 ### 2026-11-17 — M22新Source已啟動正常Native17
 
 - Root exact8paths gated cachedcheck0/commit/clean：294b74807b03266e7a58087cda138a2ea5a3affd；核specialremote仍68b87006e36f2bc57b4dd94b3d30f46078b3812e後正常FF。新push/attempt1 run43903195092/job133424987333，正常six-person→15legs保持；Root watcher56296只監看matchingSource與加密下載，非GHrerun。
 - Source凍結，同worker待命不改；Root會先讀實際14細步與安全mail snapshot，再依因果給最小task，不盲修產品、不放寬timeout/SLO/OTP/保留。Native16原FAIL/6Auth custody不回填；40/60仍未驗，主機US$0/US$5 cap、原WIP/G8停止85／Hosted／Production／真寄信NONE保持。
-
 
 ### 2026-11-17 — Native17精確otp_mail失敗與完整custody；M23已授權
 
@@ -2638,17 +2564,14 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Root private bool核兩references/path/mountSource/publictemplate hash全對，mountRWtrue不能稱readonly。runtime template306B/mode0600；filecensus不存uid，成功copy/census Source predicate驗owner==job，profile owner1001現核；Kong hostUID100由本job正向roleproof核。ACL/cap未capture，Native17first403/fallback仍是Source支持假說，不冒稱直接trace。公開模板私有600與不同readerUID是具體相容性風險，不能繼續盲修OTP/產品。
 - M23 proposal38a1dba2ed7a9b54c3462c95879209b0a1fc546e45a9edf7436fd9bc3472a056/manifestd02288799c21676740ae50726f34ca1306c7a30ec32f117a10d38f524a8a18bf Root核，已授sameworker exact6paths正式brief docs/superpowers/plans/2026-11-17-linux-template-readiness-m23-brief.md SHA1b9a11efcf8e26ca500ab419f6b531a36a5021ade987b1b8256c157c1d464e94。只公開template FD-safe0444、其他600/dirs700，業務前ownedKong UID100 applet核＋raw nc HTTP兩GET/contentSHA/identity/mount prepost、shared10s/command≤2s與原timeout-1 closeguard，unknown/403/default/late/writer不READY。generic run本已maximum passthrough不可改body；operator44/M3/snapshot/原正常suite/OTP/產品/caps全保持。Root核snapshot可捕原444成600複本，無需擴M3。先RED/真FS/直接probe/完整Python與checks/freeze，Root唯一review後新Source/attempt1，worker禁止Native/雲端。40/60未驗、US$0/US$5 cap、原WIP/G8停止85/Hosted/Production/真寄信NONE保持。
 
-
 ### 2026-11-17 — Root私有custody verifier共用化與文件數字更正
 
 - Root新private .git/verify-cold-custody.py SHA7d1f76b7e6c3976c35dc58d683d1b2d83428936e3e6e9f3d25474b2a9cfda0a5，沿已核判斷、移除run/filecount硬碼，真Native14/16/17三archive全核，wrongSHA/wrongrun/prebusiness三負向皆拒；無Source改動、不執行restore或Native。qualification receipt e0b9d49df4e680a700081209ee3d9caaa4ae0120ed4c8a013e2aaeb33876ba8a。
 - 前Native16 handoff「metadata-only dir1」為Root文字沿用誤植；actual fd702/1f2私有receipt與本次重驗均為0，Native17亦0，只有Native14是1。修正文件敘述不改資料/驗收結論、不回填FAIL。
 
-
 ### 2026-11-17 — M23失敗metadata必沿prebusiness requests保留
 
 - 同6paths內補安全UNVERIFIED template diagnostic：APPLET/固定HTTP階段/identity/file/write/deadline閉集及可確認HTTPstatus，best-effort wx600至已授權requests固定檔，原SHA/job/nonce/path綁定；不記URL/body/Env/rawerror、不mask原錯。runtime-only檔會被原prebusiness省略，故沿既有requests有界列舉，不改suite/export/M3或新增HTTP。success仍READBACK_OBSERVED/NONE，late writer/unknown不READY。補403/failed-writer/收錄控制；非產品或OTP更動。
-
 
 ### 2026-11-17 — M23唯一Root審查接受；Root另補既存文件排版
 
@@ -2656,17 +2579,14 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 公開literal template複本0444，其他600/dirs700，FD安全publish；原RW bind仍RW，非immutable。業務前精確Kong UID100 nc兩固定GET/shared10s/單command≤2s/原closeguard，bytes/SHA與前後identity/file核，不改產品／OTP／原44operator／snapshot／caps。success READBACK_OBSERVED/NONE，fail requests wx600閉集metadata best-effort不遮蔽原錯。真Linux applet/HTTP/註冊仍NOT_RUN，Native17 OTP_COUNT0與custody／推論界線保留。
 - Worker全域format初exit1只四份base既存M4 review/addendum、M13/M10 brief；Root另S級排版，三份只空白，M10把既有literal路徑模式加code標記避免Prettier誤解析，逐檔去空白/backtick相同，未改original既存文件。準備exact13paths（6Source＋brief/report/handoff3＋格式4）gated commit/clean後正常newSource/newpush/attempt1，完整正常six-person→15legs，非PASS停，不GH rerun/0business gate。原7protected與handoff575959B prefix現核；G8停止85、US$0/US$5 cap、40/60未驗、Hosted/Production/真寄信NONE保持。
 
-
 ### 2026-11-17 — M23提交前最後檢查
 
 - Root S級四份排版後全域pnpm format:check exit0（All matched files），git diff --check exit0；6Source SHA仍等frozen packet，預定exact13paths，Root唯一審查／42tests＋42controls結果不變。既存format失敗與M10 code-markup修正如上一段保留，不回填Worker初結果。
-
 
 ### 2026-11-17 — M23新Source正常Native18已啟動
 
 - Root exact13paths cachedcheck0/commit/clean：3bc4466eb22929ffc449355aab723f30ab8b5611；新網路唯讀核specialremote仍294b74807b03266e7a58087cda138a2ea5a3affd後正常FF。新push/attempt1 run43915233590/job133467458622，正常six-person→15legs。watcher64980只監看matchingSHA並加密下載；不GH rerun／不改原caps。Source凍結、同worker待命。
 - 真Linux applet／HTTP／註冊尚待本job結果，原Native17與全部6Auth/cold evidence保持；40/60仍未驗。G8停止85/原WIP、主機US$0/US$5 cap、Hosted/Production/真寄信NONE保持。
-
 
 ### 2026-11-17 — Native18實際前14stages通過，最後health1錯誤；全部cold資料已核
 
@@ -2674,45 +2594,37 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - artifact14249992026 ZIP42517052B/50dc7fcbeb0fb6ab1b23364bbc63729ce64e12143b555649f039bb6d521d6b6b API核；cipher42516914B/e80c0241da8a78b50e9f9930556c844bc1b75657bb0fac76c72c8e2e497d4be9 真age AEAD；outera25905d42a0f748e0cd5557d6c88a26a482013a20ca191c50b17f91ca89f21ec/561files211892844B全核，inner55b24f14df3e5a093304389da72691f24a0a8c78d02ef14882b721bbef8572f4/528files。8stops全部roleproof／DB2/127tables/31rolesORDER_ONLY／3vol7015regularfiles185546711B與metadata／runtime476datafiles32publiccode重建/metadata-only0全核。6Auth與16storagefiles保留，未restore。Rootreceipt a75d1c42035473884102bb3410e31b60fe5c203d5e5182cc4311bf790b070f7d，job仍10min stopped-data hold待最終failure，不rerun。
 - RootactualTS schemas解析及finish重算FAIL；初probe假設candidate literal UNVERIFIED錯，Source實為PENDING_EXTERNAL_ATTESTATION，修正後核符，非Source finding。同worker完成私有business-verifier合成資格後，僅READONLY提一次完整health閉集metadata診斷brief；禁止Source先改、修產品／增加expected／放寬SLO。原WIP/G8停止85、US$0/US$5 cap、Hosted/Production/真寄信NONE。
 
-
 ### 2026-11-17 — Root離線business verifier完整合成資格已核，不是容量證據
 
 - 同worker私有packet .git/native18-business-verifier-qualification/manifest.json 3a8db78621eef9caa459384ba2cfe7600b3051c0dd643f0959df295da485a19f，793records約4.2MB全hash/mode核。Root原verifier d346576139b738bf75a0890aea73862b304127720dc6a52bcf4045888b2cda17 未改；Root獨立11commands：合成functional15stage／15leg／106planned identities全鏈正向0，wrongSHA/job/functional-close/capacity-residue/兩candidate/hash重綁/兩前序/一致SLO違反/candidate-only十負向全1。Rootqualification receipt7d1744b9ae88006b2fe6b907c4d655eecd03d47865592a9d61614ea2b12b467f。
 - 所有profile／健康samples／identity／Root close assertions明標SYNTHETIC_ONLY／NONE，request刻意最小不可執行fixture，沒有真browser/API/OTP/Root runtime或kernel證據。只驗captured-record validator能完整走正向與拒假PASS，絕不當Native18／40／60 PASS；實際Native18仍health FAIL、15legs NOT_RUN。初wx logger撞檔與manifest排除nested同名plan的setup修正保留，無Source或Rootverifier變更。
-
 
 ### 2026-11-17 — M24完整health診斷正式授權同worker
 
 - Root凍結brief docs/superpowers/plans/2026-11-17-linux-health-diagnostics-m24-brief.md SHA3718e7ac512b737453314061a3b9f355f8178e6ed21e86e7a3b6c7bba18818dd，base3bc4466；sameworker exact8Source/tests，新增pure閉集diagnostics module，health只就近note＋diagnostics，business stage及既有before-close/cleanup沿privatejournal加獨立details；原4field shape／counter／classification／expected不變，新collection不可用／overflow／lifecycle只收緊available。最多256events，五component sum精確；stage/page/requestordinal/安全endpoint/code/status及approved公開asset位置hint，無rawURL/message/stack/secret或低熵hash。
 - health原500→最多560唯一有理由窄例外，避免無關判定重構；journeys與其他≤500。先actual export RED→GREEN、五來源/secret/overflow/late/dispose/writer/erroridentity與原Auth/Image controls，affectedTS/lint/type/format/import/static全綠後freeze，Root唯一review後才新Source/newpush/attempt1正常six-person→15legs。Native18那一事件仍UNKNOWN，不以synthetic當重現、不修產品／列expected／放寬SLO。worker不得Native/雲端/Stage/commit；原operator44/Producer/Workflow/DB/保留不變。原WIP/G8停止85、US$0/US$5 cap、Hosted/Production/真寄信NONE。
 
-
 ### 2026-11-17 — Native18最終failure與joblog已封存
 
 - job133467458622全部完成、conclusion failure；suite failure／cipher upload與10min stopped-data hold success。Rootfinalreceipt .git/linux-eighteenth-run-review-v2.json SHA72ffbc4eb4906b7392b840c40aa693f21fafcd900367b5de00b99d9fbf5aae6e；joblog22098B/555e688321920d7a0748284c18d0bf0ff848facf315f0890926b559cf5478f37，原holdreceipt a75d1…保留。未rerun／restore／刪資料。M24正在獨立實作，Root唯一review後才下個新Source。
-
 
 ### 2026-11-17 — WB5等待Local期間更新Staging唯讀整合前置
 
 - networkfresh special之外Staging ref仍d92be82ba188c3bf6618f1d70cd92f63a4eabfac。固定project onkxnkzeixpezetkmocf只BEGIN READ ONLY／5s catalog SELECT：120條remote migration version/name與Source前120有序完全相同，Source121僅pending20261116000100_content_media_manifest_digest_index.sql／SHA4379d0cefd8b7493a64c17420944ce7e1e754e51beabe4a0679eec13662fc76b；manifest_sha256 UNIQUE constraint/unique index仍在，尚未套用。沒有讀user資料／serverfiles／settings或寫DB。
 - Root preflight .git/staging-integration-readonly-preflight-20261117.json SHA03db709d159b4f42ab7f87b85418a9da73bde51f572434fa123cd54a3a3db5f0；src/functions/migrations actualGit仍與acac9bce756d94ceaa1a3d9000d21e4e993e76e2相同。public deployed artifact marker本次未refresh、remote SQL content checksum未比較；不把ref/catalog一致冒作部署或容量PASS。最終candidate／artifact／Owner approval／資料與郵件窗口仍待Local gate後具體化，Hosted/Production writes0。
 
-
 ### 2026-11-17 — WB5同次唯讀public marker已更新核符
 
 - 固定https://staging.colorplayapp.com/admin-release.json TLS GET／no redirects／10s／32KiB cap只讀一次，environment staging、revision d92be82ba188c3bf6618f1d70cd92f63a4eabfac，raw SHA3d7f3ea3a4f773370bc5c24ce0e73a1b9cea08e2ca53a11f3c102e282c119f78仍符Gitref。actualGit staging為3bc祖先，無整合commit/push。Rootpreflight-v2 .git/staging-integration-readonly-preflight-20261117-v2.json SHA08dbc05d4ae9e9f69287bbf492446e2a2f726b463ab2210ecd2c056d362a0ab4，保留v1未fresh marker的歷史，不回填。remote SQL checksum仍未比較，Local gate與發布/Hosted資料窗口待核，寫入0。
-
 
 ### 2026-11-17 — M24同步診斷快照單行窄例外
 
 - Root准functional-journeys.ts最多501行，因beforeDetails須與beforeHealth在啟動browserCloser前同步capture，不能移Promise callback造成觀測時點漂移；after純讀及availability gate保留。不為1行擠敘述/搬判定，AGENTS有理由例外，非功能或驗收放寬。health≤560、pure diagnostics與其他檔≤500，exact8paths不變；capture helper已在owned business journal boundary，沒有新第9檔。latest brief SHA45f643fea891e196009a6991067641e925ad23dddd0926dc9e758e864c8e2f1d，原3718e7ac歷史保留。worker繼續完整負向與freeze，Root唯一review未開始。
 
-
 ### 2026-11-17 — M24唯一Root review兩個P2，同輪退回修正
 
 - Root閱讀4Source core／diff與新tests、獨立重跑4files53tests PASS。唯一review另兩actual-control確認：saved Network.loadingFinished success200在dispose後經forget沒有touch fence，仍availabletrue/OBSERVED/errors0；schema允OBSERVED/components:null，actual stage接受缺分類明細。before controls SHA5fe99712eef2637e9e79b339922ddd7906a076273f84409ebb0c463879fab89f／6a574f71ccee4dcc8dc62cc92a0dfa806b4e6f67af442c1714c0e5b6212c6e78；皆synthetic工具控制，非Native18根因。
 - sameworker只同8paths補兩fence/shape guards＋actual negative，保原counter/predicate/expected；初checks留存v2修正。Root補pure helper≤510有理由窄例外，health560/journeys501保持，不擠行/新檔。39files504tests、lint/type/format原均0，但不因此忽略review finding；修正後受影響checks重跑再freeze，Root只核兩修正與finalpacket，不第二review。Root一個handoff append Python probe因引號SyntaxError未執行任何寫入，修正引號後成功，非Source issue。未commit/push/啟Native；US$0/US$5 cap與原WIP/G8停止85/Hosted/Production/真寄信NONE保持。
-
 
 ### 2026-11-17 — M24同輪兩P2核修完成，Root接受待真Native
 
@@ -2720,12 +2632,10 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 五component sum保原unexpected total，原10unexpected/14unavailable/1pageerror增量sites與37if條件／分類／expected不變；新unknown/overflow/late只收緊available。安全256events與公開asset位置hint，無rawURL/message/stack/secret/低熵hash；原stage/before/cleanup wx600 journal，writer/abort/erroridentity核符。行數health559≤560/pure508≤510/journeys501有理由例外，其餘≤500，exact8paths不擴。1792unowned actualGit blob/operator44及original7/prefix現核符。Rootreceipt f30621a6e13cee362dc8260cf1b8487a7eb833efb12944184d240dc9d5c5f202；review docs/reviews/2026-11-17-linux-health-diagnostics-m24-review.md。
 - Native18實際health1錯誤仍UNKNOWN；合成controls不當根因或容量證據。Root準備exact11paths cachedcheck/commit/clean與remote精確3bc正常FF，新Source/newpush/attempt1正常six-person→15legs；非PASS停、無GHrerun/0business gate。原全部custody／6Auth／G8停止85與WIP保護；US$0/US$5 cap，40/60未驗、Hosted/Production/真寄信NONE保持。
 
-
 ### 2026-11-17 — M24固定Source已正常啟動Native19
 
 - Root exact11paths cachedcheck0/commit/clean：9063bd9b1f98609d933fa54a57ae2b161dbb2e67；networkfresh核specialremote仍3bc4466eb22929ffc449355aab723f30ab8b5611後正常FF。新push/attempt1 run43927234067/job133509810738，正常six-person→15legs；watcher83340只監看匹配SHA／加密下載，Source凍結，同worker待命不改。
 - M24工具診斷已接受，不是實際health修復／容量PASS；Native18特定error原因仍UNKNOWN，原全部cold custody與6Auth保留。任一非PASS停升級、不GH rerun、不另開0business gate。原WIP/G8停止85、主機US$0/US$5 cap、40/60未驗、Hosted/Production/真寄信NONE保持。
-
 
 ### 2026-11-17 — Native19真functional PASS、匿名3/10 PASS，20因host_stale INCONCLUSIVE
 
@@ -2740,24 +2650,20 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - WB5新94行proposal 69f4d9db623bf78a2154cc3648e771e911e6ee92c49b75edb73a0b5d9248a641/manifest a7a2768812d247e82dae1eceb21c2ba0328a1210dec37b928ced2dd602506973，Root核11local Source/index及1record；三pin L/M/C＋完整tree proof、carrier先optout、獨立Hosted driver、OTP relay未准／無實作／latency與quotaUNKNOWN、exact-version官方DDL executor資格均只是提案NONE。沒有讀Gmail／comment／DDL或Hosted寫入，不當execution ready。
 - 原7WIP/prefix／G8停止85／所有Native cold custody保護；主機US$0/US$5 cap，40/60未驗、Hosted/Production/真寄信NONE。
 
-
 ### 2026-11-17 — M25唯一Root審查接受待真Native
 
 - Packet ac62935f91fe599138a31132827de3b444529d7134df5a3c40c19d36bcc9c157/46records/4Source/latestbrief全SHA核；Worker69files779tests與final2files46tests、lint/type/globalformat/import/static/diff0，Root2files46tests962ms＋actual export/deferred/fakeclose資格核：load32reads、每verify15reads保持，13dependencies並行15波→3波，前後order／tamper／preabort／正常close仍核。全是SYNTHETIC_ONLY/NONE，不當Native因果或容量證據。0 findings／唯一round，Rootreceipt 2a23876342f8d6edfcc30fc8aab1f1dcc342335b12ce0653130edde4905739c0；review docs/reviews/2026-11-17-linux-profile-read-batching-m25-review.md。
 - 固定13map/async/allSettled保前置2讀與所有read收束後原hash/authority/abort檢查，不cache/合併；accounting原rows只加4安全Node時點，old elapsed/outcome/入列/close保原，pre/post失敗無row仍UNKNOWN。1943unowned actualGit blobs含symlink target hash、operator44/original7/prefix核符。test530≤560理由例外，其他≤500／exact4不擴；原RED/lint/setup資格保留。Root初只讀probe filename/exit欄位猜測錯、依manifest更正，無Source issue。
 - Root準備exact7paths gated commit/clean、remote精確9063正常FF新Source/newpush/attempt1正常six-person→15legs；無GHrerun/0business gate。Native19 host_stale實際時序仍UNKNOWN、Native18舊health1未重現不回填；40/60未驗。原WIP/G8停止85/全部custody、US$0/US$5 cap、Hosted/Production/真寄信NONE。
 
-
 ### 2026-11-17 — WB5既有發布credential名稱唯讀盤點
 
 - GitHub connector無列secret工具，改用已核gh secret list只names/updatedAt：repo0、environment staging4（Access Token／Anon Key／Secret Key／Vercel Token），沒有讀值／改值。專用DB連接credential未從這些名稱辨識，Management token有效性與DDL port仍UNKNOWN，不能由API token名稱推稱可正確apply原version。metadata .git/staging-credential-names-readonly-20261117.json SHA56dcbe73d471037169bf990fa72dd5ede1c3060b3324530d0c1c8f703fca544e；發布/DDL/OTP/Hosted窗口尚無新執行授權，寫入0。
-
 
 ### 2026-11-17 — M25固定Source正常Native20已啟動
 
 - Root exact7paths cachedcheck0/commit/clean：47f2c5cfadf7ca9f710429203b708d3db84866c1；networkfresh核specialremote仍9063bd9b1f98609d933fa54a57ae2b161dbb2e67後正常FF。新push/attempt1 run43934004541/job133533644322，正常six-person→15legs；watcher38766僅matchingSHA監看／加密下載。Source凍結、同worker待命。
 - 原3s/7s freshness、started-at age、採樣週期/CPU/memory/SLO與全部guards保留；M25只是固定13 independent reads重疊與4時點metadata，不宣稱Native19實際cause或40/60 PASS。任一非PASS停升級，不GHrerun/0business gate。原全部custody/G8停止85/WIP，主機US$0/US$5 cap、Hosted/Production/真寄信NONE保持。
-
 
 ### 2026-11-17 — Native20實際媒體4個中止已精確留證／最終failure
 
@@ -2770,19 +2676,16 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 正式brief docs/superpowers/plans/2026-11-17-linux-media-abort-context-m26-brief.md SHA92c30b2f82b818c20a837900dcff9c4b93d078d389f71bb9fd50423142f5a6da，sameworker exact11paths＝原6工具Source＋focused functional-media-observation新module及4直接tests。只closed method/action/function/actor/mediaStep／Rootgoto-view intent／同request Node observed lifecycle；取消來源/app bodyEOF必UNOBSERVED。step只journal先成功後更新，intent只真既有UI/goto邊界，SPA不冒充Document／不套最近intent，未知/overflow/late收緊available。原四錯誤保FAIL，drops4/refresh1/classifiers/Auth/Image/caps/SLO不改；無新request/header/query/HTTP/IO，不產品tap或全域patch。明示行數例外保持可讀，不擴第12path。
 - 先actualRED→GREEN與actor/lifecycle/敏感資料/真正caller/error/abort控制、完整受影響checks再freeze，Root唯一review後才新Source/newpush/attempt1。Root初readonly verifier因不同manifest path-prefix誤雙加.git prefix，未寫資料；改按實際path lexeme定位後23/1全核，非Source issue。原WIP/original7prefix/G8停止85/全部custody，主機US$0/US$5 cap，40/60未驗／Hosted/Production/真寄信NONE。
 
-
 ### 2026-11-17 — M26唯一Root審查接受／待Native21
 
 - latest packet a3ec2910c6a1a3320a5fba3afa9faaf12671e3197edc3df5f71e6f0b187b7256／100records含原78完整，11Source/brief SHA核。Worker39files537tests/final82、full checks全0；Root4files82tests1.37s＋actual export合成四abort/context/敏感欄位/矛盾late/Document控制PASS，SYNTHETIC_ONLY/NONE。1937unowned actualGit blobs/operator44/original7prefix核符；原4test bytes保持prefix，0findings／唯一round，Rootreceipt 1e7897259ec2a260a2d4d64c679a168a7373c7c3fbbed9742ede21cf6225cda7，review docs/reviews/2026-11-17-linux-media-abort-context-m26-review.md。
 - 只closed method/action/actor/step/Node lifecycle與Root既有goto/view intent；request當時與failure當時intent分開，四個abort仍FAIL，取消來源/app bodyEOF固定UNOBSERVED；原classifiers/Auth/Image/counters/caps/SLO不改，無src產品變更或新HTTP/IO。Worker初RED/setup與凍結前修正完整保留。Root保護script舊行數上限probe失敗改按brief每檔limit後通過，非Source issue。
 - Root準備exact14paths gated commit/clean，fresh specialremote47f2後正常FF新Source/newpush/attempt1正常six-person→15legs。M25真capacity未run、40/60未驗，Native18不回填。原WIP/G8停止85/全部custody保持，主機US$0/US$5 cap，Hosted/Production/真寄信NONE。
 
-
 ### 2026-11-17 — M26新Source正常Native21已啟動
 
 - Root exact14paths cachedcheck0/commit/clean fa0682d6712bd6c3b4c1aab6445b5d26f979311f，fresh specialremote精確47f2後正常FF。push/attempt1 run43943978306/job133568582433，正常six-person→15legs；watcher23987只監看matching SHA並保加密證據。無GH rerun／0business gate，Source凍結／同worker待命。
 - M26唯一review0findings、獨立82tests與合成controls PASS不等實際abort已解；取消來源/bodyEOF仍UNOBSERVED，40/60未驗。原WIP/G8停止85/全部custody，主機US$0/US$5 cap、Hosted/Production/真寄信NONE。
-
 
 ### 2026-11-17 — Native21實際MEDIA_BEGIN中止已完整本機保留／終態待job hold結束
 
@@ -2790,17 +2693,14 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - artifact14264947528 ZIP42491638B/b4ddbcd94467a6054d397a055ce6b3df2bbe62ca53b4a23ea906bf8729b66112，cipher42491500B/b4fb57444ad9a5077709cc94da2e6d0ce52df4f370853989af9e9abfca9485b4 真age AEAD與outerf769a31f7b835074f1c2f280129e591bf780bb4f938d2a0616b598eb0934d111/561files211995242B全核；inner37cc9cf00ad0caac73a98c5e4c63e4d2a90e0c14b9dfb9e91668db7759612068/528files、8stops/roleproof/DB2/127tables/31rolesORDER_ONLY／3vol7019regularfiles185632903B含metadata、runtime476data32publiccode/metadata-only0。6Auth與全部media保留、無restore。Rootfunctional private receipt SHA82dbf7e104e38c0b1dbe6dee852af3b240653b8f4a08e63d60b13cd021b1b500；watcher23987 completed0。完整本機保留已核，workflow尚停10分鐘保留步驟，最終job log/結論待查，不提前稱completed。
 - 同worker僅readonly Source追ZIP begin→repo/SDK/boundedFetch/Response handling，私有proposal/no tracked修改，Root唯一review；Source根因未立、無expected放寬/盲重跑。主機US$0/US$5 cap、40/60未驗、原WIP/G8停止85/全部custody、Hosted/Production/真寄信NONE。
 
-
 ### 2026-11-17 — Native21 readonly已核／單次隔離傳輸component batch授權
 
 - readonly manifest1dbcfa39f4390482b909cb175fa21dd235c6d92ccd741837d6002f979f549dbd／proposal e2b5a155d3cf4477fb48c9d01efdd193815464a9d24c142757d5b7550e5695d4，Root核16Source/vendor hashes、7line refs、1record。SDK2.110.2本invoke無signal/timeout，JSON成功無clone/cancel、finally僅clear已設timeout；PW1.61.1 response.dispose只刪buffer/log，不能推定pageabort。ZIP逐張await begin失敗無重試；Root fullbuffer不證page.json EOF，framing未觀測。Root verifier初誤把segments當file record，按實際schema更正，唯讀無Source issue。
 - 同worker新增單次private .git/native21-transport-component，最多1browser/context/page、64synthetic requests/240s；loopback owned fakeapp/API，優先actual restrictFunctionalBrowser/HTTP hooks＋installed SDK＋actual boundedFetch，identity/gzip/length/held/cancel正負與sameID CDP；不改trackedSource/docs、不Supabase/Auth/DB/G8/Hosted/新Native/新agent，fixedports若占用即停，不連existing或kill別人。只安全enums/lengths/outcome、全owned關閉proof，不能把合成component當Native原因或expected白名單。Root唯一審核後才定next action。原容量未驗/主機US$0/US$5 cap/全部保護不變。
 
-
 ### 2026-11-17 — Native21最終failure與joblog完成留存
 
 - run43943978306/job133568582433 completed/failure，upload/10分鐘hold/post全部正常結束；Root final .git/linux-twenty-first-run-review.json SHA65aa409565fb6d198ddf98267c82f60620abc3def7953f1b70d2a1c08992509b，joblog22087B/0c073846bf5f25509cb69a06028c349bf153ed6d3fab69803f76feeee898d55d。先前actual functional FAIL與完整cipher/outer/inner/cold資料鏈全部保持；無rerun／restore／刪除。40/60未run，MEDIA_BEGIN取消來源與app bodyEOF仍UNOBSERVED，等待已授權獨立transport component實驗。
-
 
 ### 2026-11-17 — 單次transport component唯一Root核畢／M27工具診斷授權
 
@@ -2808,18 +2708,15 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 首setup opaque錯與重入EPERM皆0browser/0HTTP保留，listener唯讀空；auto-review准單次escalation後1browser/context/page真正batch，正常關閉、4CDP已見ownedPID identity消失/0socket/route/ports全空；不是Native cgroup完整普查。無Source變更/實驗追加/真服務連線。
 - 正式M27 brief docs/superpowers/plans/2026-11-17-linux-media-route-observation-m27-brief.md SHA2e8f59ce4334c26c0f9f41b4b0e5a3601e5e7cf6ed47a516c6864ddfe067e1de，sameworker exact8工具Source/tests，只media/A1同Page/完整validated private identity配CDP↔route，任意到達與原sequential retry、歧義UNKNOWN，不按時間猜；記safeordinal/stage/Node times/framing enums/bytes，不存raw/digest。原fetch/parse/hook/drop/fulfill/dispose順序次數參數與錯誤／4abort FAIL/4drops/1refresh/全部guards保留，無新HTTP/bodyread/journal/產品tap，bodyEOF/cancelSource仍UNOBSERVED。8paths及行數例外Root明示，先RED/checks/freeze/唯一review後才新Source正常Native，不GHrerun。40/60未驗、原WIP/G8停止85/custody、主機US$0/US$5 cap、Hosted/Production/真寄信NONE保持。
 
-
 ### 2026-11-17 — M27唯一Root round／P2同輪修正接受
 
 - v1 packet4c191df811a26c77ebbfb5b9b0c54c4133cfb9d9b723babe36b2650995cd9593／59records，v2 4e1e2de2f421869a66959578ab31501c7aedd98e8d74d4671b4af627107cb03f／79records含原59全raw核。Worker40files566／final81tests，full lint與最後all8 scopedlint/fulltype/globalformat/import/diff/static0；Root獨立77→final81tests2.11s、headerRED→GREEN與actual export合成order/privacy/lifecycle控制PASS。P2普通object encoding查表constructor/__proto__命中prototype已改own-key，toString lowercase原本OTHER，保4反例。僅helper/test兩檔delta，逆向精確還原helper v1 SHA，v1 test rawprefix／其他6Source保持。唯一round、無未解finding；Rootreceipt 67039077bd2384a0a0925af53bd3dca12f6666c2ed15fb86c2226e65050520e6／review docs/reviews/2026-11-17-linux-media-route-observation-m27-review.md。
 - 1942unowned actualGit blobs含symlink targetbytes/operator44/original7及真正Original575959B c4fb…核符。舊component欄位original575959…=7064…其實recovery prefix，歷史不改；Root先前已獨立真核Original，本次proof分名，非資料變動。Root v1 hash驗證碰同輪test delta、v2腳本把有效RED要求0及初header wrapper headexit0資格均明列，不假稱Source issue。
 - exact8工具Source/tests、原route/counters/4abort FAIL/4drops/1refresh/guards保留，無新HTTP/bodyread/journal/產品tap，cancelSource/bodyEOF UNOBSERVED。Root準備exact11paths gated commit/clean，fresh fa specialremote後正常FF新Source/Native22 attempt1正常six-person→15legs。40/60未run，原WIP/G8停止85/custody、US$0/US$5 cap、Hosted/Production/真寄信NONE。
 
-
 ### 2026-11-17 — M27固定Source正常Native22已啟動
 
 - Root exact11paths cachedcheck0/commit/clean b22bb05a359efac9460ff160921b85f87ca16e41，fresh specialremote精確fa0682d後正常FF。push/attempt1 run43956102504/job133610944021，正常six-person→15legs；watcher18964只matchingSHA監看並保加密證據。無GH rerun／0business gate、Source凍結／sameworker待命。M27只是同request route時序與safe framing診斷、P2同輪已解，不宣稱Native取消根因已修。40/60未run、原WIP/G8停止85/全部custody、US$0/US$5 cap、Hosted/Production/真寄信NONE保持。
-
 
 ### 2026-11-17 — Native22完整保留／新observer非target null回歸／M28窄修授權
 
@@ -2828,22 +2725,18 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - artifact14272033151 ZIP42503657B/9249e36b52f9db9fec2c0396cedda7baedf8d95a1904fd9f857a7b8af7cd53f3，cipher42503519B/f7dcafceaa1f143443fe1588cf373ee0c7a16f7d5ba1e057340a3ea1bb8e56b9 realage AEAD；outer6b1d229fba6f04d4cac08d3ff555e93accf1bc7acda2605e6373a3e065daafb9/555files211904424B，innerbec0e50d35585d589b514bae98d4a992a4c36e9aa7e697961c931b4e5280551d/522files，8stops/roles/DB2/127tables/31rolesORDER_ONLY／3vol7015files185562396B/metadata、runtime470data32publiccode0metadata-only全核。6Auth及全部media保留／未restore或刪除；Rootfunctional receipt SHA0000ff90c5d47f11b2d7df7b7fbe1d952f38f8f15c657e7c74a4b4e1ffc9531f，watcher18964完成。workflow尚hold保留步驟，最終joblog/結論待查。
 - M28 S級窄修已指派sameworker，exact2：functional-media-transport-observation.ts及直接test，均≤500；先排除非target URL/method再要求target body/auth，或只對非target容許null，target POST null/壞body/缺auth仍UNKNOWN不可放寬。actual Request非target GET/APIstatic/非targetPOST null反例、原known配對/phase guards；有效RED→GREEN/affected/fulltype/lint/format/import/diff/protection，private .git/m28-nontarget-route-filter packetfreeze、Root一次審查再固定Source正常Native23，須Native22job final後，不GHrerun。無新brainstorm/產品/expected/HTTP/body/journal/browser/Hosted操作。原WIP/G8停止85/custody、US$0/US$5cap、40/60未run。
 
-
 ### 2026-11-17 — M28 S級非target篩選窄修Root接受
 
 - exact2 Source470/test500行；先URL/method篩選，GET/OPTIONS/非targetPOST null body忽略，targetPOST null/壞JSON/缺Auth/invalidUUID仍UNKNOWN。Root actual exported native-Request-shaped GET red exit1→green exit0，獨立35tests712ms PASS；Worker有效4RED→40files582tests／fulltype/changedlint/globalformat/import/diff/static0，Root bounded唯一review0findings。29records/2Source SHA、1948unowned actualGit含symlinkbytes/operator44/trueOriginal7prefix核符、oldtest rawprefix/M27原79records保持；packet48ec05b028e467ea1ebf2f9180b681b386dae89ebd108a29227c7347d324689c，Rootreceipt 6e0b4f89429c40ae8eaa7bd514c0e1abea9fcedeae74c09a1880e86263397300，review docs/reviews/2026-11-17-linux-nontarget-route-filter-m28-review.md。
 - 解Native22新工具null metadata回歸，不當Native21取消cause或容量修復。Root exact4paths commit/clean，須Native22 final且完整保留後freshb22 remote正常FF新Source/Native23 attempt1；無GHrerun/0business/額外browser，40/60未run，原WIP/G8停止85/custody/US$0/US$5cap/HostedProduction真寄信NONE。
 
-
 ### 2026-11-17 — Native22最終failure／joblog保留完成
 
 - run43956102504/job133610944021 completed/failure，upload/10分鐘hold/post全部正常結束。Rootfinal .git/linux-twenty-second-run-review.json SHA9f023414cbcd1856b8ecad4392c809e79c1c55cbb72eff12a5a00cf3505c83e0、joblog22086B/36d84c82559c122fa6800d6c6e3093a4db38045a3af8e31ae78271459345d7b9，actual功能FAIL／完整cipher/outer/inner/cold原資料鏈不變；無rerun/restore/刪除。12PASS/mediaFAIL是已重現的新observer non-target null錯誤，M28窄修Root已接受，先前Native21取消cause仍UNOBSERVED；40/60未run。
 
-
 ### 2026-11-17 — M28固定Source正常Native23已啟動
 
 - Native22 completed/failure與全資料本機留存後，Root exact4paths cachedcheck0/commit/clean 2d341fce15bb8e53ac0e54c88bbd27bf93adf1e9；fresh specialremote精確b22bb05後正常FF。push/attempt1 run43959510304/job133622823507，正常six-person→15legs；watcher83016只matchingSHA監看／保cipher。Source凍結／sameworker待命。M28只修non-target Request null metadata篩選順序，不當Native21取消cause已解，無GHrerun/0business gate。40/60未run，原WIP/G8停止85/custody、主機US$0/US$5cap、Hosted/Production/真寄信NONE保持。
-
 
 ### 2026-11-17 — Native23最終health FAIL6／完整cold custody／已確認上游candidate
 
@@ -2852,13 +2745,11 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - readonly manifest22cd2f5c906e881d01722392855eb22d2fff9a0d30118694ca7019947c58d028，Root核16Source/3records。image分類僅app suffix，ERR_FAILED不符原image proof；Rootimage stage未知不推abort。media no-store,private＋browser-client getReader Source條件重疊。Rootfresh primary https://github.com/microsoft/playwright/issues/42742 維護者確認no-store/stream EOF卻CDPaborted，Oct21 closed並指Chromiumfix8508456；official https://github.com/microsoft/playwright/releases/tag/v1.65.1 Nov13/Chromium159.0.8154.6。這是candidate，非本runwire CacheControl/EOF或確定Native attribution。先前12normal私有component漏Cache-Control，不否證此條件；舊packet不改。
 - 已授sameworker只private .git/native23-browser-differential：old1.61.1/149 vs privately pinned1.65.1/159、officialnpm/CDN且私有cache不動舊cache、最多2sequentialbrowser／1context/page各／≤64HTTP/50data/240s actualbatch（安裝另有界），相同Source boundedFetch/SDK/route、no-store/no-cache、one/split fixture、nativejson/plainreader/實際boundedSDK／真truncated及upstreamcancel反例、liveversion/revision/hash與allownedclose。無Source/package/lock/Native/Hosted/產品buffer/clone/標頭/expected改法；image獨立未知。Root核實驗後才下一步，原WIP/G8停止85/custody／US$0/US$5cap保持。
 
-
 ### 2026-11-17 — 私有browser差異測試setup契約修正／明示累計launch上限
 
 - 官方npm isolated1.65.1及CDN Chromium159/rev1255下載成功，舊cache不動；npm初空config重用/dev/null及sandboxDNS失敗原log保留，後以兩私有config／auto-review核准網路完成，非version不存在。第一actualsetup launch1/context1/page1、0HTTP/0cases，3.387s於OLD_LAUNCH guard停；6已觀測PID全closed/server/socket全closed。原script/result/log不覆寫，logabc8484ef9d93d7d3e76c799850d5429a2428adff8d6bb9c9bb4fd19268f63ab。
 - readonlysetup c8a4cd2ba1c149f2a7323441deecfa7dfc9a2eb90b49655787ed2c2503a076b2 Root核6records與installed protocol：Browser.getBrowserCommandLine iff--enable-automation，實際預設switch未設此flag、卻在保存version前串接query/assert。這是確定診斷契約不符；原第一throw/liveversion/argv已遺失故仍UNOBSERVED，不推定shell錯或candidate失敗。static olddescriptor/plist149.0.7827.55/fullCfT吻合。
 - Root只准一次corrected private matrix、累計launch cap明示3＝先setup1/0HTTP＋old/new各1順序matrix；同時最多1、各context/page1，總≤50data/64HTTP、correctedactual≤240s。不加automationflag、不弱化真version/hash mismatch；略unsupportedargvquery，先保存supported browser.version/Browser.getVersion productrevision，再做身分guard，argvUNAVAILABLE明列。explicitexe/hash/packageintegrity/ownedPID/正常close限定資格，非Nativefreshattestation。兩版都samecontrolledContentLength（one/split），no-store/private與no-cache、nativejson/plainreader/SourceboundedSDK、direct/routed、gzip及真truncated/cancel反例；bodyEOF只真觀測不冒稱。不得Source/package/lock/cache/Native/Hosted/新expected或產品workaround。待Root核整批結果，不新增repeats/tuning，原WIP/G8停止85/custody/主機US$0/US$5cap/40與60未驗保持。
-
 
 ### 2026-11-17 — 私有old/new差異對照Root核畢／M29僅工具基線升級授權
 
@@ -2866,14 +2757,12 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - liveChrome149.0.7827.55/@3188f8a607ae7e067593be8aab7f02d2451fec07→159.0.8154.6/@98a2592026af8d673b9fa83b626ac68bdf4ae78a，controlled小MachOlauncher hash前後符；不是整個Macengineframework prelaunch attestation，argvUNAVAILABLE，Darwin/fullCfT/driver+browser一起變更/image未測等限制全保留。upstream#42742/官方1.65.1是已核primary來源，支持最小工具升級，網站取消/imagecause與40/60仍未證。Root首次readonly JSONprobe typo elseNone產生SyntaxError，僅唯讀更正、無Source issue。
 - M29 brief docs/superpowers/plans/2026-11-17-playwright-browser-baseline-m29-brief.md SHA91a5938319720abb223b3e9733255674b7206f66eda80460ba53eed2ff2afde1，sameworker exact2 package.json @playwright/test exact1.65.1＋pnpm-lock只toolchain/necessary peer edges，無prod graph解析版本改變／broadupdate／app/body/no-store/expected/guards/operator44改動。Root確認recovery node_modules是本checkout獨立dir、非Originallink；允許normalpnpm精確更新，不碰Original或舊browsercache，不新增browserbatch。先prodgraph前後/frozenlock/fulltype/lint/format/import/diff/affected>=40files582/build，記CoreSRI對private已驗1.65.1，freezeunstaged Root一review。無configRED儀式、無第3Sourcepath；真type/API必需先報最小擴scope。Root之後才exactpaths/newSource/freshremote/push/attempt1 Native24正常six-person→15legs。原WIP/G8停止85/custody、主機US$0/US$5cap/HostedProduction真寄信NONE/40與60未run保持。
 
-
 ### 2026-11-17 — M29共享virtualstore保護事件／真隔離完成／最小Original修復準備
 
 - Root先前只驗node_modules最外層為本目錄真dir，漏驗內部links，是隔離檢查不足。M29精確pnpm升級經shared .pnpm/.modules.yaml/.bin與多個alias連到Original，將Original生成virtualstore新增1.65及GC舊1.61；+4/-5確為old PWtest/core/playwright1.61.1、fsevents2.3.2、axe4.12.1(peer oldcore)5snapshot，沒有產品Source修改。Originaltop@PW alias先前無baseline，不能稱本次刪除。已停任何共享安裝；Original來源packagec88bf87414837a9efa39abea4ef008af5c656a8d21456fc977c8638fb31f2e01／lock68ca4ffab7c33600885ace0efbc609f9482f2740ffc12d90d29e6d078b962dc9保持，和recovery舊Source不同（fflate僅recovery有），不可broadOriginalinstall/reset。
 - Recovery舊node_modules真dir inode51020158僅rename至private previous-shared-node-modules保留，不traverse/delete目標。fresh frozen/copy/明確localvirtualstore安裝，offline首次NoOfflineMeta保留，official線上補policy962entriesPASS／6.108s。PhaseA前後Original45707entries metadata rawcensusSHA361af73ca9e7d710310d9e5277ce484e5d07d958d73a9634796bbc83aecd524e不變，即本階段OriginalnewWritesNONE。
 - Root獨立深掃新node_modules37806regular/2186symlinks：external0/broken0/與Originalregular共享inode0，.pnpm/.bin真dir／.modules.yaml真檔；original7/真prefix與manifest/lock SHA核符。Rootproof .git/m29-root-isolation.json SHAb94122ab0cea2e2f4b51b34fcceb4b2b3d06d488044ad9c72aedaf4aff2885a0。這才是目前真隔離邊界，不能把第一次外層檢查當closure隔離證據。
 - sameworker現只private準備Original最低修復candidate：Original lock選定4missing material＋axe舊peer共5snapshot、官方SRI／oldcore106rawcensus吻合，dest只missing不覆寫、1.65目錄不刪、不創未證prestate topalias；必要metadata/shim只反向M29已證變更，保unrelated字節，列before/after SHA／exactpath／rollback，Root核後才可Original寫入。目前Original修復尚未apply；recovery既已真隔離，可獨立跑M29剩餘checks，不與Original操作交叉。Trackedownership仍2files，無Native/browser/Hosted/DB/G8操作，全部custody／主機US$0/US$5cap/40與60未run保持。
-
 
 ### 2026-11-17 — M29同輪審查／exact11生成修復完成
 
@@ -2884,12 +2773,10 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 
 - M29 final packet validation-final-v2.json SHA cd28ce327714f20730b2d1bfd766f2aee742b6b31b63d2f1053c7adc7cc2ee2b／166records與Source原92全核；Root final receipt e1dade94a09ab5bfa6599fa19219d9f1376c85fa774c6331438bd5b8ee077a97，openfinding0、same-roundP1已解。原失敗材料與rollback保持、worker待命。
 
-
 ### 2026-11-17 — M29固定Source正常Native24已啟動
 
 - Root exact5paths cachedcheck0/commit/clean b1fa158412b105034dd0b3243e6eefc6f99e140a，fresh specialremote精確2d341fce後正常FF；新push/attempt1 run43977983798/job133686795420 capacity-linux進行中，正常six-person→15legs。新Playwright1.65.1工具基線、Rootop44/所有資源與健康門檻不變；watcher只matchingSHA監看／保cipher，無GHrerun。
 - M29 Source/166records/修復proof全freeze，worker待命；Root sole收束receipt e1dade94a09ab5bfa6599fa19219d9f1376c85fa774c6331438bd5b8ee077a97。Native23資料完整保留／其取消與imagecause仍UNOBSERVED；40/60未run，原WIP/G8停止85/所有custody、主機US$0/US$5cap、HostedProduction真寄信NONE保持。
-
 
 ### 2026-11-17 — Native24 health FAIL21／7個圖片request／完整cold custody已核
 
@@ -2897,30 +2784,25 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - artifact14282626676 ZIP42505809B/9e0528bfd704e5c2baf126383046ffdda7c186659c4faeb1ce17e6bfbc0b9829，cipher42505671B/e18b7fd193347a1fddc216ff4dad7f58c0826ffdcca1ed2a7c5ef8530843733e，真ageAEAD/561files212437428B/outerae2c66bf2dd2ff57ba25d09be51d334e1961ec83a913097526f45fa2299f40fb全部hash核；inner7428a54e8ab0f40a988c4fdf24f52bedc74d2663ca2d08c0e771f5d668088e39/528files。8stop/role、2DB127tables31rolesORDER_ONLY、3vol7017files185604927B含portablemetadata，runtime476data32publiccode0metadata-only全核，Auth/media完整保留，無restore/刪除。Rootcoldlogbaf71c0472fee65573d072898874e4d415fa71da4d4dc212a71f7d4db9221be1，businessNO_FUNCTIONAL_PASS_TO_RECOMPUTE保留非無嘗試。
 - Job目前10分鐘cold hold，尚非completed；不得claim finalconclusion。同唯一worker做一次整合唯讀diagnostic：從本run資料/固定Source找7image rawCode／Rootroute／權限與observer缺漏，未知明列；不新browser/Native/Sourcepatch，若必要只提一個合併diagnostic brief。全部M29/歷史資料保留，US$0/cap5/原WIP/G8停止85/HostedProduction真信NONE。
 
-
 ### 2026-11-17 — Native24唯讀收束／M30一次合併圖片診斷核准
 
 - readonlypacket c267f1867a6d5ca84277d405d129fa442bfe664ef83cce802f619ca5f00dd51a／9records＋18Source全部Root核符。7request-linked失敗failure/log各7能exact配對；另7console無requestID，先前簡寫「每請求三通道」只能當計數分布，不是逐筆console配對已證。Root CDP7 Image/GET皆LOGIN→LOGIN/closingfalse/no200/canceledfalse，4.045–13.237ms；原碼／blockedReason/CORS/livebrowser均未留不可還原。候選登入PNG進Git與actual572filemanifest同SHA已證，失敗URL仍UNKNOWN。
 - 停止疑問假設「圖片可套先前媒體取消原因」，沒有證據支持。Root核單一M30 brief docs/superpowers/plans/2026-11-17-image-transport-diagnostic-m30-brief.md：純工具完整圖片safe error/asset identity/route既有stage/header分類與一次actualBrowser.getVersion，兩arrival/ambiguous failclosed，immutable failureCode，保21counter/classifier/expected／資源時限/operator44。相同worker、Root唯一一次review，先RED/GREEN/fullchecks／freeze，禁止額外browser/Native直到Root收束且Native24final，無產品/PNG/lock/Original/Hosted改動。不是容量或cause修復。
-
 
 ### 2026-11-17 — Native24最終failure／joblog完整保留
 
 - run43977983798/job133686795420 actualcompleted/failure，upload/coldhold/post全success。Rootfinal .git/linux-twenty-fourth-run-review.json SHA30b126675fcddf5bc132f7613c8146fa42b5b43dfb5f171c2ca5e620d082e0f7，API exactjoblog22092B/054349ce8ecb2e75d3aeeb161d75eeb09f799efe5ae7ccad55b4333cdc04f8fe。真AEAD/561outer/528inner／8stops/DB/coldvol全部原資料鏈保持，不restore/刪除。Actual14PASS/healthFAIL21=7request-linked image；console7未逐筆配對，cause/raw碼/liveBrowser版本仍未知；capacity15legs NOT_RUN。
 - Root M30 brief追加必要4fixture-only paths，mock只提供syntheticBrowser.getVersion三欄，既有method/timeout/assertions保持；不是production信任捷徑。brief當前SHAe71c1a3f0314f8462834277d323d5c617304a93e48f4c961389ed070a9d90c4e。唯一worker繼續純診斷實作／Root唯一review；尚未授Native25。US$0/cap5／40與60未run／HostedProduction真寄信NONE。
 
-
 ### 2026-11-17 — M30純圖片診斷Root唯一審查接受
 
 - packetf97689b5438f44d0f41ea8b8ad2910f8a52e0462ce5e84f81bc2c9aaa5f2d9a7／51records20checks，6Source8tests；safe image rawcode/blocked/CORS／exactsamePage私有URL-matching／既有route stage/headers、獨立failureCode與一次actualBrowser版本欄位，missing proof不當可用，原21counter/classifier/expected/operator44與產品語義不變。有效2assertion RED→GREEN、68files820tests＋final5files100窄回歸、type/lint/globalformat/import/diff/build0；原type/lint/setup資格保留。Root one-round0findings，獨立40tests852ms，51records/14files／2184unownedactualGit／Original7trueprefix／M29原166+differential35+readonly9全核，report docs/reviews/2026-11-17-image-transport-diagnostic-m30-review.md。
 - 新helper371/317、既有health613/diag551/browser178／diagtest641必要mock窄接線行限依brief例外，不做無關重構。Sourcefreeze／worker待命。Root接下來exact17paths commit/clean、freshspecialremote b1fa158正常FF Native25 newpush/attempt1 six-person→15legs；不GHrerun/0business。Native24已final failure且完整custody保留，原7imageURL/碼/liveversion仍UNOBSERVED，不能回填原因。40/60未run，原WIP/G8停止85/US$0/cap5/HostedProduction真信NONE。
 
-
 ### 2026-11-17 — M30固定Source正常Native25啟動
 
 - Root exact17paths cachedcheck0/commit/clean bd7b9a09153b327ba9fe984898045f010d055212，freshspecialremote精確b1fa158後正常FF；newpush/attempt1 run43984953629/job133710600407 capacity-linux inprogress，正常six-person→15legs。固定Source/14files與M30packet51records保持，Root finalreceipt b510c0e56e172e93a6763be4fe0490e54572ddd93e2d48571a3cc41792ffb3da；worker待命。
 - Watcher只matchingSHA保cipher；不rerun/0business/Hosted/Production/真寄信。Native24finalfailure與完整cold已留；M30純診斷、不稱圖片cause修復。40/60未run，原WIP/G8停止85/全部custody、US$0/cap5保持。
-
 
 ### 2026-11-17 — Native25已定位304被Local攔截器封鎖／M31 S級窄修核准
 
@@ -2928,12 +2810,10 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - artifact14285786047 ZIP42533109B/bfd55c6f711fef0497112b3dae6d3ed241b980a90f60189e3093473a2c051b89，cipher42532971B/aef1f1f1c9c5a829977e3e749d05681a9e46f4b978094e0fe7fbd92d03fa7c2d真AEAD；outer5418550ea4847ffebd842b97df474370046ea1540145b50b9498201902f4dca3/561files212805497B，inner91fe9645b09dc352632265f84b9e6ed4a9da73510d030785ba8f2eea4972bd40/528files，8stop/roles/DB2/127tables31rolesORDER_ONLY、3vol7015files185563967B含metadata與runtime476data32code0metadata-only全核，無restore/刪除。job尚coldhold未final；15capacity未run。
 - Root核M31 brief docs/superpowers/plans/2026-11-17-static-image-conditional-fetch-m31-brief.md exact4 Source/test：same-app Image GET首次forward去2validators、完整allHeaders保Cookie/Auth等其他header、無retry／不偽造304body、fresh意外304仍failclosed、真redirect與其他endpoint規則不變。RFC9110與Playwright official cache/routing/allHeaders今日核，這是工程修法非NativePASS。S級直接RED/GREEN＋affectedfunctional/fulltype/lint/format/import/diff，Root唯一review後才可新Native26且先等25final。所有歷史custody/原WIP/G8停止85/US$0/cap5/HostedProduction真信NONE保持。
 
-
 ### 2026-11-17 — Native25最終failure／完整joblog保留
 
 - run43984953629/job133710600407 actualcompleted/failure，upload／coldhold／post全success。Rootfinal .git/linux-twenty-fifth-run-review.json SHA8951cfade7ea78075dd40cb97096d3b2879d0c5212614809327b634a67aa7aea，API exactjoblog22096B/b7701595c7bb71526715c9d7217014a0508c2ecb2d324b4a1c12bdca07aa5e4a。Root actualfunctional/finalizer .git/native25-functional-review.json SHA7632c6358731736682688b7726b57db30c6c4517d694214bf2b4713c501c3355／cold fda4367e8acad5ad4f9ae930b1cc943d4e9a3687ff742da69aacc99307e74f6f原鏈保持。7exact圖片route304被Localguard主動封鎖是本輪已觀測；Native request validators原值未留，首次移除validators是有primary規範支持的工程修法，不能宣稱原header已觀測或回填Native24/23cause。
 - M31同worker有效RED已重現同shape conditional→304→blockedbyclient/無fulfill，正在窄修與affectedchecks；Rootreview前不啟Native26。原資料／WIP／G8停止85／US$0/cap5／HostedProduction真寄信NONE／40與60未run保持。
-
 
 ### 2026-11-17 — M31 Local圖片304窄修Root審查接受
 
@@ -2941,12 +2821,10 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Root唯一一輪0findings，獨立29tests745ms；packet d91936fec4ee19c4fecb46fffc7d19ed50d76bfe8bbd995ccefa249f38e7d905／43records17checks，4files/2197unownedactualGit/operator44/Original7trueprefix/歷史261records全核。Rootreceipt c42d55b69334dc1b83b7de9b8fa9ce1472cda76f7b3324f96b05fca3b109de11，review docs/reviews/2026-11-17-static-image-conditional-fetch-m31-review.md；worker待命。
 - HTTP304/Playwright routing/cache/allHeaders官方今日核＋本機SDK explicitheader replacement證，Native25 validators原值未觀測，不能把工程修法當原header確證；也不回填Native24/23cause。Native25已final且完整custody留。Root接下來exact7paths commit/clean、freshspecialremote bd7b9a0正常FF／Native26 newpushattempt1六人→15legs；不rerun/0business。US$0/cap5/原WIP/G8停止85/HostedProduction真信NONE/40與60未run保持。
 
-
 ### 2026-11-17 — M31固定Source正常Native26啟動
 
 - Rootexact7paths cachedcheck0/commit/clean 9ee8d92bc45d6192da43ce83df001e88e9ed7f38，freshspecialremote精確bd7b9a0後正常FF；newpush/attempt1 run43988849520/job133723938709 capacity-linux inprogress，正常six-person→15legs。M31只修Localrouted圖片conditional forwarding／unexpected304 failclosed，Rootreceiptc42d55b69334dc1b83b7de9b8fa9ce1472cda76f7b3324f96b05fca3b109de11；Source/packet43records固定，worker待命，不rerun/0business。
 - WatchermatchingSHA保cipher，Native25已finalfailure與全部cold留，所有歷史custody／原WIP/G8停止85保持；US$0/cap5／40及60未run／HostedProduction真信NONE。不稱M31 Native或容量已通過。
-
 
 ### 2026-11-17 — Native26功能15關PASS／匿名3與10PASS／20缺證停點
 
@@ -2955,19 +2833,16 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - artifact14288115062 ZIP42569378B/8b7601739c0e8a98f07d348a771da182ca6caa8b7af20c2c21b07ecf123ce88b，cipher42569240B/def1aa8de8aa98f7142bb50ba88c4fa841f205439a556e8a1dbaae329f6fc62b真AEAD；outer235fdbd6176ce9b1cb138766d9da675f0eb26389725c175436d23dc8660fb866/682files212242947B，innerf0ce06ac2a37bc33953b42b7b81dd7a6886bd54c7008800393f582f5e2ba9617/635files；8stop/role/DB2/127tables31rolesORDER_ONLY與3vol7017files185598688B含metadata、runtime583data32code0metadata-only全核，無restore/刪除。
 - sameworker一次整合唯讀診斷20實際停點與所有既有helpertimings/profile/freshness/barrier，不先套Native19stale原因、先用現有證據／沒證才提單一完整brief；不修改Source/Original/docs、不新HTTP/browser/Native/Docker。Root唯一review，M31/全部歷史資料保留。US$0/cap5/原WIP/G8停止85/HostedProduction真信NONE保持。
 
-
 ### 2026-11-17 — Native26最終failure／功能PASS與容量缺證資格保持
 
 - run43988849520/job133723938709 actualcompleted/failure，upload/coldhold/post全success，Rootfinal .git/linux-twenty-sixth-run-review.json SHA25bbdc7611b02e969a67bf8737c30df71b784a4a51f9005aa3c3bf4885ed3909，API exactjoblog22979B/09312ff5434ff3e6d2929a54846654f1a774b21e3cc3d8231300110a78d1bf3e。功能15PASS/health0errors、匿名3/10PASS、20INCONCLUSIVE與全cold鏈不變；無GHrerun/restore/刪除。
 - worker目前找到20 snapshot health UNKNOWN唯一host_stale，以及host3完整call2024.623ms後再wait1000、host4 start-gap3033.711ms之hazard；Root尚等完整readonly packet，不把最後stale／finally導出的runAborted或timeout當首因。UI ready先error或collector先abort尚無事件順序證明；Root要求單一firstInvalid＋ready safeerror/subphase＋abort-source/finally同clock完整診斷建議，暫不修cadence/放寬3s guard。Source與M31packet凍結，40/60未run、其他12legs未執行、US$0/cap5/原WIP/G8停止85/HostedProduction真信NONE。
-
 
 ### 2026-11-17 — Native26整合readonly接受／M32單一first-stop診斷核准
 
 - readonlyfinal b160d21a0dc39b15c1d5cf804b5ce53a2a878d718597f5b08960bc9da5f4b2d2／9records、12coldprojection／12Source／304歷史records核；20entry200/VALID54.040ms、healthUNKNOWN唯一host_stale與3033.711ms sample-start gap已證，無已觀測資源超限。first invalid/readyerror/signal/finally順序仍UNKNOWN，runAborted/timeout可由finally stop衍生；不能稱stale已證首因或回填Native19。
 - Root核M32 brief docs/superpowers/plans/2026-11-17-capacity-first-stop-diagnostic-m32-brief.md，純診斷exact5Source＋必要tests：同Nodeclock first-wins invalid/readyerror/subphase/abort-request/actualsignal/stop/finally，未知明列。明授runner原finally全部收束後／candidate前，透過既有scope-bound writer一次固定capacity-run-diagnostics最終privatejournal；writer缺證不能PASS，不能假稱較早accounting含晚來signal。無新Root權限/任意path/readback/HTTP；不改cadence/3s7s/guard/caps/profile/operator44。相同worker實作／Root唯一review，先RED/GREEN＋capacity208受影響與新cases/fullchecks，freeze後才可新SourceNative27，不rerun。
 - Native26final與全部cold保持，功能15PASS/health0、anon3/10PASS、20INCONCLUSIVE/其他12未run；40/60未run、US$0/cap5、原WIP/G8停止85/HostedProduction真信NONE。
-
 
 ### 2026-11-17 — M32同輪P2已解／Root唯一審查接受
 
@@ -2976,12 +2851,10 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Rootreceipt f3e728922f6a2148b6457ec767724a6c20f37a904dcd31ccd1ff0794da638a34；8files/2198unownedactualGit/operator44/Original7trueprefix+package-lock/313歷史records全核，review docs/reviews/2026-11-17-capacity-first-stop-diagnostic-m32-review.md。Root schema readonly probe v1key已按v2shape更正，無Source介入；同輪0open，worker待命。
 - Native26firstcause/CPU/IO仍UNKNOWN，不能將stale/最後timeout回填首因；只Task診斷接受。Root接下來exact11paths commit/clean、freshspecialremote9ee8d92正常FF／Native27 newpushattempt1六人→15legs；26已final全cold保持，不rerun。40/60未run、US$0/cap5、原WIP/G8停止85/HostedProduction真信NONE。
 
-
 ### 2026-11-17 — M32固定Source正常Native27啟動
 
 - Rootexact11paths cachedcheck0/commit/clean c695dc819a01084d328ed5fe4c7a6724527010ca，freshspecialremote精確9ee8d92後正常FF；newpush/attempt1 run44001687343/job133767061082 capacity-linux inprogress，正常six-person→15legs。M32 first-event診斷／finalprivatejournal明授，Rootreceipt f3e728922f6a2148b6457ec767724a6c20f37a904dcd31ccd1ff0794da638a34、v2packet75records固定；同輪P2已解，worker待命。
 - WatchermatchingSHA保cipher，Native26final與全cold保持；15functionalPASS與anon3/10PASS不改，20firstcause仍UNKNOWN。此輪不改cadence/freshness/guards，不GHrerun/0business；原WIP/G8停止85/US$0/cap5/HostedProduction真信NONE/40與60未run保持。
-
 
 ### 2026-11-17 — Native27已觀測collector先abort／M33排程窄修核准
 
@@ -2990,12 +2863,10 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - artifact14293147064 ZIP42572054B/dc6a49f16e975ebc7267af8e4461f2da5d12b5ce49dae0768591f64d6fbf8289，cipher42571916B/591fae9ffdb2ae1f1e7557b8c4dc5b800b8f0bc679c7dd50c74f19b01a720d48真AEAD；outer3917ef48f4bacf61bb1a60d35aeb9856ba7ad7b374ceaef529764c6869e0452d/685files212238206B，inner2fa3a4d617420a7952d1279f3781c72e5b22f1537a89d6fe4988d573eb9b0d26/638files；8stops/roles/DB2/127tables31rolesORDER_ONLY／3vol7017files185590496B含metadata、runtime586data32code0metadata-only全部核，無restore/刪除。
 - Root核M33 Sbrief docs/superpowers/plans/2026-11-17-capacity-sample-cadence-m33-brief.md：host/resource以實際last callstart對齊原1000/5000period、扣已花時間，serial不overlap不catch-up queue；只timerdelay變，原測量start/complete/3s7s/notify/stop/profile/operator/caps保持，長sample仍failclosed。先actualcollector有效RED/GREEN＋capacity/fullchecks，Root唯一review後且27final才可Native28。不是已保證60PASS，原WIP/G8停止85/US$0/cap5/HostedProduction真信NONE/40及60未run保持。
 
-
 ### 2026-11-17 — Native27最終failure與完整joblog留存
 
 - run44001687343/job133767061082 actualcompleted/failure，upload/coldhold/post全success。Rootfinal .git/linux-twenty-seventh-run-review.json SHA136f4140decbe5378c36d31e89d555d27804657b092181eb8ac97c1f381c45af，API exactjoblog22983B/dff8d721f1b82e1e1c57fc8bb7cc30c7b152e975df545166fb91cc492f8ef702；真AEAD/685outer/638inner／8stop/DB/所有cold鏈保持，無restore/刪除。
 - M32 first-event已證本輪collector host_stale先ownedabort/signal再readyerror；不回填26/19/CPU/IO，也不保證cadence單修足60。M33 actualcollector有效RED4FAIL/3PASS，確認原completion後再空等使freshness過期；stop/abort晚完成與長樣本UNKNOWN負向原碼已PASS。worker窄修laststart扣耗時並跑全集，不改3s7s/guard/profile/caps。Root唯一review前無Native28。原WIP/G8停止85/US$0/cap5/HostedProduction真信NONE/40及60未run保持。
-
 
 ### 2026-11-17 — M33排程窄修Root唯一審查接受
 
@@ -3003,12 +2874,10 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 有效RED4FAIL/3PASS→focused18PASS，final29files247capacity／fulltype/lint+fixturechangedlint/format/import/diff/static0；原fake monotonic及246PASS/1FAIL fixture資格raw保，不當乾淨綠。Root35tests1620ms／38records16checks／4files/2205unownedactualGit/operator44/Original7trueprefix+package-lock/388歷史含M32v2原75+v1原55全核。packet39c9d88469855e59abe8caa39bf7a00d7a64b5c004d39bccffec200dfb19003d，Rootreceipt2eb1b957d95856b66451e07b768999df2b1e5418cc31add7b1442d3b162d7844，review docs/reviews/2026-11-17-capacity-sample-cadence-m33-review.md；一輪0findings，worker待命。
 - 只修已證hazard，仍可能因長sample/其他效能缺證，不稱60PASS或回填26/19cause。Native27已final全cold保持；Root接下來exact7paths commit/clean、freshspecialremote c695dc8正常FF／Native28 newpushattempt1六人→15legs，不rerun。40/60未run，原WIP/G8停止85/US$0/cap5/HostedProduction真信NONE。
 
-
 ### 2026-11-17 — M33固定Source正常Native28啟動
 
 - Rootexact7paths cachedcheck0/commit/clean 987a7153104fc290f7b318c2dc7eac0b5c298b25，freshspecialremote精確c695dc8後正常FF；newpush/attempt1 run44005732283/job133780517381 capacity-linux inprogress，正常six-person→15legs。M33僅原startedAt同步存laststart扣sample成本的timerdelay，Rootreceipt2eb1b957d95856b66451e07b768999df2b1e5418cc31add7b1442d3b162d7844／38recordspacket固定，worker待命。
 - WatchermatchingSHA保cipher，27已final全cold／first-event鏈保持；不保證60或長sample必PASS，不改timestamp/3s7s/guards/profile/caps，不GHrerun/0business。原WIP/G8停止85/US$0/cap5/HostedProduction真信NONE/40及60未run保持。
-
 
 ### 2026-11-17 — Native28最終failure／新collector unavailable並非stale
 
@@ -3017,13 +2886,11 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - artifact14293874193 ZIP42562385B/ccdf19dc15fac9a537d38bea9174ea1fc994c29f2a59cf4d5350036cb38fe4a0，cipher42562247B/663c1e3552938e557f4475b4f7ef3aba494187ceb32561845eb0517e8203e3ba真AEAD；outer5da396d593323cdacc3dbfc7de3d1c51822712ea05b4a1d178ee77c4f9a78c84/685files212245041B，innerce3402d61081b5fb7c87da3f270aae22e5eb2e1fa1bedb28fada7580be2bce70/638files，8stops/roles/DB2/127tables31rolesORDER_ONLY/3vol7017files185606880B含metadata/runtime586data32code0metadata-only全核；無restore/刪除。
 - worker唯讀已縮到20第二次linux-host-sample.py execute返回/拒絕unknown：callstart3709.847465/preverify3762.480590/execute4258.299928/post4378.798290，前後verify成功；host前次start2699.602513/complete2810.127254→次startgap1010.244952/實等899.720211，M33扣耗時生效。原helper error envelope/rawsample沒有保留，exacthelper branch仍UNKNOWN；不猜tree/memory/OS，也不稱資源不足。先一次完整safe-exit probe proposal，無新Sourcepatch或Native29。所有歷史custody/原WIP/G8停止85/US$0/cap5/HostedProduction真信NONE/40及60未run保持。
 
-
 ### 2026-11-17 — Native28整合readonly接受／M34單一完整helper退出診斷核准
 
 - readonlyfinal4143bfcaaa0ea33254ba89073370a827e59aa22897b3658016684ff3833149af／10records、12Source與15coldinput全部Root核，Rootreadonlyreceiptc8dabdaf47fac152a416c06694431b15b80af60f35a8ee0ea2c9197cb389faf8。第二HOST完整pre/postverify間EXECUTE或JSON_PARSE失敗，code/exit/stdout envelope未留、exactguard未知；M33实际start cadence生效，不猜tree/memory/OS，不延用host_stale，不稱資源不足。
 - Root核M34 brief docs/superpowers/plans/2026-11-17-root-helper-exit-diagnostic-m34-brief.md：一次Node phase＋executor closedcallback/exit/limit/abort/parse＋2sampler固定stage/code/errno完整安全投影，僅原buffer stdout在close且bound內closed解析，stderr仍ignore，不留raw/error.message/任意uppercase/hash/PID等。只有onClose callback才可填terminal、不等於Kernel physical attestation；fake/custom未觀測誠實UNOBSERVED。
 - 明授7Source含Root兩sampler僅error診斷、package-manifest只對應2entries bytes/SHA更新、其餘42/總44不變；contracts純schema、executor/runtime/journeys窄接線，只附既有transport-accounting write。無新I/O/helper/timer/journal/Root權能、正向sample不變、原131072B/30s/3attempts1.5s/admission/kill/3s7s/caps/flags/錯誤行為不變。相同worker先有效RED/GREEN/受影響checks、Root唯一review後才可Native29；28已final/cold全保，40/60未run/US$0/cap5/原WIP/G8停止85/HostedProduction真信NONE。
-
 
 ### 2026-11-17 — M34完整helper退出診斷Root唯一審查接受
 
@@ -3032,12 +2899,10 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - finalv2 d388ef4bbf9811c174d58f2fd908844c0ca417de98a732e393cfad9db59d1662／77records33checks，v1 67a08cd6697abaed053ba2f2829068304ee2b201fe06c3931cc20cbd814af968／原54全保。Rootreceipt b95874f60d3dfa444aff4e2af658c9e7dccbdc9b2d9ade82aaeb894294a92867，11files/2203 unowned actualGit of2212含type/execbit/operator42/Original7真prefix+pkglock/436歷史raw含M32v1v2/M33/readonly全核；全部既有Python函式去literal mark exact AST。review docs/reviews/2026-11-17-root-helper-exit-diagnostic-m34-review.md。
 - 只Task級觀測接受，不證Native28底因或容量PASS。28已final/cold全留；Root接下來exact14paths commit/clean、freshremote987a715後正常FF啟動Native29新Source pushattempt1六人→15legs，不rerun/0business。40及60未run，US$0/cap5／原WIP／G8停止85／HostedProduction真信NONE保持。
 
-
 ### 2026-11-17 — M34固定Source正常Native29啟動
 
 - Rootexact14paths cachedcheck0/commit/clean 39088488cd9e435803beb36e262cae2ba8e8977b（tree95826421a013fc0ce46fa23725f5fbcaf1304c29），freshspecialremote987a715後正常FF；newpush/attempt1 run44015391613/job133811967038 capacity-linux inprogress，正常six-person→15legs。M34 Rootreceipt b95874f60d3dfa444aff4e2af658c9e7dccbdc9b2d9ade82aaeb894294a92867／v2 77records固定，同輪唯一P2已clear；worker待命。
 - watcher只保matchingSHA cipher，28 final/cold全保；不rerun/0business、不推測Native28底因、不宣稱40/60或容量PASS。原WIP／G8停止85／US$0 cap5／HostedProduction真信NONE保持。
-
 
 ### 2026-11-17 — Native29前業務啟動失敗，僅診斷留存
 
@@ -3046,24 +2911,20 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 8image pull均attempt1/exit0/physicalClosureVERIFIED，stderr10467B/d2e871d90e1eafc70d527f4f4cb285c3964196cc12e6c4e9c6578ceb5e68e101／stdout0，121migration applications後，HEAD loopback58321 /functions/v1/_internal/health contextdeadline；HTTPstatus／SQLSTATE／實際Edge state／OS cause UNKNOWN，不推崩潰/OOM/帳號登入或容量失敗。M34沒有改bootstrap/config/functions/images，現無已證Source缺陷，不微修timeout/ignorehealth/classifier，不GHrerun。
 - worker只在 .git/native29-bootstrap-readonly/ 收束16coldinputs/必要Source/hash與單一被動診斷proposal，Root另審必要性/guard前無Sourcepatch或Native30。US$0/cap5／40與60未run／OriginalWIP／HostedProduction真信NONE保持。
 
-
 ### 2026-11-17 — Native29 readonly接受／M35單一被動啟動觀測核准
 
 - readonlyfinal35703c8bb27c7cb882eefad25d279919211843e6815223a913c69011fca3eaf7／10records、16coldinputs18685B、7Source已Root核；Rootreadonlyreceipt05fcc1cbe47f46c45b5895ab23e3b042efcd150f28eb74a7d9316791fef11f39。HEAD Edge timeout只定位操作，actualstate／短log來源／底因UNKNOWN，無已證Source缺陷，不修timer／ignorehealth／retry／classifier。29已final、僅16file診斷留存，不能稱DB cold完整。
 - Root選M35一次完整被動observer方案，brief docs/superpowers/plans/2026-11-17-bootstrap-passive-observer-m35-brief.md；明授新4Source（2新module＋既有backend/bootstrap窄接線）及固定scope Docker只讀events／state／Edge framed logs，不授其他project／Env／服務HTTP／restart／signal／volume／quota。Source/job/request/nonce/new-empty/image/cgroup獨立綁定，原唯一CLI start600s/2MiB／upstream10/30s／cleanup／exit保持，新observer資源獨立close、主command診斷不得覆蓋；資料只private requests既有encrypted export。無證scope／frame／coverage／closure誠實UNKNOWN，殘留資源阻business但不改原CLI結果。
 - 同worker先純fake有效RED/GREEN／affected/fullchecks與完整packet，Root唯一review後才新Source Native30正常pushattempt1六人→15legs；現未實作/launch。operator44/helper13/M34全部／產品/DB/依賴/workflow/exporter不改，舊records/原WIP/G8停止85/US$0 cap5／40/60未run／HostedProduction真信NONE保。
 
-
 ### 2026-11-17 — M35必要兩階段validation inspect澄清
 
 - worker正確指出Docker event沒有immutable configDigest/cgroup，原brief要求在任何inspect前核完兩者是循環前提。Root修brief第3點：Gate1 exact candidate64hex/new-empty/daemon/exact role-name+project label＋已核image hint(tag/pinnedReference/configDigest)才允每candidate一次固定projection validation inspect；Gate2先核immutable ID/name/project/image/nonce CgroupParent、必要running PID cgroup後才採用state/attach唯一Edge logs。未核state不當證據，mismatch/role第二ID/reuse即UNKNOWN/拒絕，不續讀foreign，不讀Env/fullState。是必要實作澄清，非擴任意Docker權能；其餘範圍／一次start／limits／close不變。
-
 
 ### 2026-11-17 — M35追加唯二fixture相容接線核准
 
 - Source4／新tests2已落，focused27PASS/type/full lint/format0；149affected batch有147PASS/2fixture errors，因兩個既有case直接NativeIO+fake source未走新Source bind，不是Source guard錯。Root核只test_linux_ecr_pull.py的test_actual_start_recovers_only_exact_rate_without_retrying_cli與test_prebusiness_diagnostic_export.py的test_actual_bootstrap_failure_saves_first_private_raw_after_admission注入external fake observer/bind，保原全部pull/raw/count/start/secret/mode assert，production無unbound fallback。fake不冒充Native。另允同export檔至多1個必要純FS bootstrap-health-prefix帶入回歸，已等價則不加；不改exporter/limits。兩檔仍<=500，無新增Source path。
 - 149紅及初static歷史v1檔名/inputshape setup錯全部留存，不當乾淨綠。Source4此時freeze，fixture/fullchecks及packet後Root唯一一輪review，現無新Native。
-
 
 ### 2026-11-17 — M35被動啟動觀測Root唯一審查接受
 
@@ -3072,12 +2933,10 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - finalv2 88e1449ad4a7133db2bf3093b875090036f1c81b0989253e5ea78ce26a98428c／69records25commands，v1 747caacce5c09d046c98499dd7bc8ae0af284006a135174da67043b18a610c01原46raw全保；Rootreceipt0daad6cfec20738987f315744bade1c34e9b2487fc21142e1eb8fffb5aa61d2e。Root核8files/2212unowned of2217含type/exec/operator44/M34 11/Original7真prefixpkglock/Native29 16inputs/577歷史引用523unique，review docs/reviews/2026-11-17-bootstrap-passive-observer-m35-review.md。
 - 只是觀測工具接受，不證Native29底因／啟動修復／容量PASS。29已final16file僅診斷留存，無DB cold全留聲明；Root下一步exact11paths commit/clean、freshremote3908848正常FF新Source Native30 pushattempt1六人→15legs，不rerun/0business。US$0/cap5／40/60未run／G8停止85／原WIP／HostedProduction真信NONE保。
 
-
 ### 2026-11-17 — M35固定Source正常Native30啟動
 
 - Rootexact11paths cachedcheck0／commit clean23d0a54eaf952a373d42eb6fbc870042a7d9e0ea（tree686176e88a2dc1b4b74c487707de29873633e1cf），fresh specialremote精確3908848後正常FF。public repo gate private=false當前唯讀核；newpushattempt1 run44026002753/job133846375567 capacity-linux inprogress，正常six-person→15legs，watcher79225只保matchingSHA cipher。
 - M35 Rootreceipt0daad6cfec20738987f315744bade1c34e9b2487fc21142e1eb8fffb5aa61d2e／final69records固定，一輪2P2皆clear、worker待命。新Source只補scope啟動觀測，不證Native29底因或已修啟動；29已final僅16file前業務診斷全保，28cold全保。不GHrerun/0business/改門檻，40/60未run／US$0 cap5／OriginalWIP／G8停止85／HostedProduction真信NONE保持。
-
 
 ### 2026-11-17 — Native30 final／實際STABILITY guard已定位
 
@@ -3086,13 +2945,11 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - artifact14303646619 ZIP42600613B/3605b3b07410e171c380cccdff65eae4dba082605abf147b044eb0731b3fd529，cipher42600475B/c7304b334a3bc35b8edfc3c90d4968c848a03868c940a344ae9f2f2305bd5bef真AEAD；outer0d26778d89cd61b2ba48657d9b65edf48805f46e3f975e15aa9791c802dc5dfb/687files212290013B，inner27bd292ca00e54a49d2c7582551ecc050f43bb831be656b6dfb67e47977ab137/638files；8stops/roles/DB2/127tables31rolesORDER_ONLY／3vol7017files185590496B含metadata／runtime586data32publiccode0metadata-only全核，無restore/刪除。
 - M35本輪startup成功，安全probe collectionUNAVAILABLE/INCOMPLETE firstSCOPE@174011.001038，events22/states14／EdgeHTTP200、495raw bytes8stdout frames/0stderr0system、boundarytrue／closureVERIFIED，不能稱完整capture或回推Native29。無M35微修。worker只在 .git/native30-stability-readonly/ 用原3tries/1.5s與完整proof條件作只讀／純fake重現及一個M36proposal；Root另核前無Sourcepatch/Native31。US$0 cap5／OriginalWIP／G8停止85／HostedProduction真信NONE保。
 
-
 ### 2026-11-17 — Native30 readonly接受／M36原窗口完整pair修正核准
 
 - readonlyf720dae54499bba48d4702cde975401aec58f55b310902e980c59b864a1714c2／15records9Source7coldmetadata Root核，Root另隔離輸出重跑13purefake獨立Pythonexit0，receiptdd3ceee09b5b1477783682e1c72aa74e5104817908e3742ff4544a69ce923f0a；原composite-cat exit資格UNOBSERVED不改。已證range3可66ms用盡而第四stable不讀，且late1602ms stable仍return；均政策反例，不是Native30具體churn成因。
 - Root核M36 brief docs/superpowers/plans/2026-11-17-stability-window-m36-brief.md：原1.5s內deadline-driven完整pair、20ms cooperative yield＋76attempt cap雙bound，開始／讀取邊界／完成後檢window，原完整set/identity/PSS與普通guards不降；Root明授內部attempt/read count增加，非API重試或Root擴權。只HOST failure加strict閉集attempt/window/set-count診斷，正向shape保持，nested未知不洗白。
 - exact5Source含新純schema分檔＋host／manifest僅hostentry／contracts／decoder，新2tests；collector/runtime/M35 8／產品DB／依賴workflowexporter不改，其他43operator保持。先有效RED/GREEN與受影響checks，Root唯一review後才Native31正常新Source pushattempt1六人→15legs；現未實作/launch。Native30已final/fullcold全保，不追M35微修／不回填28/29／不稱容量PASS；US$0 cap5／原WIP／G8停止85／40/60未run／HostedProduction真信NONE保。
-
 
 ### 2026-11-17 — M36 原窗口完整 pair 修正 Root 唯一審查接受
 
@@ -3101,12 +2958,10 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - final81records/34commands6957ec69d1e65ac8a7896593fdfe476ae2d8aa21688ebaa46ad8cffe706cb296，v1全53及原manifest保；Rootreceiptc32bbe07ec19256ac51303a9624ad0a6e763c2b7bc8e603e31e66c5ec70f04f1。Root核607unique歷史/707引用、7Source、2218unowned of2223含type/exec、Original7真prefixpkglock、Native30 inputs7；同輪2delta其餘5raw同，schema逆向/test原prefix同v1。review docs/reviews/2026-11-17-stability-window-m36-review.md。
 - 工具task接受，不是20/40/60容量PASS；Root下一步exact10paths commit/clean、freshremote23d0正常FF新Source Native31 pushattempt1完整six-person→15legs，無GHrerun/0business。30final/fullcold保／US$0 cap5／OriginalWIP／G8停止85／HostedProduction真信NONE保。
 
-
 ### 2026-11-17 — M36 新 Source Native31 正常 Local 執行啟動
 
 - Root exact10 paths cachedcheck0／commit clean b036123aed776b05cc4f8c2313a20b64f0bd05f0(tree18843b1d7725252fc8180a8d489dfbc639f90842)，fresh specialremote精確23d0a54後正常FF；當前public repo private=false核。push attempt1 run44034779344/job133874903908 in_progress，正常six-person→15legs，watcher97710只匹配該Source加密證據，未GitHub rerun。
 - Root M36唯一一輪1P2已clear，receiptc32bbe07ec19256ac51303a9624ad0a6e763c2b7bc8e603e31e66c5ec70f04f1；final81records固定。工具修正接受不代表20/40/60容量通過。Native30 fullcold全保／US$0 cap5／OriginalWIP／G8停止85／HostedProduction真信NONE保持。
-
 
 ### 2026-11-17 — Native31 suite停止／cold全核／40人首個host_stale定位
 
@@ -3115,12 +2970,10 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - artifact14306633530 ZIP42663004B/730ca339b10a964057aa13e77fa659f4967cf136677366703d7db74aa9a47cfd，cipher42662866B/19a5092dc81941d7d014fe2d1c9c15e6ca3ac2183e7ba22c76018bc8219b3261真AEAD；outer9da06f6fcbaca49bb0fda96a6b44904262f2a2497e47b1cddb364b3d990c2dc6/937files212792609B、inner26db6996a9f7f71678dd1a0a29b93bd2ecb58fdd3f2dd9a5ec1b8b7bffc03c26/884；8stops/roles/DB2/127tables31rolesORDER_ONLY／3vol7017files185591435B及portablemetadata/runtime832data32publiccode0metadata-only全核，無restore/刪除。watcher97710 exit0只是download，非workflowfinal。
 - M35probe同樣UNAVAILABLE/INCOMPLETE firstSCOPE@141600.362208，events22/states14、HTTP200/495B8stdout0stderr0system/boundarytrue/closureVERIFIED；startup成功非完整capture，不追微修。worker限.git/native31-collector-readonly/ Source＋必要6coldJSON/純fake/單一proposal；Root未核M37/Native32。US$0cap5／OriginalWIP／G8停止85／HostedProduction真信NONE保持。
 
-
 ### 2026-11-17 — Native31 workflow final／完整留存完成
 
 - run44034779344/job133874903908 Sourceb036123aed776b05cc4f8c2313a20b64f0bd05f0 pushattempt1 completed/failure(updated2026-11-17T07:13:46Z)，upload/hold/post皆success；watcher97710 downloadexit0。exact APIjoblog23212B/ffc98934b9d3840a80122267c86f674463978514f92f7df1b3dcceba5897b16d。Root final .git/linux-thirty-first-run-review.json SHA 5059a84b7899c17a63f6469e7bbd85781af56817733a957da7595808f0a8a0ac。
 - 前段記錄的functional15PASS/anon3,10,20PASS/fresh40INCONCLUSIVE與首次host_stale/註冊零send/完整cold全核維持；其餘11legs含60未run。worker仍僅只讀／純fakeproposal，未核M37/Native32。不GHrerun、不把此次當STABILITY拒／網站API承載FAIL、不追M35微修。US$0cap5／OriginalWIP／G8停止85／HostedProduction真信NONE保。
-
 
 ### 2026-11-17 — Native31 readonly接受／M37同批metadata與phase診斷核准
 
@@ -3128,12 +2981,10 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Root核M37 brief docs/superpowers/plans/2026-11-17-profile-verification-m37-brief.md SHA 089c6dc1762382d6646a39e4e8d0eb26b27dce708431fd94a13f70bf4ae11e61：兩固定metadata同batch allSettled完整收束/原profile優先error與hashgate後13helperbatch，15fresh read/完整proof/不cache/不提前consume。Root明授metadata之一fail時另固定metadata已讀差異，無新path；細PROFILE_META/CLOSURE_META/HELPER_BATCH只existingNode PHASE/caps/journal，非nativewitness，callback不得變operation。
 - exact3Source＋existingprofileRuntime test／newcapacity-profile-verification test，無collector/M35/M36/operator44／產品DB依賴workflow變動。先actualRED/GREEN與相關checks，Root唯一review後才Native32正常新Source pushattempt1完整six-person→15legs；現未Sourcepatch/launch，不保證解Native31/60。US$0cap5／31finalfullcold／OriginalWIP／G8停止85／HostedProduction真信NONE保。
 
-
 ### 2026-11-17 — M37必要既有firstFailure fixture例外
 
 - 新metadata/phase28PASS、新actualcaller14PASS；合併4files83為81PASS/2既有fixtureFAIL，原raw保。細phase真firstFailure是HELPER_BATCH，原fixture仍只期待PRE/POST。Root明授唯一extra tests/contracts/whole-site-capacity-runtime.test.ts 原before/after case窄修firstFailure期待＋新增原PRE/POST FAILED事件斷言，原throw/accounting/execute斷言不動。既有556行例外<=570，不擴Source或刪測試。
 - ownership改3Source＋3tests，brief append-only補例外 SHA a3b393685d48afee2fde95b46ee8ab3d04f46dfe27a7c2b3065d5514e74c72d3（前版089c6dc1762382d6646a39e4e8d0eb26b27dce708431fd94a13f70bf4ae11e61保資格）。等待相關測試/fullchecks後freeze Root唯一review，現未Native32；其餘範圍／US$0／Original/G8/Hosted禁令同前。
-
 
 ### 2026-11-17 — M37同批metadata與phase診斷Root唯一審查接受
 
@@ -3142,12 +2993,10 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Root核6hash/701unique歷史854引用/2222unowned of2228含typeexec/operator44/M35全8/M36未授權6/Original7真prefixpkglock/Native31指定6coldJSON。review docs/reviews/2026-11-17-profile-verification-m37-review.md。非Native31底層FS/CPU成因證明或40/60 PASS。
 - 下一步Rootexact9paths commit/clean、freshremote b036123正常FF新Source Native32 pushattempt1 six-person→15legs，無GHrerun/0business。31已final/fullcold／US$0cap5／OriginalWIP／G8停止85／HostedProduction真信NONE保。
 
-
 ### 2026-11-17 — M37新Source Native32完整Local執行啟動
 
 - Rootexact9paths cachedcheck0／commitclean c9cf5aceff1e9b45ab7be85f3d9e0e4aa57bc44c(treef80feeb396c1318237cc36d39fb1e0db2ea8aa9e)，freshspecialremote精確b036123後正常FF；當前publicrepo private=false再核。pushattempt1 run44042637416/job133900649558 in_progress，正常six-person→15legs；watcher76711只匹配該SHA cipherdownload，不GitHubrerun。
 - M37Root唯一一輪0findings receipt3ac9297b9fc08a9958a5d12ce355a248e0f239849268c42bd070408112fafd66／final46records固定；工具接受不代表40/60 PASS或Native31FS底因已證。31已final完整cold保，OriginalWIP／G8停止85／US$0cap5／HostedProduction真信NONE保。
-
 
 ### 2026-11-17 — Native32 suite停止／cold全核／執行中host_stale新時序
 
@@ -3157,12 +3006,10 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - artifact14310287522 ZIP42559356B/bd273f4c210123e05ad92209d9d4dea5e4790c7e07fa7d705caae5d6a27668bf，cipher42559218B/3c6e505415c2238100752aaea8bc894d3c526703bbfb2af1826574a89a16f9c6真AEAD；outerbb0d038c4ac97bd5ff2da2cf4ed58dae97e87d089c2be17fa8474aa198c88ce1/687files212326830B，innere37d3c0e8ea2903c604ba889823bb5e652d13e2a53b9a74e5b7538bf6b7f6244/638；8stops/roles/DB2/127tables31rolesORDER_ONLY／3vol7017files185598688B含portablemetadata/runtime586data32publiccode0metadata-only全核，無restore/刪除。watcher76711 downloadexit0非workflowfinal。
 - Root停止microfix推定，worker僅.git/native32-generator-readonly/完整Source/firstcold-entry與generator建立/collectorbaseline時序診斷＋單一proposal，cold只3/10/20各3既定JSON；不預設波次減少足夠，不預熱origin/caches、不變並行/250ms/3s7s/identity/PSS/caps/權限。M35sameUNAVAILABLE/SCOPE first146085.728373/events22/states14/HTTP200/495B8stdout/frameboundarytrue/closureVERIFIED，不追微修。未核M38/Native33；US$0cap5／OriginalWIP／G8停止85／HostedProduction真信NONE保。
 
-
 ### 2026-11-17 — Native32 workflow final／完整冷封存完成
 
 - run44042637416/job133900649558 Sourcec9cf5aceff1e9b45ab7be85f3d9e0e4aa57bc44c pushattempt1 completed/failure(updated2026-11-17T08:15:15Z)，upload/hold/post皆success；watcher76711 downloadexit0。exact APIjoblog22975B/6863807382083034b59d6c75f243c2b5a8de3ce4edf9b23451e505f04eeaec38。Root final .git/linux-thirty-second-run-review.json SHA ee279601d9b49ed9f8c36633940c9d633c94202050e1f84e9f5a26efddee1f7f。
 - 前段functional15PASS/anon3,10PASS/20INCONCLUSIVE及firsthost_stale在helper執行中／abort後exit0未parse成功sample／完整cold全核維持；其他12legs/40/60未run。worker仍僅完整Source/基礎browser建立/entry/collector時序readonly，Root另核准唯一extra20/entry-observations.json safe投影判斷setup與dispatch，無Source/M38/Native33授權。不再以單點verify小修假定解全問題，US$0cap5／OriginalWIP／G8停止85／HostedProduction真信NONE保。
-
 
 ### 2026-11-17 — Native32 readonly接受／M38一次完整generator診斷核准
 
@@ -3171,12 +3018,10 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 明授exact14Source＋4newtests，optional診斷/既有stdout passive decode，原sample計算/authority/close/abort/64cap、全N/coldnav/250ms/collector起點/3s7s/資源/SLO不動；sideband即使abort後exit0仍不consume sample，rawCPU profile僅private0600+加密。無產品DB依賴workflow/exporter/other43operator變動。先actualRED/GREEN/完整相關checks與Root唯一review，現未Sourcepatch/Native33；不再單點猜fix或盲跑。
 - Native32 finalfullcold/Rootreceipt ee279601d9b49ed9f8c36633940c9d633c94202050e1f84e9f5a26efddee1f7f保，US$0cap5／OriginalWIP／G8停止85／HostedProduction真信NONE保。
 
-
 ### 2026-11-17 — M38必要host main failure fixture例外
 
 - worker已保存2actualRED各exit1（原native.start callback無lifecycle事件／真Python main failure無timing），尚無capacity判定。Root明授唯一extra tests/contracts/helpers/root_sampler_failure_driver.py<=230：僅既有host main case取出/驗timing，再保原envelope exact assertion；backend/其他guard/errno/unknown-secret等原assertion不動，不許只pop忽略。新timingdriver/parentstrictwire負責完整語義。
 - ownership14Source+5tests=19，brief append例外新SHA 21c1ca8f0bd8d7fff787a703e20c3ec60bac106eb28b1234e9172c3d51ec1996，前fbad16e181a48fc00ded5bccaffa07d3ed21693ae9ec3b60f0af4aee0e45986e保資格。仍同M38／Root唯一review；無Native33/Hosted/產品/新權限授權，其他邊界同原。
-
 
 ### 2026-11-17 — M38完整generator診斷Root唯一審查接受
 
@@ -3186,12 +3031,10 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - finalv2 1ff9446fb9fef1bd096f8f086a6daf9d47ff374a9b047174cc2a63bab1d25282／81records、v1原56+manifest保；Rootreceipt e2576b31233c9589ac51b5fb4bb1d0e0bfe2e565f2c7b2cdcb39516c9e57c8a4。Root核19hash/816unique歷史969引用/2219unowned of2231/typeexec/Original7真prefixpkglock/Native32十input。review docs/reviews/2026-11-17-generator-diagnostics-m38-review.md。
 - 工具接受非Native32成因證明或40/60PASS；下一步Rootexact22paths commit/clean、freshremote c9cf5ac正常FF新Source Native33 pushattempt1完整six-person→15legs，instrumented資格保，不GHrerun/0business。32finalfullcold／US$0cap5／OriginalWIP／G8停止85／HostedProduction真信NONE保。
 
-
 ### 2026-11-17 — M38固定Source Native33完整Local診斷執行啟動
 
 - Rootexact22paths cachedcheck0／commitclean f28284a87acc6ddb37ab39ab2f6b10357548687f(tree295ac4449227252922ac8c088f166cf367bec127)，fresh specialremote精確c9cf5ac後正常FF；當前publicrepo private=false再核。pushattempt1 run44060522281/job133960922444 in_progress，正常six-person→15legs；watcher45915只下載匹配SHA加密證據，不GitHubrerun。
 - Root M38唯一一輪4P2皆clear，receipt e2576b31233c9589ac51b5fb4bb1d0e0bfe2e565f2c7b2cdcb39516c9e57c8a4／final81records固定，Root獨立9files130PASS；Source只完整診斷，不宣稱修Native32底因或40/60PASS。全run instrumented資格/60s ownNode profile scope/typedsideband非authority保持；32final完整cold/OriginalWIP/G8停止85/US$0cap5/HostedProduction真信NONE保。
-
 
 ### 2026-11-17 — Native33 final／完整診斷接受／M39 bounded schema reuse核准
 
@@ -3201,7 +3044,6 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - readonly02087eb39e32b0ea9d33fd2c71784aa76addba48aa2e453d940610dad7b4b3d7/14records18Source10coldJSON Root全hash核，receipt940fc93a98016575e811ca8d3185388427fdb89601af3ecb4c7735755639ed08。自身V8 profile709nodes267samples中Zod39/operation22/request9候選，不轉CPUms或硬映epoch，不輸出raw私有frame。
 - Root核M39 brief docs/superpowers/plans/2026-11-17-observer-schema-reuse-m39-brief.md：只2observer七完全靜態schema hoist/reuse，所有每eventparse/guard/session/並行/coldnav/250ms/3s7s/authority/PSS/caps/M38診斷保，2directtests+必要1pure replay，成本資格actualSource RED/GREEN/等價重播/逆向schema原樣/fullchecks/Root唯一review，未實作未Native34。原目錄WIP/G8停止85/US$0cap5/HostedProduction真信NONE保。
 
-
 ### 2026-11-17 — M39七schema重用Root唯一審查接受
 
 - 2Source/2既有directtests（317/301/233/188行），只七完全靜態schema原樣hoist，每event原位置完整parse、非target malformed仍拒、原控制流程全保。Root獨立七initializer＋全檔AST inverse成功；mutable observers/兩sessions/N/coldnav/250ms/3s7s/PSS/完整prepost/caps/SLO/M38診斷不動。
@@ -3209,12 +3051,10 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - final45records17checks packet971e25633b95accc082169a93d21467214d16ea729e766256b57ae4f1c611df4；Root0finding receipt8dd480067d37dc01b573d6f9bb866432d23a1f14d46c2cf3b83593c5a828484a，proof3673d697b3ccf3c9e64a48a328c9d9ec087f1d68c6b1e4e3301ac183a7a6c32c，review docs/reviews/2026-11-17-observer-schema-reuse-m39-review.md。2236unowned/2241HEAD/typeexec/operator44/855unique歷史1064引用/Native33十inputs/Original7真prefixpkglock全核。初RootEOFdiffFAIL、Rootchecker3setup假設失敗/停止診斷SourceFile.text後修正皆保資格，非產品finding。
 - Root下一exact7paths commit/clean、freshremote f28284a正常FF新Source Native34完整six-person→15legs。工具接受不證Native33底因或40/60PASS，33finalfullcold保，不GitHubrerun/零business探針；US$0cap5/OriginalWIP/G8停止85/HostedProduction真信NONE保。
 
-
 ### 2026-11-17 — M39固定Source Native34完整Local執行啟動
 
 - Rootexact7paths commit/clean 11b1d6891bcfa4bb8084090ca81fb6d212295c8b(tree8698b2fee0fd4b227b53722407fe849dbd2c2ef8)，freshspecialremote精確f28284a後正常FF、publicrepo private=false；目前GitHub身分peiyi-liu已核。pushattempt1 run44067209605/job133983863432 in_progress，正常six-person→15legs，watcher86269僅匹配SHA下載cipher，不GitHubrerun。
 - M39 Root唯一review0finding receipt8dd480067d37dc01b573d6f9bb866432d23a1f14d46c2cf3b83593c5a828484a/final45records固定，Root2direct19PASS/七ASTinverse/原guardload保持。不是Native33成因或40/60PASS；33fullcold/OriginalWIP/G8停止85/US$0cap5/HostedProduction真信NONE保。
-
 
 ### 2026-11-17 — Native34 suite停止／40send-barrier新第一因／完整cold保
 
@@ -3223,14 +3063,12 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - artifact14321098281 ZIP43171956B/ba7593f7a6649f2243d027dea06f5627dcdb4a623ccf4c822f592aaf0e4f1a01，cipher43171818B/e7650a2827794109304d1f82f63a873ecb311e4342ec04c7b344a13891711ba8真AEAD；outerc49c4e3e8c2ac135a2a6bb7b9d509c6cce4d8ea823d9ce5b554eb3fa642c621f/1066files215156162B，inner234c3d8597e801614f9c195c57f177b38a3b6a0243804c55b6a87021a0cb0bc5/1013；8stops/DB2/127tables31rolesORDER_ONLY/3vol7025files186287755B/runtime921data32code0metadata-only全核，無restore/delete。watcher86269downloadexit0不是workflowfinal。
 - worker僅.git/native34-send-barrier-readonly/完整送出barrier Source/6既定coldJSON（必要anon20pair最多8）第一因診斷＋一有界proposal；無M40/Native35授權，不放寬250ms/40/60/coldload/trueUI/OTP/3s7s/資源/權限、不rerun。US$0cap5/OriginalWIP/G8停止85/HostedProduction真信NONE保。
 
-
 ### 2026-11-17 — Native34 workflow final／40筆CDP send-skew獨立核對
 
 - run44067209605/job133983863432 Source11b1d6891bcfa4bb8084090ca81fb6d212295c8b pushattempt1 completed/failure(updated2026-11-17T11:00:59Z)，upload/hold/postsuccess；exactjoblog23211B/067c6a355b4922f291d081c8380185019d3175fa7c0f1587abc0b62b38b035aa。Rootfinal .git/linux-thirty-fourth-run-review.json SHA43d259dd0353feaf990e878d973846bf0dc10c83707ed766a807515b719e241f。
 - Root另strict parse plan-root a00..a39 otp-send-confirmed exact40files，filename/outer/response index全一致、phaseotp_send/Chromiumclock/physical1/HTTP2xx；實際timestamp重算327.751000000048ms與report同。v2receiptb4863405a0c548796d7fca56a353557327b08d7f1817f23ebe9f10fd201b277d；初v1dc2c41...把lowerP50(2077.898ms)誤標median，保v1另v2更正偶數median2080.383ms，skew/verdict不變。request duration非APIp95SLO判定，未讀身份/信/OTP/body。
 - functional15PASS/anon3,10,20PASS/fresh40INCONCLUSIVE維持；actual40sent/Authcreated/zeroverified-complete/healthVALID/nullcollectorinvalid，11legs未run（producerremaining12包含failed）。Source與CDP證明最早回應仍晚於最後送出約1521ms，排除after-response journal為skew初因；Node click dispatch／auto-wait／renderer表單驗證分段仍UNKNOWN，不猜repair，不放寬250ms。
 - worker仍僅readonly六既定JSON＋必要40安全confirmed records，合併送出lifecycle診斷proposal待Rootfinalbrief；無M40/Native35授權。OriginalWIP/G8停止85/US$0cap5/HostedProduction真信NONE保，完整cold保，不restore/delete/rerun。
-
 
 ### 2026-11-17 — Native34 readonly接受／M40一次send lifecycle診斷核准
 
@@ -3258,7 +3096,6 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 
 - Root從actualSource截獲evaluateHandle回呼並隔離VM執行，pinnedtsx __name helper未存在page造成ReferenceError；無rawcallback持久化/真browser，新proof保。worker尚未交同輪clear前併第4P2，原3receipt/v1保，改自足callback且不注入global/改編譯/產品，再唯一第二次controlledreadiness。未Native35。
 
-
 ### 2026-11-17 — M40完整send診斷Root唯一審查接受
 
 - exact7Source+7tests接受：defaultnative tuple/actualUi/ARM ticket封閉綁定，Node dispatch/click/原CDPcallback＋page-local trustedclick，NON_AUTHORITY；原allsettled後才read/全cleanup，DOM anchor/Node roundtrip bounds保三clock分離不硬join。原同批/target/parse/guard/Erroridentity/250ms/3s7s/PSS/caps/SLO/產品不動。
@@ -3267,13 +3104,11 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - final100records39commands packet1a42b450cc2a1e30657f7ce8be81cc73371f63263d793ca26770d3062e158013／v1raw42+manifest保；Rootreceiptd26125754cca385c0d9bb5c56af4b450784472e96572c211d3224885c3d023b6，proofb28ad3e450d8453913f0a491d378dfbdb432cb54b1d29b034a79f91cfdf81c59；2232unowned/2243HEAD/typeexec/operator44/919unique歷史1128引用/Native34四十六inputs/Original7真prefixpkglock全核。review docs/reviews/2026-11-17-send-diagnostics-m40-review.md。
 - Root下一exact17paths commit/clean、freshremote11b1d68正常FF新Source Native35完整six-person→15legs，instrumented資格保，不GHrerun。工具接受不證Native34成因或40/60PASS；34finalfullcold/OriginalWIP/G8停止85/US$0cap5/HostedProduction真信NONE保。
 
-
 ### 2026-11-17 — M40固定Source Native35完整Local診斷執行啟動
 
 - Rootexact17paths cachedcheck0/commitclean 4c901f71ee210f9d400c2caa81b819e5af5e313e(treea4e5a23dfee91022bef08e9cacbbc2456724b2e1)，freshspecialremote精確11b1d68正常FF、publicrepo private=false再核。pushattempt1 run44080913112/job134030954247 in_progress；watcher65812只匹配SHA下載cipher，正常six-person→15legs，不GHrerun/0business。
 - M40一輪4P2皆clear，Rootreceiptd26125754cca385c0d9bb5c56af4b450784472e96572c211d3224885c3d023b6／final100records固定；Root2/34PASS＋兩Sourceinverse/type-erasure/currentserializedVM核，controlled1contextdefaultnative readiness只工具資格，zeroOTP/Auth/DB/外部HTTP業務請求，不把localCDP loopback傳輸稱零HTTP。Source只診斷，Native34送出327.751ms來源仍待新證據，不稱40/60PASS。
 - instrumented三clock/anchor uncertainty/NON_AUTHORITY保持，原input/guard/同批load/250ms/3s7s/PSS/權限/caps/SLO不動。Native34fullcold/OriginalWIP/G8停止85/US$0cap5/HostedProduction真信NONE保。
-
 
 ### 2026-11-17 — Native35 final／readonly接受／M41固定四路完整PSS資格核准
 
@@ -3291,7 +3126,6 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 
 - worker原交付前自檢發現Thread.start FileNotFound可能被smaps missing retry洗掉；Root明授clock/window首terminal最高→scheduler/infrastructure terminal→普通read/parse planned order/missing retry。origin只記憶體、allsubmitted drain後原identity raise，不擴wire/main/sample/ownership；反例與mixed/reverse completion必測。Root既有唯一P2為stop check+submit非原子，合併同輪clear，非第二review/Native授權。
 
-
 ### 2026-11-17 — M41完整PSS Root唯一審查接受／新Source Native36授權
 
 - 固定最多4worker／4inflight完整已核PID之PSS，shared clock／failure latch與admission原子；所有實體workers join後才post／retry／return。原身份／prepost／窗口／freshness／caps／SLO不變。Root唯一同輪2P2（atomic admission、serial comparator固定base）皆clear；scheduler origin／shutdown自檢補控制，無未解finding。
@@ -3299,13 +3133,11 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Finalpacket0bc4b0380d3849356b07cd3cbd9c561d6757f8bf444455c7422e51b7b2b3c14b／Rootreceipt864c81799377e71c5c469a01554ddd7230e074072edd9a532dd3c47f61678fef，review docs/reviews/2026-11-17-pss-concurrency-m41-review.md。sixowned／v1raw／2244unowned／歷史1033／Native35十一與34四十六inputs／Original7真prefixpkglock全核。
 - Root下一exact9paths commitclean、freshspecialremote4c901f71ee210f9d400c2caa81b819e5af5e313e正常FF新Source Native36 fullsix-person→15legs，標4-wide qualification；不GHrerun／不放寬、不稱40／60PASS。Native35 fullcold保／US$0cap5／G8停止85／HostedProduction真信NONE／Original WIP保持，未Staging。
 
-
 ### 2026-11-17 — M41新Source Native36完整Local啟動
 
 - exact9paths commitclean 1ebf3525a52690ca04efb5152b62c7c869d4959f/treec24eeff10ab60e5e2ba13c232f32cf94e500bc55，Rootreceipt864c81799377e71c5c469a01554ddd7230e074072edd9a532dd3c47f61678fef／packet0bc4b0380d3849356b07cd3cbd9c561d6757f8bf444455c7422e51b7b2b3c14b。freshpublicrepo與specialremote4c901f7精確核後正常FF push，不GHrerun。
 - run44094497173/job134077929395 pushattempt1 in_progress，完整six-person→15legs／同免費4CPU16GiB；watcher1521只下載加密證據。四路PSS有界資格非Native速度證明，40/60尚未PASS，失敗保第一因／不放寬。
 - US$0/cap5／OriginalWIP／G8停止85／HostedProduction真信NONE保，未Staging。此啟動紀錄為commit後WIP，不另report-only push。
-
 
 ### 2026-11-17 — Native36完整final／停止同免費主機小修／試用沙盒候選
 
@@ -3315,13 +3147,11 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Root停止在同4CPU16GB generator追加微修；待證假設是同主機產生40/60負載時仍能可靠監測，不以此宣稱網站不足或升硬體根因已證。現有worker只做一次readonly fulltimeline packet，無下一修復Source授權。
 - 更新DO帳號唯讀再核：availableCredits5名Inference Cloud Trial，Inference/Agents prepaid0、accountprepayment0、usage0、autoReload off，付款方式已啟用；一般Droplet抵扣仍未證，不保證免費。官方2026-11-17文件明示此promo可供Harness Runtime，harness:none Ubuntu24.04/root sandbox支援16CPU32GB mars-16vcpu-32gb，published fullallocation1.008USD/hr，需先驗Docker/cgroup相容，不開月費。Root僅隔離安裝官方doctl2.1.0雙hash驗，binary3bbf140e520f6e715506ebf7db4744ef3e6c0dc584d0b75e4593ee9844d19a44，無token/VM/沙盒建立。US$0cap5/OriginalWIP/G8停止85/HostedProduction真信NONE/未Staging。
 
-
 ### 2026-11-18 — Native36 readonly核定／M42 Harness離線readiness bundle
 
 - Native36 readonlyfa41efb4e79b6d9efa4351f57028569b19215f321af5a2d107163136f2dc2cb3，10records/10Source/10inputs Root逐hash核；receiptee0880b2c8f66dc2f61661f1215650084b37878fe2035d54d5f1856154a183be。HOST48 pre923.564/execute1086.772/post1118.733，metadata同批不相加；firststale先於fullpost，40landing全部signal後失敗、未send。無OS/硬體根因、無新修復Source/Native37。
 - Root核M42 brief docs/superpowers/plans/2026-11-18-harness-readiness-m42-brief.md：2新Source/2新tests，只離線產生harness:none16CPU32GB私有spec/精確probe/hash/5分鐘readiness0.10USD估費/逐步cleanup runbook，讀自身proc/cgroup/Docker現況，全部NONE/readiness-only。既有freeprofile/Source/operator44/產品/workflow不變；token/Cloud/Linux實測皆未授權。
 - 官方doctl2.1.0隔離安裝雙hash核且version成功，可執行help/無token dryrun，沒有doctl全域安裝/登入。先完成concrete bundle與Root一輪review，才在實際新API權限前一次向owner確認；API可用性/Docker/cgroup仍UNKNOWN，不假造GitHubidentity。US0cap5/無資源/月費/真信/HostedProduction，OriginalWIP/G8停止85保。
-
 
 ### 2026-11-18 — M42離線readiness工具Root唯一審查接受
 
@@ -3330,7 +3160,6 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - packet5e7ecf7341fe404cee4eb9a0280d87a5803aafb34640ad5ca15639067e5529bb，Rootreceipt93526a377790648a5a2c050de678bce246697cbc10133c361b77b771ce7a094a，review docs/reviews/2026-11-18-harness-readiness-m42-review.md。Root核59records／4owned／2252protectedGit／M41原105／Native36十inputs／operator44／Original7真prefixpkglock及bundlemode/hash。
 - Root token草稿已填name colorplay-local-readiness-20261118／四Harness scopes create/read/manage/operate，share及其他namespace未選，UI最短30天到期(2026-12-18)，Generate未點。需依瀏覽器新access action-time規則當次owner確認，尚無token／API／資源／花費。M42僅本機固定commit不push，不Native37；Native36 fullcoldfinal保、OriginalWIP/G8停止85/HostedProduction真信NONE/未Staging。
 
-
 ### 2026-11-18 — M42本機固定版本／待新API權限當次確認
 
 - Root exact7paths cachedcheck0/commitclean 49402116b542473b2665211bd7404ff7f51249fd/treeb307a74ddde47267fcc8a1843c04c159d56f6264，未push／未Native37。M42唯一Rootreceipt93526a377790648a5a2c050de678bce246697cbc10133c361b77b771ce7a094a；59records／11Python＋1TS wrapper／必要checks綠，只離線準備，spec NOT_CLI_VALIDATED/readinessUNKNOWN/NONE。
@@ -3338,14 +3167,12 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Root已準備但未執行私有TTY capture .git/capture-harness-token-private.py，可在action-time owner同意後透過新Terminal window的getpass（不echo）與browser copy clipboard直接私有保存，禁止把token回顯／傳chat／放argv/env/guest。token.txt未建立；後續須轉privateconfig並先dryrun／readsize，尚未授權provider實測結果或Full60。
 - Native36finale6462572e7cf026ea382a78012a78c3fbfa497c751ecd1c6bebe5a97e48eba72／readonlyee0880b2c8f66dc2f61661f1215650084b37878fe2035d54d5f1856154a183be，functional15/anon3,10,20PASS，40INCONCLUSIVE firsthoststale beforeOTP(Auth0/send0)，後11NOT_RUN。不同generator待readiness，不同Source/free rerun禁止；全部colddata/OriginalWIP/G8停止85/HostedProduction真信NONE/未Staging保。
 
-
 ### 2026-11-18 — owner建立testtoken／M42真readiness firstCGROUP／M43單次只讀定位
 
 - Owner回覆已建立測試金鑰並准繼續；Root僅接線既有name-bound token，private runtime/harness-access/config.yaml700/600，fingerprintfe73bf898fca24e19c171e1ff309e672fc957cbfe5bfeaf23002c42e91fbcd16，無value回顯／argv/env/guest，初copy clipboard空而未存，改visible token memory直私有保存且清clipboard，未再建credential。CLIactual dryrun0已接受原none/16CPU32GB/idle5m/keep_warmfalse/egress[]，billingread未授故balanceAPI空UNKNOWN不加權限；UI最新promo5／usage0／autoReloadoff，catalog16/32率1.008/h。
 - Root一次create唯一Harnesssession01a1ea8a-837c-7282-94bf-b3ab0f298573／sandbox01a1ea8a-8571-796e-82c9-e98288284f6f／config01a1ea8a-82da-7988-8c62-8d18e23cee7f／namecp-readiness-d4740b5a1539b938，實際immutable config none/size/無model secrets repo核。exec一次15秒bound child0，result UNAVAILABLE/CGROUP/factsnull；remoteprobe下載hash同848acf4609537f28f67b986149c103744812a802fb237f761e5588e4c9e847e2，原result/probe私有保。不能因CGROUP說controller必缺或host不兼容，firstreason精度不足。
 - pause API0且show SESSION_STATUS_PAUSED/manual，first active保守上界197.145152s，費用尚非帳單數字，按fullcatalog上界估算，已非宣稱零消耗。Root明授M43一次新readonly小probe（非原probe retry/Source修復），只在既有pausedsession定位cgroup格式/controllers/mount/caps與基礎facts；worker僅私有離線準備，Root先審，再最多90s active resume→upload/exec/download→pause，總保守預留287.145152<300s，仍0.10USD估算／總cap5。不新建資源／不syswrite／不裝Docker／不擴權。完成兩份private保全後只清本次新session/config，不碰G8停止85或歷史Native資料。
 - trackedSource仍49402116b542473b2665211bd7404ff7f51249fd，未push/Native37；Native36 40INCONCLUSIVE/60未run、Staging/HostedProduction真信NONE、OriginalWIP保。
-
 
 ### 2026-11-18 — Sandbox 結案清理／owner 允許實際扣款／M45 離線 VM 移植
 
@@ -3355,12 +3182,10 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - M45 brief docs/superpowers/plans/2026-11-18-vm-port-m45-brief.md：新獨立paid kind、真ephemeral self-hosted UID1001、exact新branch/workflow、Vercel先optout、oldfreeworkflow不動、guard／backend4CPU6GiB不動，新增付費outerbudget較緊而非放寬驗收。Root唯一review，worker僅離線工具，未push／Native37／新access／HostedProduction真信。sandbox review docs/reviews/2026-11-18-harness-environment-final-review.md。
 - Source49402116b542473b2665211bd7404ff7f51249fd仍local-only，40INCONCLUSIVE／60未run／Staging BLOCKED_LOCAL。Original WIP／G8停止85／全部cold evidence保。
 
-
 ### 2026-11-18 — M45共享tuple依賴拍板／VM帳號tier阻塞待owner
 
 - Root明授新linux-operator/linux_host_contract.py<150、package45entries，原未改44保持；root-helper-contracts.ts／execution-profile-preflight.py／capacity-root-readonly.py／prepare-capacity-plan.mjs只為依賴closure接線，不移guard。worker開始離線實作，Root唯一review。
 - 最新DO UI Tier1、Droplet0/3；RIC1 v5 GP最小配置明示account tier restricted需open ticket；舊款disabled精確原因仍未證，不混稱。未建VM／新access。Root在Codex向owner詢問是否准送DO支援1台16CPU32GB、最多3h、不提高消費上限的有限額度申請，PENDING。離線準備不依賴回答，總capUS5。
-
 
 ### 2026-11-18 — owner核准的DO額度申請已受理#13013994
 
@@ -3368,32 +3193,27 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - UI明示Support Ticket Created Successfully，ticket#13013994，預計24h內回覆；是受理而非核准，未建VM／未擴credential／無新費用。private成功截圖.git/vm-support-ticket-13013994.png保，未附件／無secret值發支援。後續只讀該案件，未授額外聊天／其他申請。Root於登入轉址觀測時曾誤輸出含SSO片段的URL，後續不再輸出URL片段／secret，不重用或另傳該憑證。
 - M45 TS額外窄接線明授execution-profile-runtime.ts，discriminatedUnion不再pick，採共用strict observed schema；實際初import FAIL保，kind↔完整host tuple及深等observed不變。Root唯一review尚未開始，worker離線繼續；新workflow/Source未push，原免費分支不再run，OriginalWIP／G8停止85／HostedProduction真信NONE保。
 
-
 ### 2026-11-18 — M45離線VM工具Root唯一審查接受／等待DO額度
 
 - Root接受22Source+14tests：獨立VM16CPU32GiB／28–32實際與quota/affinity嚴格tuple，真job branch/workflow-ref/push binding；paid admission75/job150、free240/330與舊workflow保持。backend4CPU6GiB／8services／swap0及全部guard/SLO不動，45package／14closure／10scope helpers hash完整。唯一504行例外base502＋2binding，有理由避免無關refactor。
 - Final TS13/174（包含fake8／sampler6不另加），Linux86／snapshot19／prebusiness14／preparation8分組PASS，fulltype/lint/format/import/diff/static0；原FAIL全保。Root43pure交叉controls PASS、84records／36owned／2227protectedGit／原M42 59／Native36十inputs／operator原36unchanged／Original7真prefixpkglock核。唯一comment clarification已同輪close，未解0。packet4f104bd0df43bed1f14383071d6053d0965e004b1ac0973edfc242248f0c6978／Root8cb55cdc2916e870d91212a61d49ee351fcdab36e65c5ac7c1d7dcea06328d90，review docs/reviews/2026-11-18-vm-port-m45-review.md。
 - DO案件#13013994受理但未核准，無paidVM／新access／kernel／容量／push。Root下一只exact本機commit，待provider開放後核quote／newaccess／真ephemeral UID1001及API run/job/runner、一次fullLocal functional→15legs，無fakeGITHUB／不降低門檻。預算仍US5（已允實扣），過往Sandbox compute估0.0636724非帳單；Staging BLOCKED_LOCAL，60未證。OriginalWIP／G8停止85／cold evidence／HostedProduction真信NONE保。
 
-
 ### 2026-11-18 — M45 exact本機版本固定（未push／VM額度待核）
 
 - Root exact40paths cachedcheck0／commitclean 9a7ea08893b974d50981559c9f10983efd492848／tree07f65a4a4ce015f6a031a72cd6d1a9b5718f1b25；Rootreceipt8cb55cdc2916e870d91212a61d49ee351fcdab36e65c5ac7c1d7dcea06328d90，M45唯一審查接受只離線工具。未push、新VM0／新access0／Native37未執行，不啟動已停止G8。此commit後狀態只append WIP，不report-only push。
 - 最新DO支援申請#13013994已成功受理，VM account tier尚未核准。下一步只讀案件確認供應；可用後才核新DO/SSH/ephemeralrunner必要權限與actualquote，整體實扣capUS5／新VM建立到刪除以3h計畫；kernel前置通過後，固定Source完整functional→15legs一次fail-stop、保加密cold證據再清理。40／60與Staging仍未驗，不把工具接受稱容量PASS。
-
 
 ### 2026-11-18 — 本輪結束：M45已固定／DO#13013994仍Open無支援回覆
 
 - Root最後直接讀取正式案件detail：Status Open、Conversation History1，只有我方04:15AM申請，未見DO回覆／核准；沒有發第二則訊息／附件／關閉案件。兩入口control-panel無receipt與正式ticket已在原文澄清同一台申請；下一輪只讀該case與可用size，不新增重複申請。
 - 已完成離線移植／唯一審查／本機9a7ea08893b974d50981559c9f10983efd492848（未push）；60人實測／Staging整合仍待provider與真Local gate。既有Harness token不具Droplet權限，新DO/SSH/ephemeralrunner access未建，必要時在具體操作前一次核准；預算不再重問，實扣總capUS5。Vercel CLI60.1.3尚未升級，未來Staging整合前建議採官方新版，但目前不做全域安裝。
 
-
 ### 2026-11-18 — owner續查額度：正式案件仍Open／原16CPU32GB不可選
 
 - Owner要求確認核准、可用則繼續60人，總實扣capUS5保持。Root刷新正式DO case#13013994：Status Open／History1，僅原04:15AM我方申請，未見provider回覆或核准。控制台刷新仍Tier1、Droplet0/3；單次確認SFO2 CPU-Optimized Regular Intel16vCPU32GB336/mo選項disabled，不能啟動該機型；不把未開放歸為預算不足，也未推定其他所有region的原因。
 - 本輪readonly與未提交草稿選項確認，VM0／newaccess0／support messages0／capacity未run／未新計費VM。沒有重送申請／改預算／開小機器替代／放寬門檻。Source仍9a7ea08893b974d50981559c9f10983efd492848（未push），工具已接受；60與Staging維持NOT_VERIFIED／BLOCKED_LOCAL，OriginalWIP／G8停止85／Production不動。
 - 下一個必要外部變化是DO開放所申請機型；收到回覆後先由Root直接查case及actualsize，再按既有3h與預算runbook接真ephemeralrunner及完整Local gate，不需owner轉交技術內容。
-
 
 ### 2026-11-18 — 替代執行路徑說明／DO一般型大機器亦disabled
 
@@ -3402,13 +3222,11 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 官方核：AWS EC2 c7i.4xlarge為16vCPU32GiB，但帳號regionquota需實查，不保證新帳號立刻可開／價格未報。GitHub larger runner僅Team／Enterprise組織可用；x64 8CPU32GB0.022USD/min、16CPU64GB0.042/min（後者3h7.56USD超本預算；前者需另核8CPU profile，不直接用現有16CPU32）。Hetzner16CPU64GB同樣非現profile，帳號驗證/供應仍未核，不冒稱即開。
 - 向owner釐清是否已有AWS／GCP／Azure或其他已開通雲端帳號，只需平台名，不要傳金鑰。仍可做較小診斷／整合前準備，但不能替代完整60人瀏覽器門檻或解除Staging Local gate。DO#13013994保留不重送，所有既有WIP／G8／歷史cold／Production邊界保持。
 
-
 ### 2026-11-18 — Google Cloud唯讀檢查：登入正常／未開計費
 
 - Owner要求確認Google Cloud。無GCP connector／本機gcloud，Root用既有Chrome登入唯讀進console；現有Gemini API專案未連結billing，帳單帳戶管理未列出任何此登入帳號可見的billing account。頁面僅提供US300免費試用入口，不能當作已啟用或已入帳；16CPU quota／Compute API狀態仍未核，沒有以開VM測權限。
 - Root只開啟免費試用說明入口並保private截圖.git/gcp-billing-not-enabled-20261118.png；初Gemini提示自動消失造成close selector no-match，未變更設定。沒有啟用trial／建立billing／接受條款／填付款資料／改IAM/API／建VM或新credential。GCP current-account facts在.git/gcp-account-readonly-20261118.json。不得把Gemini專案當空白測試環境或默許變更既有用途。
 - 下一步若owner選GCP，須本人完成身分／付款方式驗證與服務條款；Root之後先核billing類型／trial剩餘／CPU區域quota與actualprice，再決定是否能沿用16CPU32GB M45。官方trial不允請求quota increase，不能保證開通後16CPU可用，不自動升付費帳戶。總實扣capUS5保持；Source9a7ea08／未push／60未run／Staging BLOCKED_LOCAL／OriginalWIP／G8停止85／Production保持。
-
 
 ### 2026-11-18 — GCP試用已生效／預算150／接續至現有Staging
 
@@ -3416,25 +3234,21 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Compute Engine API尚未啟用，page明示適用GCP服務條款。Root已提出一次action-time確認：在此新project啟API、隔離VM臨時SSH與colorplay_v1單次ephemeralrunner，PENDING；未clickEnable／newaccess／VM。Root同時先準備M46私有bootstrap，Source9a7ea08保持，不等額度而盲啟計費。
 - M46 brief docs/superpowers/plans/2026-11-18-gcp-bootstrap-m46-brief.md只private操作準備：精確新GCE身分／kernel／UID1001／Docker／officialrunner2.338.2 pin／無token，不登錄runner或Cloud呼叫，Root唯一審查。Staging部署在Local gate通過後再exactref/target核，Production不動；原Gemini API project不改。
 
-
 ### 2026-11-18 — M46私有GCP bootstrap Root同輪接受／Staging前置核定
 
 - M46bootstrap249行／8fake-tempFS＋compile綠、Root5metadata fake controls綠；同輪HOME覆寫移除／canonical home owner guard兩項clear，未解0。Root核12records＋3歷史inverse／Source9a7ea08產品零改；packet1f04f705ad2a029fd2ce35b78b299deee7559de00394cf1b20af9b00de917f86／Root3ff6364d2b75494fef4bfeb366035aacc5a7a0dbfc82e5503f28e597c4b54762。review docs/reviews/2026-11-18-gcp-bootstrap-m46-review.md。僅OFFLINE允，未Native或Cloud。
 - Root新read：remoteStaging d92be82ba188c3bf6618f1d70cd92f63a4eabfac為9a7ea08祖先，隔離VM分支尚不存在。git push --dry-run成功不更新ref；本機gh CLI default token invalid僅該CLI路徑，osxkeychain Git auth與connectoradmin可用，不因此新增憑證。Vercel已核project prj_Ovywu34q8URtgOQCtc5WwCNFz7oo／colorplay-staging-web／staging.colorplayapp.com，現Production-target staging部署dpl_F8E8GnMrZ3pehib2gfJhqx9NSJZq對應d92be82，非Production產品project。
 - GCP現active trial／抵免9,727／90天到2027-02-17，billing currency仍未直接觀測，未把local$當USD。API enable／newtemp SSH／GitHub ephemeralrunner一次action-time確認仍待owner；不升paid。Source／VM0／newaccess0／capacity未run，總US150上限已授，無重問預算。接續仍以新VM短時與保全清理節省成本，不讓等待啟計費。
 
-
 ### 2026-11-18 — owner當次核准Compute API與臨時存取
 
 - Owner明確回覆「允許啟用與建立這些臨時存取」：新的My First Project試用project啟Compute Engine API及適用GCP服務條款、本次隔離VM臨時SSH、colorplay_v1單次GitHub runner；測後清理新存取，總US150，不升paid。這取代此前PENDING，不再重問同一scope。
 - Root已在exactproject compute.googleapis.com頁點Enable一次，等待實際完成與quota；尚未宣稱成功、未建VM。M46 accepted私有bootstrap固定16CPU32GiB與UID1001／vendorhash，Source9a7ea08，後續仍先actualquote／kernel與真jobidentity；Local通過才部署現有Staging，Production禁。
 
-
 ### 2026-11-18 — Compute API已啟用／trial全域CPU12，準備M47窄移植
 
 - Root觀測到exact新project建立VM表單，Compute API enable VERIFIED（第一次未見進度，排除nav/banner後第二次啟用進度並到create form）；尚未建立VM／SSH／runner。16CPU32GB草稿出現CPUs(all regions)全域0/12、需要16，報價約US0.47/hr，不能執行原16tuple。這是quota而非金額不足，不請求升paid／不重送支援。
 - Root採12CPU32GiB隔離profile窄移植M47，保留16/free與所有60人cold／後端4CPU6GiB／資源效能門檻，待同一implementer＋Root唯一審查；修改不是容量PASS。brief docs/superpowers/plans/2026-11-18-gcp-12cpu-m47-brief.md，Source仍9a7ea08未push；先離線完成，不等待燒VM。總US150、Local過才現有Staging、Production禁保持。
-
 
 ### 2026-11-18 — M47 GCP12工具Root唯一審查接受／準備真VM
 
@@ -3442,24 +3256,20 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Final TS9/99（含10pure不另加），Linux86／privatebootstrap8＋compile，type/lint/format/import/static/diff0。Root195交叉controls PASS，49records／11freeze／2255protectedGit／M45 84／M46 12及index／Native36十inputs／Original7prefixpkglock核；未解0。packet f524c13174478dbf89aca0899950f512e229ef8eb102c4290099c42e13f5afda，Root af9c01ef8c4bb83b146f89f3f8fa972939f969bb066b70490c8d81bec117df1e；review docs/reviews/2026-11-18-gcp-12cpu-m47-review.md。
 - Compute API已啟用，globalCPU0/12／uscentral1 CPU0/200；12CPU32GB100GB草稿Ubuntu24.04／無SA快照OpsAgentHTTP開孔、instanceSSH only／blockprojectkeys，3hSTOP＋1mingrace，不autodelete證據。約US0.39/hr基本費、總US150不升paid。VM仍0／未登錄runner／Source未push；下一exact本機commit後oneVM／真kernel+GitHubidentity／fullLocal，Local過才現有Staging，Production禁。
 
-
 ### 2026-11-18 — M47固定71b5d97／GCP單台VM已建立，尚未容量測試
 
 - exact16paths本機commit71b5d97618d9a7513645fd66498067a701ed666a／tree7315047e9117d92c9ac3bf2fa7766a37a98db232，當下clean，未push。新GCP VM cp-capacity-20261118-6d9a14／us-central1-f／12CPU32GB100GB已建立並顯示running，bootstrap尚待receipt／hostkeypin／UID1001和kernel核；只送publicSSH，private不出本機、runner未登錄。
 - 真GitHub唯讀核：Staging仍d92be82、舊free仍1ebf3525、新VMbranch不存在。Recovery origin是保留的Original本機clone來源，其9c42不是Hosted current；第一次origin lsremote屬本機舊ref，不作Hosted證據，後續使用explicit HTTPS GitHub URL，不改origin／Original Git。總US150不升paid、VM3hSTOP＋1mingrace、證據保全後清理；G8停止85／Production不動。
-
 
 ### 2026-11-18 — GCP bootstrap APT逾時／M48有限續接準備
 
 - 真VM initial bootstrap在APT update180s COMMAND_TIMEOUT，未runner／容量。Google序列頁refresh單次讀到舊值，reload後見20:37:23 BLOCKED/APT；不把舊snapshot當仍執行。Root使用Google serial pin主機key後SSH readonly成功UID1001，原ROOT只有1691bytes 01-apt-update.log，hash與bootUUID已固定。只證原大型index下載時逾時，官方鏡像/GitHub Range1KiB可讀，精確慢因未證。
 - Root開M48私有續接brief，只同一VM／保舊ROOT證據／精確boot與failedlog gate／新ROOT-m48／同M47accepted base／APT減少language與限制network等待一次，不改signed sources、不skip kernel/UID/guard。Source71b5d97已pushVMbranch、真run44171162232/job134350306751/push attempt1 queued；無Native business執行，不是容量rerun。總US150／3hSTOP保持，勿新建VM或Production。
 
-
 ### 2026-11-18 — M48私有APT續接Root接受，尚未執行
 
 - 137行adapter／7fake+compile綠；Root8獨立控制（含FIFO nonblocking/metadata與argv閉合）綠，8records與M46原12／M47原49 hash核。唯一Root同輪未解0，packet a72711f6cfaf3f7fe69228b5a39e5c17a9547aa1bbb0d653f7dda4581c44a640／Root 96235e9a088417225a43e7b14b8713de60979e5928cfaa19633b4af78c02e227。review docs/reviews/2026-11-18-gcp-apt-resume-m48-review.md。
 - 只同一VM/同boot與failedlog嚴格核後改新ROOT-m48；APT單次減language、Retries1/network30s/ErrorModeany/update300，其餘acceptedbase保持，舊root不刪。Root下一透過pinSSH傳兩publiccode並一次續接，成功才token/runner；Source71b5d97／queued run44171162232不改，容量未run，US150/Production禁保持。
-
 
 ### 2026-11-18 — GCP VM1真job啟動／runner21與Source71b5d97核
 
@@ -3468,12 +3278,10 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Root後續S級環境設定：因Source Playwright/age還會aptupdate，新本次VM檔/etc/apt/apt.conf.d/99colorplay-capacity-temporary沿同5strictsettings（Languagesnone／Retries1／network30／ErrorModeany），不改signed sources/TLS。最初launcher本機nested quote syntax失敗無remote，之後Root把apt-config normalized Languages list誤當原文造成驗證stop；唯讀證實設定正確後只改驗證，不重寫cfg。最後官方svc install/start成功UID1001、Restart=no。
 - 真API run44171162232/job134350306751/push attempt1現在in_progress、runnerid21／name/label符合Source71b5d97618d9a7513645fd66498067a701ed666a；checkout進行，商業測試結果仍待。Source未變，G8停85／OriginalWIP／US150不升paid／Production禁。VM建立20:33:42UTC，3hSTOP＋1mingrace23:34:42計畫保；Root持續看證據先保全再清理。
 
-
 ### 2026-11-18 — GCP VM1 prebusiness停止，M49固定classic store準備
 
 - Source71b5d97真VM1首pull exit0/closureVERIFIED，但Docker29.1.3/containerd image.Id=manifest而舊完整閉包要求configDigest，因此B.startimageguard ADMISSION_INVALID；CLI未started、containers0volumes0、functional/15legs全NOT_RUN。不是網站40/60容量FAIL。RootZIP/cipher/age/Source/job/6files3722B全驗，bootstrap13logs16507B保，本機檔案在runtime/gcp-vm1/。FullDataRetention不宣稱。
 - 影響圖涵蓋start/container/observer/pinner與Edge/Kong/DB/REST shutdown；Root保持既有全部configDigest/shutdown guard，選Docker29支援classic overlay2前置，無版本downgrade或digestOR。M49小Sourceearlyadmission＋freshVM2私有bootstrap（NAME b4c72e/同project/12CPU32GB）、APT5strictsettings與classicreadback，離線同一agent/唯一Rootreview。brief docs/superpowers/plans/2026-11-18-classic-store-vm2-m49-brief.md。舊job不rerun，等正常final後停止VM1保disk節費；新Source/新VM2才完整Local，再Staging。US150／不升paid／Production禁保持。
-
 
 ### 2026-11-18 — VM1 finalfailure／ephemeral清理1／正常停機完成
 
@@ -3481,12 +3289,10 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Google Console exactinstance6554935358823400650顯示已停止，正常shutdown未勾略過；磁碟100GB保留、未刪，VM運算不繼續但disk仍計費，帳單未核。停止請求後頁面曾stale顯running/progress，reload再觀測stopped並保.git/gcp-vm1-stopped-20261118.jpg；不重點停止。G8原Local停85與Production不動。
 - M49准Source linux-local-bootstrap.py＋linux_bootstrap_contracts.py、小fake接線test_linux_local_bootstrap.py及focused test_linux_docker_store.py避免>500；不加helper/manifest，不改原configDigest/全部shutdown。PrivateVM2固定b4c72e，同project、12CPU32GiB，classic overlay2/no containerd explicitguard；未開始Cloud或新access。下一M49freeze／Root一輪review／exact新Source後fresh VM2完整測試，再部署現有Staging。
 
-
 ### 2026-11-18 — M49唯一Root審查接受／fresh VM2待實機
 
 - Source四檔 early classic admission；89 Linux（含focused3）／privatev2八項PASS，Root15controls與53records、2267protected、69history、Native36十項核。FIFO非阻塞與明確Docker start兩項P2同輪關閉；未解0。packet20376f53／Root a663e2c317ba8c9b8c466d26e1dcdd211cb2a6bf2d78ee06c36d5353d974c5c9；review docs/reviews/2026-11-18-classic-store-vm2-m49-review.md。
 - VM2草稿b4c72e/12CPU32GB100GB/3hSTOP＋1mingrace/noSA，startup14373bb10abd7a7e4ae49d51c5d191fc06055c97b371ecdea676226730d5df67；尚未建立、classic實機UNKNOWN、容量未run。下一exact新Source提交、freshVM2核、單次新job，再完整Local與Staging；舊VM1停機保disk仍計費、US150不升paid/Production禁。
-
 
 ### 2026-11-18 — M49 fresh VM2開機成功與新真job啟動
 
@@ -3495,7 +3301,6 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - courier4mockcontrols PASS，只mint1token/PAT不出本機，API核runner22/name/uniqueLabel。啟動器首次因root600APT檔用非root apt-config造成readonly驗證停止，svc未執行；只改sudo readonly驗證後官方svc install/start成功Restart=no。真API核新Source/job綁runner22已in_progress；functional/15legs未有PASS結論。
 - 下一持續守候第一原因failstop、實際下載age加密證據與檔案/schema核，再決定Local結果與Staging；VM1停機保disk仍計費/US150/不升paid/OriginalWIP/G8停85/Production禁。
 
-
 ### 2026-11-18 — VM2 fresh40 INCONCLUSIVE／完整冷證據已保
 
 - 真run44182576471/job134390502411/Sourcee2dbeb6/runner22：functional15 PASS，匿名3/10/20 PASS；fresh40 INCONCLUSIVE，remaining12未升級。40sent/verified/completed/Authcreated均真、unknown0，sendBarrier40/40 VALID220.079ms、entry103.228ms，generator healthVALID/PSS4.275GiB/NodeRSS約440MiB/PSI0/swap0/OOM0；非generatorlimited。
@@ -3503,19 +3308,16 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Rootbusiness recompute核3legs＋functional15，fresh40保原INCONCLUSIVE。40個planroot finalconfirmed精確0..39皆存在，故不能稱DBreadback失敗；同一agent readonly定位capacity-registration.ts cohort尾runtime/observer finalpredicate，該snapshot未落地、具體firstcause仍UNKNOWN。Journey44.8s錯誤在partialreadback finally後，retention錯誤更晚，不能誤當首因。Rootreceipt .git/gcp-vm2-root-first-review.json d65b23f4017de1de4250d22c294a75b5c0eb8ada9d8ba6d1cec23309945cd816。
 - job正常10min evidencehold中（不是重跑），待final/ephemeral清理後停VM2保disk節費；本輪不部署Staging。唯讀Staging仍d92be82，120remote/121local/remoteOnly0，唯一pending20261116000100/SHA4379d0ce…。Authhealth現v2.198.0、官方burst仍30，非Hosted實測FAIL；未Hostwrites/noProduction，US150不升paid。
 
-
 ### 2026-11-18 — VM2 final停機與M50一次finalgate診斷
 
 - run44182576471最終completed/failure，attempt1/Sourcee2dbeb6；runner22已自動移除1、repo runners0。Google exactVM2 instance3132945892589532355確認已停止（正常1mingrace，未勾略過；reload後讀最終狀態），保100GB磁碟仍計費，無新VM開始。證據.git/gcp-vm2-stopped-20261118.jpg／Rootfinal 227160a5970457e960648f9834c8b307da950d04a566e7a23bac2358b3504e00。
 - Root採M50單次完整安全finalgate snapshot＋runtime/proxy/requestobserver firstreason，原predicate/counter/guards/門檻保持；原因UNKNOWN，不做無根據產品修法。brief docs/superpowers/plans/2026-11-18-registration-final-gate-m50-brief.md，同一agent離線實作、Root唯一review；非重跑舊job。
 - Root僅離線準備下次VM名稱c7d93a：M49accepted v2一處NAME替換inverseexact／8TempFS假測試PASS，startup86860551cf2de06aa216b06acfe947f56ef71bfd8ca4980fa10a43479e8fc617；未建立，不是Native證據，必須等M50review與exact新SHA。舊M49packet及VM1/VM2證據不改，US150不升paid/Production禁。
 
-
 ### 2026-11-18 — M50 Root唯一review接受
 
 - 5Source/5tests凍結、47focused與fullchecks綠；Root45獨立controls PASS，36records/2267protected/M49原85rows/Original7+trueprefix核。未解finding0，packetd733891de7ed5d1916f515f82ac403daed71676fd316f74b2d29a50ee03b9e88／Root7c49bb653e40bd816f7994a725eeddb3aa5cb9dd007d40ac270ce33adc8280b0。registration504（原514）窄例外保原flow，其餘≤500；review docs/reviews/2026-11-18-registration-final-gate-m50-review.md。
 - 同一實際snapshot/原短路predicate＋事件firstreason，舊VM2 INCONCLUSIVE不回填，新Native未run。Root下一exact新Source後freshVM3 c7d93a/us-east1（us-central1 SSD200/250保舊disk，避免刪證據）同12CPU32GB100GB、3hSTOP+1m/noSA/Ops/HTTP，估價0.39/hr；尚未create。M49一處NAME替換868605…/8fake僅離線資格。VM2結果另docs/reviews/2026-11-18-gcp-vm2-fresh40-result.md；US150不升paid/Production禁。
-
 
 ### 2026-11-18 — M50 exact新SHA／VM3真job啟動
 
@@ -3524,13 +3326,11 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Root courier4mock controls PASS；一token一ephemeral runner23/PAT不出本機/BOM處理沿用，API獨立核ID/name/label及真job/Source；官方svc正常start Usercp-capacity/Restart=no，無前兩次helper問題重現。GitHub已in_progress；VM1/2均停機保disk仍計費。
 - 下一本次完整Local第一原因failstop、真加密download/custody/business核，仍US150不升paid/Production禁；Staging/Hosted均未改。
 
-
 ### 2026-11-18 — VM3首因更正／停機與M51有界N2對照
 
 - VM3真Source00704e8/run44189447502/job134414633079最後completed/failure；functional15與anon3/10/20 PASS，fresh40 phaseentry/skew268.381ms>250/Auth0，finalgate檔0。Root先前「再停尾端」進度說得太早，已Codex更正；M50尾gate原因仍UNKNOWN，不能當診斷失敗或網站註冊FAIL。947files214168261B實際age+冷備份+business核，25bootlogs30940B保；詳docs/reviews/2026-11-18-gcp-vm3-entry-result.md。
 - GoogleConsole真CPU IntelBroadwell vsVM2 AMDRome；healthVALID但barrier無效。Root准M51一次同M50程式的N2/minIceLake12CPU32GB100GB/3hSTOP+1m對照，不改backend4CPU6GiB/browser6GiB/Node2GiB/250ms及其他門檻。新commit只環境plan/結果，10Source/tests hash逐檔相同，不搬舊PASS；私有startup4ff09cd9…一處NAME替換/8fake PASS。Root 606f6bdba4fe72cff6e968b3e8913af2dfab5b95e115c3d80518351ee419b397；docs/superpowers/plans/2026-11-18-n2-environment-m51-plan.md。
 - VM3 exactinstance369862048023145784已Console確認停止且保截圖.git/gcp-vm3-stopped-20261118.jpg；runner23已移除1/repo0，原3disk仍計費。N2草稿d9e462/us-east1-c/minIceLake尚未建立，UI長期折扣0.44/hr不作3h價，採0.56/hr×3≈1.68base另extras；US150不升paid/Production禁。若一次N2仍無法250ms，停止單台12CPU generator假設，不盲換/放寬；下一exactSHA後實機核才新push attempt1。
-
 
 ### 2026-11-18 — M51固定N2真機／新job已啟動
 
@@ -3539,25 +3339,21 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Publicstartup4ff09cd9…單處NAME替換/8fake；Google serial pinLKwswxew…與boot73509c5e…，SSH核12CPU/31.335GiB/UID1001/Docker29.1.3 classic/空Docker。courier4mock PASS、一token/一ephemeralrunner24，API核name/label/Source/job；官方svcUsercp-capacity/Restart=no真啟動。
 - 下一本次完整functional15/原15legs、firstcausefailstop、實際age/cold/business核；若同250ms仍過不了，不盲換機/放寬，停止此單機假設。US150不升paid/Production禁/Hosted0。
 
-
 ### 2026-11-18 — VM4 N2同步門檻通過／local logout403首因已證
 
 - Source0270cac/run44196367479/job134438781467/attempt1，functional15與anon3/10/20 PASS，fresh40 INCONCLUSIVE；40sent/verified/completed/Authcreated，entry67.09ms/send213.971ms<250。原finalgate actor0 HTTP403/phase null/UNKNOWN、unexpectedHttpErrors1，其餘39原短路未觀測，不能倒填。
 - Root fixedhostkey/boot/source/exact ownedcontainerid/name/image核，Auth/Kong均stopped，唯讀47s window：40個POST local logout403/session_not_found、無其他HTTP>=400；SDK本地signout契約容許此情況。M50觀測已定位工具全域>=400誤判，不是網站權限概括FAIL；M52精確lifecycle+code有界修正，brief docs/superpowers/plans/2026-11-18-onboarding-logout-m52-brief.md，同一agent離線／Root唯一review，不回填舊PASS。
 - 實際artifact14380541746/ZIP43452189B/cipher38514ce2…/1388files215956355B age核，cold1335/8自然stop/2DB127tables/3volumeshash核，未restore；25bootlogs30940B保runtime/gcp-vm4。詳docs/reviews/2026-11-18-gcp-vm4-logout-result.md。job23:31:20UTC finalfailure、runner24自移除1/repo0，Root正常stopVM4保100GBdisk待Console終態；磁碟仍計費／US150／不升paid／Hosted0／Production禁。
 
-
 ### 2026-11-18 — VM4 Console已停止／M52離線實作中
 
 - exactinstance8771879674655629553 GoogleConsole確認「已停止」，正常shutdown未勾skip，100GBdisk保留仍計費；截圖.git/gcp-vm4-stopped-20261118.jpg。舊4VM皆停，GitHub單次runner24已移除1/repo0，沒有運作中測試VM。Rootfinal.git/gcp-vm4-root-final-review.json包含實際custody/business/finalgate核與停機截圖hash。
 - M52同一implementer已接精確預期logout辨識，Root唯一review；不回填VM4 INCONCLUSIVE，未改Staging/Hosted/Production，US150不升paid。下一freeze/review/exact新Source及fresh Local驗證，原完整矩陣不減。
 
-
 ### 2026-11-18 — M52離線中／下輪N2草稿不計運算
 
 - Root offline startup5e3eceb2172d4b270e150c7c3eb42ec1ee3e18fcadf6135618cef95da98983fd，只VM_NAME改e83f26/inverse與M47base exact/8fake PASS；未新建VM、無Native。Console草稿us-west1-b（保central1/east1各200/250GB舊disk，避免刪證據）、N2 custom12/32/minIceLake、Ubuntu24x64 image20261105/100GBbalanced保disk，3hSTOP+1m/noRestart/noSA/Ops/snapshot/HTTP，原publictestkeyonly/projectSSHblocked，Startup textarea與本機byte內容真exact；未按Create，待M52 Rootreview/exactSHA。0.56USD/hr保守base估3h1.68+extras。
 - 唯讀Billing現trialactive/90days至2027-02-17，credit顯$9727但currency UNKNOWN不當USD；費用頁$0且明示數小時至>24h延遲，不宣稱實際花費0。US150、不升paid；四VM皆stopped保disk計費，runner0。Rootowned .git/m52-vm5-startup/**不進Source。
-
 
 ### 2026-11-18 — M52 Root唯一review一項P2／同輪修正中
 
@@ -3565,13 +3361,11 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Root獨立exported helper真重現：error_code原unexpected＋escaped duplicate變session_not_found、code原401＋escaped duplicate變403，finalize均1/預期0。P2為raw literal-key regex不能阻擋JSON.parse last-wins，.git/m52-root-initial-controls.json保2違反；同一agent同輪回修，原packet不覆蓋。
 - agent回報已改完整JSON string-token key掃描，只允canonical code/error_code/msg且每key唯一，再原closed parse；真RED2→GREEN focused52、helper325/test497，Root尚待v2freeze＋獨立controls，不預先ALLOW。下一final核/同輪delta，exactSource後freshVM5；草稿未Create／全部舊VM stopped／US150/noPaid/Hosted0/Production禁。
 
-
 ### 2026-11-18 — M52同輪P2關閉／Root唯一review接受
 
 - 6owned Source/tests，v2packet2d6943d8bfc3d00dae1f34e0e1dfaf7da567faa50905929044e461be9de7f01a／101records43checks全hash核，v1原61records/manifest不動。原P2 escaped duplicate key已在parse前以canonical/unique token資格拒，真RED2→GREEN；未解0。Root7files104tests＋新19與原45獨立controls PASS；worker最終fullchecks0，初FAIL資格詳review。
 - Root核2279非ownedGit/operator45/history121/Original7+true575959prefix/pkglock/M51 private startupadapter不動，原registration.ts gate+Rootreadback全byte不動，6檔均≤500。Rootreceipt.git/m52-root-review.json SHA3fd3aae2e4be87d235e98c3c6bb7144c1ac7ce7d6e676858f3299f1cef92abd0；docs/reviews/2026-11-18-onboarding-logout-m52-review.md。
 - 只離線接受，VM4舊真run保INCONCLUSIVE，無Local60/Hosted/phasePASS。下一exact新Source10paths、freshVM5草稿e83f26/us-west1-b同N2minIceLake12/32，3hSTOP+1m/noSA/Ops/HTTP，原完整矩陣／US150/noPaid/Production禁；舊4VM仍stopped保disk計費。
-
 
 ### 2026-11-18 — M52 exact新Source／VM5新job已啟動
 
@@ -3580,32 +3374,27 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - courier4mock PASS，一token/一ephemeralrunner25，API獨立核name/label/Source/job綁定；官方svc Usercp-capacity/Restart=no真啟動，空Docker後freshjob in_progress。Rootstart .git/gcp-vm5-root-start-receipt.json；尚無本輪容量結果。
 - 下一functional15＋完整15legs firstcausefailstop、真age/cold/business核；舊4VM皆stopped保disk計費、US150/noPaid/Hosted0/Production禁，Local未過不部署Staging。
 
-
 ### 2026-11-18 — VM5 before_send父取消／M53完整首因診斷
 
 - Source4ada65a/run44206460914/job134473538252/attempt1，functional15+anon3/10/20 PASS，fresh40 INCONCLUSIVE；phasebefore_send/752.658ms/completed0/Authcreatednull/ownershipKnownfalse，未browser entry/OTP/M52gate。Node PARENT_SIGNAL先journeyfail/finally；outerSIGKILL/4651.866ms/stderr0/residue0/sourceFrozen，health0samples/stale不能當健康有效。
 - 父deadline1490s/overflow/cancelled混合分支未保存；cancelled含父signal或trackException，具體首因UNKNOWN。不能猜exec/PIDrace/UID0/OOM，也不以不同Python/Nodeclock相減。M53只補原實際firstdecision/stage/code/errno/counts/stop各步的NON_AUTH sideband，原guards/timeouts/signalorder/receipt保持。brief docs/superpowers/plans/2026-11-18-parent-stop-m53-brief.md，同一agent離線/Root唯一review；無產品或M52更改，operator45只三既有entry hash更新。
 - 真artifact14384362874 ZIP42687536B/9805707b…/cipher0840c264…，Rootactualage833files213185327B/cold780/8自然stop/2DB127tables/3volumeshash核，未restore，25bootlogs30940B保runtime/gcp-vm5；Rootfirst .git/gcp-vm5-root-first-review.json。詳docs/reviews/2026-11-18-gcp-vm5-parent-stop-result.md。job00:37:15UTC finalfailure，runner25移除1/repo0，Root正常stopVM5保disk待Console終態。US150/noPaid/Hosted0/Production禁。
 
-
 ### 2026-11-18 — VM5停止終態／M53待最小介面具體化
 
 - GoogleConsole exactinstance6000752327006442416核「已停止」，正常shutdown未勾skip，100GBdisk保留仍計費；截圖.git/gcp-vm5-stopped-20261118.jpg。runner25已移除1/repo0，五VM全stopped。Rootfinal .git/gcp-vm5-root-final-review.json SHA5cfd405f7bc07dc9f7b2109d43a8d0ba8ca3403d5dbc4610a1aba8c0eb265bf0。
 - M53同一agent先具體化closed sideband／writer失敗語義；在Root核介面前不改Source，原guard與signalorder/timeout不動。沒有新Native/Cloud，US150/noPaid/Hosted0/Production禁。
-
 
 ### 2026-11-18 — M53最小介面已拍板／只離線實作
 
 - Root核ParentStopDiagnostics純memory optional參數，保原run_child return/authoritystdout/PASS；caller重用原pre snapshot observed.identity jobSha/bootSha與expected profile，stop/close後try/finally私有wx600 sideband；無新proc/context/clock採樣或callback I/O。writer best-effort不改原結果／exception，缺診斷明記UNKNOWN，不宣稱診斷或資料完整已驗。
 - 同一agent已可直接actual exported run_child fake RED→實作，無Cloud/Native/Hosted；Root唯一review，operator45只三既有entry hash更新。五VM均stopped保disk計費/runner0，US150/noPaid/Production禁。
 
-
 ### 2026-11-18 — M53 Root唯一review接受／原guards全保
 
 - 5owned Source/tests，packet9c9af64621670b8b6d3b2eeb4f32ac6d756a77ac01262c85dfebc784a5842cba/59records22checks全hash核，未解finding0。memory firstcause閉集與原track/stop實際值，caller原pre snapshot binding＋stop/close後wx600 sideband，writer best-effort原return/exception/PASS不動、缺診斷UNKNOWN。
 - worker12新pure＋2舊pure分列PASS，必要checks最後0，初RED/interfaceERROR/deadline fake/setup/style失敗原保；Root19額外controls含11原新版operation/clock trace、PID/UID拒絕、敏感錯誤、caller exception identity與VM5真profile job/boot hash對照PASS。Source347/143/114等均≤500；Root2284protected/operator其餘42/283history/Original7trueprefix/pkglock/M52六檔全核。Rootreceipt.git/m53-root-review.json SHAde0c5322f6e33c91c35cf47e257e28ec62dd4198ddd0361a826230e91544f651，詳docs/reviews/2026-11-18-parent-stop-m53-review.md。
 - 僅Source工具接受，VM5原首因UNKNOWN/M52未真機走到，舊結果不回填。五VM仍stopped/runner0，VM6草稿f14b8c同N2IceLake12/32/us-west1-b未Create，startup a435ad2a…只NAME替換/8fake與UI textarea exact；下一exact新Source/fresh job＋完整矩陣與真sideband/cold核。US150/noPaid/Hosted0/Production禁。
-
 
 ### 2026-11-18 — M53 exact新Source／VM6 zone-a新job啟動
 
@@ -3614,7 +3403,6 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 實際VM6 f14b8c/instance2354073094086245965/us-west1-a/136.66.239.179，01:34:26UTC建立；Console actual/min IceLake/officialUbuntu24x64 image20261105、3hSTOP+1m/noRestart/noSA/Ops/snapshot/HTTP核。Google serial兩收據一致、bootff8e50bc…/hostkey66/W7zHf…固定，SSH12CPU/31.335GiB/UID1001/systemdcgv2/classic29.1.3＋空Docker真核。
 - courier4fake PASS，一token一ephemeralrunner26，API核ID/name/label與新job綁定；officialsvcUsercp-capacity/Restart=no真start。Rootstart.git/gcp-vm6-root-start-receipt.json；尚無本輪容量結果。下一functional15/原15legs firstcausefailstop＋真ParentStop sideband/contextMatches/collection/age/cold/business核；舊5VM皆stopped保disk計費，US150/noPaid/Hosted0/Production禁。
 
-
 ### 2026-11-18 — VM6 functional Live FAIL／實際 M53 sideband 已核
 
 - Source e7063d63d4ed4ee6dff4af87db4ac2e6430fe46d、run44217510715/job134510925057/attempt1：前9功能階段PASS，live_finalized FAIL、後5及所有容量legs NOT_RUN；無Local40/60或M52真finalgate證據。
@@ -3622,18 +3410,15 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - artifact14389367163 ZIP25093455B/63f6da64…、真age490files155644637B/cold455/8stop/2DB127tables/3volumes hash與metadata核、未restore，25bootlogs30940B保runtime/gcp-vm6；Rootfirst .git/gcp-vm6-root-first-review.json，詳 docs/reviews/2026-11-18-gcp-vm6-functional-live-result.md。producer cleanup失敗與outer程序已釋放不同層，原FAIL保留。
 - VM6待10min hold完成後正常stop。Console磁碟清單六個各100GB，f14只有zone-a；無zone-b殘留列、無刪除。六台最大配置base估算US10.136非帳單，US150/noPaid/Hosted0/Production禁；Local未過不部署Staging。
 
-
 ### 2026-11-18 — M54合併診斷範圍核准／同一agent只離線
 
 - 唯讀定位confirmed在結算前，operation與finally錯會被原safely壓碼；APP_DOCUMENT未保存Root分支/意圖，不能定report goto或timeout。凍結一次完整診斷：teacher每題尾段與結算/report全部step＋operation/cleanup兩首因＋actualPage/ownedroute/CDP唯一關聯，原順序/guard/timeout/health/PASS不改。
 - 只5Source/4tests，無產品/operator/M52/M53/exporter/workflow；functional-health既有613行本輪窄cap650、其餘≤500。詳 docs/superpowers/plans/2026-11-18-functional-live-finish-m54-brief.md。同一agent actual factory fake RED→離線，Root唯一review；不Native/Cloud/commit。VM6證據已保、待hold完成stop；US150/noPaid/Hosted0/Production禁。
 
-
 ### 2026-11-18 — VM6已停止／M54離線中
 
 - job44217510715/134510925057於01:59:14UTC completed/failure，runner26自動移除1/repo0。Root保真age/cold資料後正常shutdown，不略過grace；GoogleConsole exactinstance2354073094086245965顯示已停止（UI更新中），截圖.git/gcp-vm6-stopped-20261118.jpg；100GBdisk仍保留計費。六VM全部stopped，無刪除/Hosted/Production。
 - Rootfinal.git/gcp-vm6-root-final-review.json SHAc2b2780f59fca4329f07317964f80d4a17dfb3b59d797d70f65bd11bd958e2ff。M54同一agent已actual journey假ports有效RED（前setup失敗原保）、正在5Source/4tests離線；原M52/M53/operator/產品與health/timeouts不動，Root唯一review。離線只預備VM7新名稱a76d91 startup13ccefd2…/8fakePASS，未Create/region未定/Source待M54審查；不舊job重跑。US150/noPaid。
-
 
 ### 2026-11-18 — Staging Auth 控制台唯讀核對／未改設定
 
@@ -3641,13 +3426,11 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 官方GoTrue v2.198.0 Source已另存：token密碼登入/refresh共用limiter、constructor burst30；UI refill額度不等於burst容量。以上是同IP60的風險依據，非實際Hosted60 FAIL或PASS，不以假IP、跳OTP或改額度充當通過。下一Hosted窗口仍須exact候選/遷移唯一pending/受控信與上限/收斂方案；先完成Local。Staging branch唯讀再核仍d92be82…，沒有merge/deploy/Hosted寫入。
 - 安全收據.git/staging-auth-readonly-complete-20261118.json。M54同一agent離線繼續，六VM全stopped/US150/noPaid/Production禁。
 
-
 ### 2026-11-18 — M54唯一review三項P2／同輪合併修正
 
 - Root直接actual helper假ports核出：外層未包步驟錯誤誤標已完成step；intent結束後新request誤配舊generation；main Root request與外iframe CDP同URL被稱OBSERVED。初3FAIL原保.git/m54-root-initial-controls.json，非Native。須全補UNKNOWN/active lifecycle/main-frame provenance，原操作/health/exception不改。
 - Root准最小純type第6Source functional-document-observation-types.ts≤180與dochelper≤500，為lint格式及主frame被動觀測留空間，無產品/operator/M52/M53擴張。雙brief追加，同一agent同輪修正/保freeze歷史，Root只關finding與最後checks。
 - VM7 a76d91草稿us-south1-a同N2minIceLake12/32/100新disk保留，3h正常STOP+1min/noRestart/noSA/Ops/HTTP/snapshot全UI核、新startup13ccefd2…exact；未Create。新區域保留目前六disk（原三region各200/250GB不足再加100），草稿base運算465.73/月÷730約0.638/h，以0.67/h保守保留3h約2.0212，不含IP/流量/稅；US150/noPaid。REST等效editor可見input只有294字截斷而JSONparse失敗，私有partial保留，未當完整配置證明，未執行REST/CLI。
-
 
 ### 2026-11-18 — M54唯一review接受／最終690＋Root16 controls
 
@@ -3656,19 +3439,16 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 私有ASTstyle工具曾污染新fixture前綴，已停用；原25assertion AST/19cases保留並Root核初可見/最終fixture，未聲稱缺副本的污染前bytes相等。primitive throw單行具理由lint例外保原拋值。Doc504 cap510具理由/health622 cap650，puretypes82不runtime循環。Root2287非owned/operator45/M52/M53/Original7 true575959prefix/pkglock核。Rootreview.git/m54-root-review.json SHAcd642c1a39975be0d7f7657a8b14f5188e21829f7a61e1c75072a44cc7ab1c96；詳 docs/reviews/2026-11-18-functional-live-finish-m54-review.md。
 - 只Source工具接受，不把VM6 FAIL/M52未走到/Local60當PASS。下一exact14paths新Source與freshVM7原矩陣，草稿a76d91/us-south1-a未Create；六VM均stopped保disk計費/runner0/US150/noPaid/Hosted0/Production禁。
 
-
 ### 2026-11-18 — M54 exact新Source已固定／VM7配置未啟動Native
 
 - exact14paths commit be38f50b9b274a66a03244123e8ce85590971300/tree1c9077f15d8e845fa6701f21acafd2baf749f4c4，parent e706；Rootreceipt.git/m54-commit-receipt.json。GitHub VMbranch唯讀仍e706，尚未push/排新job，repo無新增runner。Source vercel.json該VMbranch deploymentEnabled=false真核；get_project未回git欄，初缺欄按UNKNOWN停止檢查後改核正確Source設定，無Vercel寫入。
 - VM7 a76d91/us-south1-a建立回resource pool unavailable；同區域自動選區重新提交後仍回同a區錯誤，無boot/Native/新runner，兩失敗receipt與截圖保.git/m54-vm7-startup，orphan disk仍待真清單核。每次retry UI重設SA/Ops/snapshot，Root建立前全改回原限制，startup13ccefd2…exact；未放寬CPU/時限/PASS。
 - 先查官方regions-zones表：south1-b沒有列IceLake，c有列，但不代表當下capacity。改同規格explicit us-south1-c草稿中，第三次若仍失敗停止此配置嘗試並重新檢視可取得性假設，不盲目連續Create。六舊VM全stopped保disk、US150/noPaid/Hosted0/Production禁。
 
-
 ### 2026-11-18 — VM7達拉斯配置三次失敗／停止該區域Create
 
 - explicit south1-a、auto仍報south1-a、查官方平台支援後explicit south1-c三次均resource pool unavailable。第三error截圖/receipt.git/m54-vm7-startup/third-placement-error-20261118.jpg與zone-c-create-failure.json；無boot/新runner/新job/Native，Source be38未push。不是網站功能或容量FAIL。
 - 依三次失敗停止規則，停止達拉斯Create；存疑假設為「達拉斯此刻可取得指定N2 IceLake12/32配置」。官方支援表不提供即時容量。下一先唯讀核失敗disk殘留/另一美國區域quota與費用，保原硬體/時限/guard/PASS；不改成較低標準或升paid。六舊VM已stopped，資料disk保留；US150/Hosted0/Production禁。
-
 
 ### 2026-11-18 — M54 fresh VM7新job開始／六舊VM全stopped
 
@@ -3677,7 +3457,6 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - exact14paths be38f50b9b274a66a03244123e8ce85590971300/tree1c9077f15d8e845fa6701f21acafd2baf749f4c4 normalFF推隔離VMbranch（Source vercel git.deploymentEnabled=false），新run44227747989/job134544990007/push attempt1；repo0→唯一ephemeralrunner27，4courierfakePASS/一token一POST；API核ID/name/label/Source真綁，officialsvcUsercp-capacity/Restart=no/MainPID3571真start。新job已in_progress、checkout成功。
 - Rootstart.git/gcp-vm7-root-start-receipt.json；讀進度.git/gcp-vm7-read-business-progress.py。下一functional15→原15legs firstcause failstop，真M54/M53 sideband與age/cold/business核；最晚05:56:58UTC+1m STOP。七台已配置base最大估算US12.1572（非帳單，不含IP/流量/稅），六舊stopped/七disk保留仍計費；US150/noPaid/Hosted0/Production禁。尚無本輪Local容量結果。
 
-
 ### 2026-11-18 — VM7真40完成但CODE拒絕／M55閉集parser診斷
 
 - be38/run44227747989/job134544990007：functional15+anon3/10/20 PASS；fresh40 wcr-261118-8a2ec8494ce2 INCONCLUSIVE，40completed/Authcreated、ownershipKnowntrue、entry58.027/send171.415ms均有效<250。M52 finalgate真執行REJECTED，actor0 AUTH_LOGOUT403/bodyReads1/decoded92/firstFailureCODE；39短路UNOBSERVED。非父取消，M53五份真Source/profile/job/boot binding核、firstCause null/no timeout/overflow/cancel/residue0。
@@ -3685,25 +3464,21 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - owned stopped Auth/Kong03:15–03:17UTC真投影40session_not_found/logout403，無其他>=400；非actor0 wire body。CDP/UTF8 read已通，CODE收斂lexer/JSON/schema，不能擴user_not_found或schema。CODE revoked之後login flagsfalse不是UI失敗。M55只閉集parserReason＋已知欄type/presence/unknown count，原決策/read/parse/lease/discount/PASS不變，先最小介面Root核後同agent離線；brief docs/superpowers/plans/2026-11-18-onboarding-body-diagnostics-m55-brief.md。
 - 真job03:27:02UTC completed/failure、runner27auto移除/repo0；Root已送正常STOP VM7保100GBdisk、待Console終態。Rootfirst.git/gcp-vm7-root-first-review.json，US150/noPaid/Hosted0/Production禁。尚無Local60證據，Staging未部署。
 
-
 ### 2026-11-18 — VM7停止終態／M55待最小介面
 
 - GoogleConsole exactinstance8920317743019896087已停止，正常shutdown/未skipgrace，100GBdisk保留；七VM全stopped/runner0。截圖.git/gcp-vm7-stopped-20261118.jpg；Rootfinal.git/gcp-vm7-root-final-review.json SHAb5770abde35d5d2510902726ea9bcb78070b26dfa624626bb9750093989f5575。詳 docs/reviews/2026-11-18-gcp-vm7-onboarding-parser-result.md。
 - 真age1394/cold1341/全部hash與metadata核，未restore；40completed/barriers有效但CODE parser仍UNKNOWN，60未跑。M55先最小介面Root核再同agent離線，保原CODE拒絕/keys/schema/parse-read次數，不猜body/不擴例外。US150/noPaid/Hosted0/Production禁。
-
 
 ### 2026-11-18 — M55最小介面核准／同agent離線實作
 
 - Root准既有logouthelper＋新purememory diagnostics helper＋newfocused test3paths。嚴bodyDiagnostics固定stage/reason首因、topKind、10public keys presence/type、code/error_code固定值分類；TOKEN_SEEN非top-level、早退其餘UNOBSERVED，僅原parse/safeParse返回後descriptor投影，不加scan/parse/read。unknownKeyCount非三keys授權集合，knownalias仍原拒。diag故障UNAVAILABLE、不改原判定/exception/health/discount。
 - 原497test、M52其他五檔、M53/M54/operator45與產品全byte保；actual factory RED/次數順序/隱私與lifecycle對照，Root唯一review，不泛用ASTstyle/Native/Cloud/Git變更。七VM全stopped/runner0/US150/noPaid/Hosted0/Production禁。
 
-
 ### 2026-11-18 — M55閉集body診斷唯一審查通過／待fresh VM8
 
 - 4paths freeze-v2 b42f0789…；worker packet89bb3423…53records23checks，最終33files388tests與type/lint/globalformat/import/diff/static0，Root220組be38/new actual factory行為lifecycle parity全PASS。原497test byte保；新診斷不改原lexer/parse/schema/lease/revoke/discount/PASS。
 - Root獨立重現既有runtime fixture讀取數落差並核6檔be38等值，最小3literal130→132/330→332/30→32 inverse精確；其餘assertions/runtime/IO/closure保。初2RED/11privacyFAIL/舊fixtureFAIL/style/static/重複log資格全保，唯一review open0。原目錄7docs/真575959prefix/pkglock與2298非ownedtracked、operator45保。
 - Review docs/reviews/2026-11-18-onboarding-body-diagnostics-m55-review.md，Root.git/m55-root-review.json。下一精確Source commit/push隔離branch，fresh VM8 west2-a同N2 IceLake12/32/新100GBretain/3hSTOP+1min/noSA/Ops/snapshot/HTTP；offline8controls PASS/name-only exact，尚未Create/runner/job。七VM均stopped、原VM7 CODE subreason仍UNKNOWN/60未跑/Staging未部署。US150/noPaid/Hosted0/Production禁。
-
 
 ### 2026-11-18 — M55 fresh VM8單次job開始／七舊VM stopped
 
@@ -3712,12 +3487,10 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 本機新startup檔初mode0644被private0600 guard擋在SSH前，Root直接重現同guard、縮權0600且內容hash不變後繼續唯讀preflight；無registration attempt/job執行於失敗時，資格.git/gcp-vm8-local-preflight-mode-correction.json保。不是Native重跑或放寬guard。
 - Rootstart.git/gcp-vm8-root-start-receipt.json；七舊VM仍stopped，八disk保留；八台已配置base最大保留US14.1784非帳單，disk估84/月、IP/egress/tax未含，實際帳單UNKNOWN。US150/noPaid/Hosted0/Production禁。下一真functional15→原15legs firstcause failstop，actualage/cold/business核；Local60尚未跑，Staging未部署。
 
-
 ### 2026-11-18 — WB5 Hosted移植唯讀impact map／未動Source或Hosted
 
 - 同implementer只Source分析：hosted-config/provenance純guards回executionAuthority NONE，尚無Hosted runner接線；不能改LocalURL冒驗。需獨立admission/nonce/freshness、runtime/browser/functional ports、真Gmail/OTP relay、owned fixtures/oracle/retention、獨立workflow及operator/app SHA鏈。完整六身份/Admin需額外明授scope，Local106規劃不是Hosted106寫入授權。
 - 詳 docs/reviews/2026-11-18-wb5-hosted-port-readonly.md（impact map非review）。建議先有界admission+fakeIO，再mail/fixture/oracle，再functional/15legs adapters；保Localguards/原SLO/Root-only秘密/Production禁，不先改限額。Root仍執行VM8 M55 exact47f2812；本輪functional15與anon3/10/20 producer回PASS、fresh40進行中，待actual export/Root核後才定案，60未跑。
-
 
 ### 2026-11-18 — VM8 actual保留核／M56官方modern契約準備
 
@@ -3726,19 +3499,16 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 官方Auth2.192 tagcommit5acfdea…真modern code:string/message:string，API-version>=2024-01-01；本機auth-js2.110.2實際預設該header，產品無override。確定M52legacy-only契約缺口，但原wire body值仍未知，不能追認舊PASS。M56雙strict branch只精確session_not_found、有界message，mixed/其他碼/403拒、原lease/body/postlogin/oracle/SLO保；brief已雙根。同agent先最小介面核後RED，Root唯一review。
 - report docs/reviews/2026-11-18-gcp-vm8-modern-auth-format-result.md；Rootfirst .git/gcp-vm8-root-first-review.json。VM8等待原10minhold/job自然結束再Root正常STOP保100GB；七舊VM已stopped。US150/noPaid/Hosted0/Production禁，60未跑/Staging未部署。
 
-
 ### 2026-11-18 — VM8已停止終態／八VM全stopped
 
 - 原hold自然完成，job134565843675於04:20:09UTC failure；runner28auto移除/repo0。Google Console exactinstance7403469309937229717已停止，正常shutdown未skipgrace，100GBdisk保留。Rootfinal.git/gcp-vm8-root-final-review.json SHAf445408494e7ca6dee63da4b028e9404cc30e39baccee609f9d492cda439dced，截圖.git/gcp-vm8-stopped-20261118.jpg；八VM全stopped。
 - M56同agent離線實作後34capacityfiles434PASS，正在最終style/checks及Root唯一review；未另Create或push，VM9只offline name-only8fakePASS準備。原VM8 INCONCLUSIVE/60未跑/Staging未部署，US150/noPaid/Hosted0/Production禁。
-
 
 ### 2026-11-18 — M56雙格式精確契約唯一review ACCEPTED
 
 - 3paths frozen92f12524…，packet9ef74635…36records15checks真hash核；34files434PASS在新test-only等價style前，freeze-v2後direct3/130＋type/lint/globalformat/import/diff/static0。初actual-helper2RED與lint4FAIL保。Root220組M55 legacy/lifecycle parity＋132modern tuple/正負向/lifecycle皆PASS；Rootprivate loader初錨點錯誤資格保，僅修控制工具、不動產品。
 - 原legacy保持，加strict modern僅code精確session_not_found＋有界message；mixed/unknown/duplicate/escaped/其他錯碼403拒、單read/parse/所選safeParse、原lease/postlogin/oracle/discount/SLO保。原497raw、M55pure/enum保；M55 mixed testcase只准標題與error_code TOKEN_SEEN窄hunk。2303非ownedtracked/operator45/Original7/prefix/pkglock核。唯一review0finding，Rootreview.git/m56-root-review.json SHAbe748854574d4cad9e6528195e142d52ca6a5f49e3910bea761ae7ce6b648f0e。
 - 正式review docs/reviews/2026-11-18-onboarding-modern-contract-m56-review.md。下一exact8paths commit/normalFF隔離VMbranch，再fresh VM9／job；尚未Create。八舊VM全stopped/runner0，原VM8INCONCLUSIVE不回填、60未跑、Staging未部署。US150/noPaid/Hosted0/Production禁。
-
 
 ### 2026-11-18 — M56 fresh VM9單次job開始／八舊VM stopped
 
@@ -3747,13 +3517,11 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - west2已保留200GB，不用第三100超過既觀250regionalquota；官方表核east4-a支援N2/IceLake（不當即時capacity），新UI區域更新的舊west2 quota warning消失後才Create。未折扣compute UI444.52/月、disk11/月，以.67/h保留3h+1m2.0212，非帳單；首回Create成功。初唯讀runner census模板殘舊VM8輸出檔名，wx拒覆寫後Root只修本機獨立輸出再唯讀核repo0，舊資料未覆、無Native重跑。
 - Rootstart.git/gcp-vm9-root-start-receipt.json；八舊全stopped、九disk保留，已配置base最大保留US16.1996非帳單，disk估95/月、未含IP/egress/tax、actualinvoiceUNKNOWN。US150/noPaid/Hosted0/Production禁。下一原functional15→15legs firstcause failstop及actualage/cold/business核；尚無M56 Native結果、60未完成、Staging未部署。
 
-
 ### 2026-11-18 — WB5 M57離線admission控制器有界開始
 
 - 同agent四新檔：hosted-admission-contracts/admission及兩focused tests；Root先核typedports／opaqueFSM。caller僅scope，固定Rootports依序核批准bytes/SHA/window、完整target/artifact/key/Edge/migration、Local15stage/15leg＋close/publication、必要protectedMerge，再原validateHostedConfig與原子nonce。executionAuthority NONE、無effects／真adapter／mail/Admin/Hosted執行。
 - UNKNOWN本controller鎖死不release/retry；跨instance依真store單調性，fake分replylost與store不可用，不冒稱durable已寫或global atomic。JSON/clone/純validated/foreign opaque拒、重核一次USED／漂移INVALID。Root唯一review，保Local/M56/產品/舊guards/operator45 bytes。
 - 四新檔先WIP，後續獨立operator branch/SHA；被測app candidate1536921與VM9實測tree不混，不能追認含新工具。新carrier push前Root另Vercel optout。詳 docs/superpowers/plans/2026-11-18-hosted-admission-m57-brief.md。VM9 fresh run44238411982仍進行，八舊stopped/US150/noPaid/Hosted0/Production禁。
-
 
 ### 2026-11-18 — VM9真40 modern驗過／錯誤聚合40仍FAIL
 
@@ -3762,19 +3530,16 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Root真age1315files215921839B/cold1262/8stop/2DB127tables31roles/3volhashmetadata核、未restore；25bootlogs30940B。ZIPb5f717af…／ciphere68b5277…，Rootfirst.git/gcp-vm9-root-first-review.json與actualcoldbusiness結果保。report docs/reviews/2026-11-18-gcp-vm9-console-counter-result.md。
 - job04:58:02UTCfailure/原hold自然完、runner29auto移除/afterholdrepo0；Root正常STOP待Console終態、保100GBdisk，八舊已stopped。M57僅獨立operator離線4新檔進行，不混app tree。60未跑/Staging未部署，US150/noPaid/Hosted0/Production禁。
 
-
 ### 2026-11-18 — VM9已停止終態／九VM全stopped
 
 - Google Console exactinstance6659979787753264319已停止，正常STOP未skipgrace、100GBdisk保留；九VM全stopped／after-hold repo runner0。Rootfinal.git/gcp-vm9-root-final-review.json SHAb81bf8f866ffa80ac3cec5508499d5f44be09f1a9a5123716e6d3718c2f5ea8b、截圖.git/gcp-vm9-stopped-20261118.jpg。
 - Source1536921真40 M56 gate全接受、完整註冊readback等PASS但總unexpectedErrors40使capacity FAIL；原60未跑、Staging未部署。M57獨立operator四新檔離線進行，下一錯誤分項／精確console對照修正待有界task，不泛忽略403。US150/noPaid/Hosted0/Production禁。
-
 
 ### 2026-11-18 — 順序修正：M57尚無Source，先M58 console精確對照
 
 - Root查agent狀態確認M57介面回覆FINAL後，send_message批准沒有觸發新turn；4新檔尚未存在，並非Source進行。Root改以followup_task正式啟動主阻擋M58，M57設計批准保留、實作延後，不刪任何Source。
 - M58先最小介面Root核，保M56/body/raw counts，PW resource403候選需同頁CDP Log.networkRequestId＋真原onboarding所有proof一對一，至多折1；未配對/JS/page/server/其他console全FAIL。加閉集分項診斷，不假稱VM9sum40全部logout。brief docs/superpowers/plans/2026-11-18-onboarding-console-m58-brief.md；同agent/Root唯一review，先RED後新Source，九VM全stopped/runner0。
 - M57後續獨立operator branch/SHA不混app tree；US150/noPaid/Hosted0/Production禁。60未跑、Staging未部署。
-
 
 ### 2026-11-18 — M58介面核准／VM10僅草稿
 
@@ -3783,19 +3548,16 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - VM10 cp-capacity-20261118-d03e74僅Google UI未提交草稿，us-east4-a/N2custom12/32/minIceLake/Ubuntu24.04新100GBbalancedretain、3h normalSTOP＋1min/noRestart/noSA/Workload/Ops/snapshot/HTTP；startup與本機exact相等，name-only反向替換exact、8fakePASS，courier4fakePASS/realcredentials0/SSH0。private .git/m58-vm10-startup；Source admission BLOCKED待M58 Root核，不Create、不register、不Native。UI444.52/月compute＋11/月disk，保守.67/h/3h1m約2.0212非帳單。
 - 九VM全stopped/runner0、九disk估95/月/3.1233每日仍計費，九配置base最大16.1996非帳單；.git/gcp-owned-budget-reserve-nine-stopped-20261118.json。US150/noPaid/Hosted0/Production禁，Local60未完成、Staging未部署。
 
-
 ### 2026-11-18 — Root產品整合unit回歸PASS（非Native／integration）
 
 - Root獨立執行src全部unit＋auth-login四直接contracts/content-media recovery，maxWorkers2：actual222files1771testsPASS／68.944秒；231requested中9個integration依既有Vitest exclude未執行，明確不是integration或capacity／phase PASS。658個src檔案before/after hash全同，產品Source基線1536921；M58工具WIP不在這組tests內。
 - private .git/m58-root-product-regression/result.json SHA0aa97177e50c485bb565504fc125be674103edb420bb6d99de439c844d80efab、log10960bd8c782f0e8490fc60b901e03eed2dd2b3abb3b17a6ca679bc39224a118，命令／完整tests／src freeze保。M58同agent實作／檢查進行，Root唯一review待finalpacket；九VM stopped／VM10僅未提交草稿，US150/noPaid/Hosted0/Production禁。
-
 
 ### 2026-11-18 — M58唯一review ACCEPTED／待exact Source fresh VM10
 
 - Root真核final packet65005a68…64records27checks／6freeze，最後36capacityfiles483PASS、fulltype/global lint/globalformat/import/diff/static0；初RED/type/lint/setup與舊478資格保。Root獨立產品222/1771通過、9integration未跑；2307protected／173history／3inverse／Original7/prefix/pkglock與658產品hash皆核。
 - 唯一review Standards/Spec/Security0finding；原raw計數保，同頁同request唯一PW+CDP networkRequestId／genuine current binding／原全部onboarding proof，且同ConsoleMessage曾被raw listener計入才最多折1，late無法追認。M56 parser／產品／SLO／operator45不改。Rootreview.git/m58-root-review.json SHA28b7713f3d7702785ccde9c48d0a1504cd1c402a94d0045f33c70dd2cf6fe839。Root首次private verifier symlink讀取錯誤只修工具v2、無Source／Native更動。
 - 正式 docs/reviews/2026-11-18-onboarding-console-m58-review.md；下一exact11paths commit/normalFF隔離VMbranch與freshVM10，尚未Create；VM9 FAIL不回填，60未完成/Staging未部署。九VM stopped/runner0/US150/noPaid/Hosted0/Production禁。M57僅設計待獨立operator Source。
-
 
 ### 2026-11-18 — M58 fresh VM10單次job開始／M57獨立operator恢復
 
@@ -3804,19 +3566,16 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Rootstart/private gcp-vm10-access、m58-vm10-startup；九舊全stopped/十disk保留。UI444.52/月compute11/月disk、保守.67/h，十配置base最大18.2208非帳單；十disk估106/月/3.4849每日，未含IP/egress/tax，actualinvoice UNKNOWN。US150/noPaid/Hosted0/Production禁，Local60未完成/Staging未部署。
 - Root從app3f1建立獨立codex/hosted-capacity-operator-20261118，只供M57四新檔；app分支/Source tree固定。M57沿已核typedports/UNKNOWN語義，以followup_task正式恢復Source實作，Root唯一review。只fakeIO、executionAuthority NONE，無真NonceStore/Rootadapter/mail/Hosted作用；新carrier首次push前Root另Vercel optout，不混app Native SHA。
 
-
 ### 2026-11-18 — M57 RECHECK原guard界線核定
 
 - Root核原validateHostedConfig硬要求runIdentity UNUSED；同agent回報reservation後真讀應為RESERVED，因此admit只原樣調一次，RECHECK獨立嚴schema／同approval bytes/SHA與完整stable bindings／時窗／同nonce RESERVED，原sourceproof與必要ProtectedMerge port重核，不偽造UNUSED或改舊guard。未知/partial/throw/漂移/expiry永久INVALID，無重reserve/retry、無executor，成功只USED/OFFLINE_RECHECK_PASSED、authority NONE。brief雙根append，四新檔範圍不變，Root唯一review待final。
 - VM10 app3f1dd73/run44245300575/job134602672919仍進行，kernel calibration／Local artifact與Edge Source綁定已由producer回報，functional結果尚未出，非capacity PASS。九舊stopped，US150/noPaid/Hosted0/Production禁。
-
 
 ### 2026-11-18 — M57唯一review ACCEPTED_OFFLINE_ONLY／獨立operator已保存
 
 - final4Hostedfiles198PASS、fulltype/lint/globalformat/import/diff/static0；Root真核75records32checks/4freeze、2316protected237history/M56/M58/Original等。唯一review0finding，Rootreview.git/m57-root-review.json SHAf2f2ed05…；所有RED/FAIL/舊197與單行非Error proxy負向lint例外資格保。authority NONE，真adapter/store/executor仍未實作。
 - operator9f9cb0caa2975a4f61d455fa15e03fe5985fa7fe/tree da468f1225c379324f0188d10d2b7ebd6c06ff1d，parent app3f1；Root只commit四Source/tests＋精確Vercel operator分支optout，normal新分支push備份，無PR/merge/deploy／無Local job trigger。Rootdocs/handoff仍WIP，已回app3f1；不追認operator在Native app tree內。正式 docs/reviews/2026-11-18-hosted-admission-m57-review.md。
 - M59同agent已以followup_task正式啟動唯讀定位與最小提案，Source尚未核准。真VM10 fresh40 PASS、fresh60 send295.676ms>250 generatorlimited，4/15legs完成，後續10legs未跑；全部資料保留、十VM已stopped/runner0。US150/noPaid/Hosted0/Production禁，Staging未部署。
-
 
 ### 2026-11-18 — VM10真40 PASS／60 send發生器受限，十VM已STOPPED
 
@@ -3825,7 +3584,6 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - job06:02:02UTCfailure/hold自然完成/runnerauto移除repo0；Google Console exact1877550926476117898 STOPPED正常關機未skipgrace，100GBdisk保，十VM均stopped。完整 report docs/reviews/2026-11-18-gcp-vm10-reg40-pass-reg60-generator-limited.md。US150/noPaid/Hosted0/Production禁，十配置base最大18.2208非帳單，disk估106/月，actualinvoice UNKNOWN。
 - M59同agent唯讀診斷中：擴散在CLICK進入後，具體原因仍待定位，不跨clock硬減；另真caller鏈已確認40/60共享plan-root固定finalgate wx會碰EEXIST，提案需一併窄修、保原檔。Root3context installed-Chrome/mac方法控制驗pointer/Enter均1trusted click/1loopbackPOST，synthetic負向untrusted；非真ColorPlay/Linux60/容量PASS。Source待Root最小範圍批准，舊job不重跑。M57operator9f9獨立已push，app仍3f1，不混tree。
 
-
 ### 2026-11-18 — M59兩Source有界實作開始／VM11僅離線準備
 
 - 同agent唯讀核：原dispatch全體先ARM再Promise.all並行，Native60擴散確定在perform進入後，pointer/React/browser/CORS尚未分解，不跨clock造精確時序。Root准正式按鈕visible/enabled/focusable/focused與跨await admit、Node單clock共用原15s預算後public press Enter；保allARM/CLICK marker/POSTclock/原observer與erroridentity，不用force/JS click/HTTP暖身，不改SLO/60人。Root3context installedChrome/mac方法控制1trustedclick/1loopbackPOST，不是真ColorPlay/Linux60容量PASS。
@@ -3833,20 +3591,17 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - agent回報canonical2RED已落；第一次FS因mac tmpdir symlink被原guard拒，只改test realpath，原FAIL保，不放寬guard。無Native/Cloud/秘密/Git mutation。M59 brief雙根最新核准；十VM stopped/runner0。
 - VM11 proposed cp-capacity-20261118-e11a42/us-east5-a 僅name-only offline啟動檔8fake＋courier4fakePASS/Source admission BLOCKED。五既用region各保200GB，避第三100超既觀250regionalquota；Google官方表列east5-a/N2/IceLake但exact minCPU/quota/capacity待Console核。尚無Create/register/Native，US150/noPaid/Hosted0/Production禁。
 
-
 ### 2026-11-18 — M59唯一review ACCEPTED／待exact Source fresh VM11
 
 - Root唯一一輪0finding；最終39capacity/send檔545PASS、type/lint/globalformat/import/diff/static0。packet bd83c22b8fa7a6c2add88a8679c24f5db1bf9a0ae8d21cd0a3813f1e330a931d／52records21checks7freeze；Rootreview 421adb777ae84320d442062824607de09b4d7d8596fd0350029d90246714494a。真正exported UI在installed macOS Chrome自有loopback：正常1trusted click/1POST，disabled及focus後abort皆0，browser/server關。非真表單/Linux60證據；初sandbox EPERM於browser啟動前停止，核准同命令後PASS。
 - 兩Source正式button公開focus/press Enter、strict readiness、跨await admit、共用原15s monotonic；原ARM/並行/CLICK/CDP250ms保持。40/60固定gate兩basename，真wx collision RED→GREEN、原bytes保。2310protected/312history/Original7與prefix/658src/VM10八input真核；M57 operator獨立不混。正式review docs/reviews/2026-11-18-send-cohort-m59-review.md。
 - 下一exact13paths commit/normalFF隔離VMbranch/freshVM11。Console草稿east5-a N2custom12/32 minIceLake/100GBretain/3h normalSTOP+1min/noSA/Ops等實核，尚無Create/register/run；配置保守.60/h/3h1m reserve1.81，十舊base最大18.2208→planned20.0308非帳單，不含IP/egress/tax。十VM stopped/runner0/US150/noPaid/Hosted0/Production禁。
 
-
 ### 2026-11-18 — M59 fresh VM11單次job開始
 
 - exact13paths Source4eeb0b32a72ba370b5ce7b24d1bf1f5fe28e8569/treee935a0ba7015b750122cc11be907db02a8e10487，parent3f1dd73；normalFF既定Local branch/Vercel optout false；run44255304545/job134635465442/attempt1/runner31，officialsvc cp-capacity/Restartno/MainPID3536。GitHubexact checkout進行；尚無容量結果，不重跑VM10。
 - VM11 e11a42/2754168844104822854/europe-west4-a/34.90.17.51/07:07:24UTC，N2custom12/32 actual/minIceLake/Ubuntu24.04/new100GBbalancedretain/noSA/Workload/Ops/snapshot/HTTP/display、3h normalSTOP10:06:31UTC+1min/noRestart。Google2equalreceipt/hostblock1/blocked0＋strictSSH preflight核，boot35e6680f…/hostfpiTZ0nZjd…；APT0a138/classicDocker29.1.3/空store真核。
 - east5-a與b先前兩次poolunavailable均非Native，兩次磁碟census仍十舊disk無新遺留；保存原失敗，不刪舊資料。第三次轉官方有列N2/IceLake的europe-west4-a成功。retry表單預設備份/Ops/SA已逐次還原，原startup SHA4f1c964b…exact UI核。十舊全stopped；保守.67/h/3h1m reserve2.03，加十舊配置最大18.2208→20.2508非帳單，disk共約117/月，未含IP/egress/tax/actualinvoice UNKNOWN。US150/noPaid/Hosted0/Production禁，Staging未部署。
-
 
 ### 2026-11-18 — VM11真註冊60 PASS／existing3 INCONCLUSIVE，M61完整首因診斷核准
 
@@ -3855,19 +3610,16 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 同agent M61 readonly manifest73557d8da45f10b54593365fbdf5f8c5ef91ded2b8cc135d75c163b90318c81a，6records/8inputs/14Source已核。Root准單一完整game首因＋operation accounting診斷，四原Source/可新單一helper/兩focusedtests，保30concurrent/原trace/error/await/stop/metrics/所有門檻，不人工延慢或加負載救PASS。brief docs/superpowers/plans/2026-11-18-game-work-diagnostics-m61-brief.md 雙根落地，Root唯一review待packet。M60只讀盤點de3a9163…保、operatorSource暫緩；固定Staging一般唯讀既有授權可自主，不新設permissiongate。Root初私有manifest verifier把相對path當cwd而停，未寫入或改Native；後以manifest parent正確核六records。
 - VM11原hold至07:33:28UTC自然結束後核runner0，再normalSTOP保disk；目前尚running。十舊stopped/US150/noPaid/Hosted0/Production禁。ZIP7ade2410…/cipher32510735…/outer50e93d1b…；Root actual cold/business tool結果與首投影已私有保存。
 
-
 ### 2026-11-18 — VM11 Root最終保留核通過／十一VM全STOPPED
 
 - 真age/cold/business已核：functional15＋前5/15legs（含首次註冊40/60）PASS；existing3仍INCONCLUSIVE/後9未跑，首因UNKNOWN。Rootfinal 640e121f61d0c9c66e697449f2c7d82cf99747544ac89f607f8a25efe430c078，正式report docs/reviews/2026-11-18-gcp-vm11-reg60-pass-existing3-inconclusive.md。原cold、資料與全部失敗保留，未restore/Hosted/Production。
 - GitHub原hold07:33:28自然結束/job07:33:31 failure/runner31自動移除repo0；Google exact2754168844104822854嚴格已停止、normal未skipgrace，100GBdisk保，十一VM全stopped。配置base預留20.2508非帳單，disk117/月/1100GB，US150/noPaid。M61同agent有界Source進行/Root唯一review待packet；VM12僅offline8+4fakePASS/Source BLOCKED，未Create/register/run。
-
 
 ### 2026-11-18 — M61唯一review ACCEPTED／待新exact Source與freshVM12
 
 - 唯一SpecP2 counter不可能矩陣仍OBSERVED，Rootactual反例成立；同輪純schema語義驗證清除、Root6負向＋正向皆核。原操作/30concurrent/metrics/SLO/trace/error/await/stop保持。新diagnostics缺method/throw等隔離，無新請求或負載。Source5/tests2 finalfreeze；journeys既有563→573僅coordinator窄接線，其餘≤500。
 - worker40files548PASS/focused19及fulltype/lint/globalformat/import/diff/static0；Root發現少前send-dom16，自跑完整union41files564PASS/15.086s/7Sourcehash不變，非第二review/Sourcefinding。packetfe24d79375189a5ee5cca6e8a646c0022e26deabc1b60ebce93dbf099a02e27f/70records39checks7freeze，Rootreview23ff2768b3a23481b44c88f3ad98c4e4066e23cc4bd8b96b4267fb2877077812，2318protect/298history另M57 75/v1 43/inverse/Original/VM11八inputs皆核。正式docs/reviews/2026-11-18-game-work-diagnostics-m61-review.md。
 - 下一exact11paths commit/normalFF既定Local VMbranch/freshVM12單次。VM11原結果不回填；十一VM stopped/runner0/磁碟保、US150/noPaid/Hosted0/Production禁。VM12草稿europe-west4-a/新100GB、minIceLake/3h normalSTOP+1min/noSA/Ops等實核，Sourceadmission尚BLOCKED未Create/register/run。
-
 
 ### 2026-11-18 — M61 fresh VM12單次診斷job開始
 
@@ -3876,7 +3628,6 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 原十一全STOPPED/runner0後才本輪單次register，offline8+4fakePASS/Rootadmission已核。配置本輪保守reserve2.03，加十一20.2508→十二最大22.2808非帳單；十二disk1200GB約128/月，未含IP/egress/tax/actualinvoice UNKNOWN。US150/noPaid/Hosted0/Production禁。
 - M62僅只讀核teacher camelcase classroomId與teacher_classroom_overview RPC契約相符，不改路由、不猜Native原因；manifest b7b201e9d23a1a9ab04a841561a9e2a8c22a6a8e40fcc5df7616054ef95a0e8b，2records/14Source。M60 operator接線暫緩Source，Root唯一review規則保持。
 
-
 ### 2026-11-18 — VM12四legs PASS／parent identity COMPARE拒絕；M64完整transition診斷核准
 
 - Root真age1481files216439643B/cold1424/8stop/2DB127tables31roles/3vol全hashmetadata核/未restore。functional15＋anon3/10/20＋fresh40 PASS，4/15legs；40completedAuth40/ownershiptrue/entry128.261/send122.832ms/30771.041ms。60 wcr-261118-a30e1021c7d4於before_send60並行Root capture中parent取消，未到browser/game，後10legs未跑；M61未取得新Native game首因。
@@ -3884,31 +3635,26 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - M63唯讀manifestb7b75da2…3records/12Source/4cold保；Root准M64一次完整被動transition sideband（重用原讀值、只第一failedpair候選與已核parent最多2PID/64KiB/100ms軟截止/無retry），原guard/equality/pidfd/stop/seen/close不改，原JSON保、獨立wx0600sidecar。brief docs/superpowers/plans/2026-11-18-parent-transition-m64-brief.md 雙根，Root唯一review待packet。無判合法exec、無Source修法或容量PASS。
 - 原hold08:19:00自然完/job08:19:04 failure/runnerauto移除repo0；VM12正常STOP已提交、未skipgrace，Google最終STOPPED尚待核。十一舊stopped/US150/noPaid/Hosted0/Production禁；配置最大22.2808非帳單，12disk1200GB約128/月，actualinvoice UNKNOWN。
 
-
 ### 2026-11-18 — VM12 Root保留核完成／十二VM全STOPPED
 
 - Root真age/cold/business核functional15＋前4/15legs PASS、fresh60仍INCONCLUSIVE/parentCOMPARE拒絕，後10未跑，未到M61game。Rootfinal454649e483dc39a44e9df4614409b9fbef9a033a6e5473c597c2f5ed2703cf1d，正式docs/reviews/2026-11-18-gcp-vm12-parent-identity-compare-result.md；原guard/失敗保，未restore/Hosted/Production。
 - 原hold08:19:00自然完/job08:19:04failure/runner32自移repo0；Google exact5444938758100150077嚴格已停止、normal未skipgrace，100GBdisk保，十二VM全stopped。配置base預留22.2808非帳單/disk128/月1200GB/US150/noPaid。M64同agentSource只完整被動transition診斷/Root唯一review待packet；新loader機制暫緩，待報既有closure最小接線exactpaths。尚無VM13。
-
 
 ### 2026-11-18 — M64載入與獨立sidecar工程決策
 
 - 實核parent原以processObserverSha256獨立綁，不在Root helper14+1；擴closure至少五既有Source/schema/fixtures，超本診斷必要。Root准owned parent固定module/固定已綁expectedSHA的最小verified-byte loader，同一次已驗bytes compile/exec、無unverified fallback，pure module頂層無IO；package-manifest第46entry與parentSHA parity/tamper測試鎖住。五extras不改，不新增合法exec policy，load故障只新diag UNAVAILABLE/原guard不變。
 - 原parentwriter block保，其後同owned run-functional-owned內獨立try sidecar；capacity沿BASE重用。真雙writer/erroridentity新focused test，原AST局部fixture不改assert。具體條件已append M64brief雙根；workeractual exported RED已落，Source進行，Root唯一review待packet。十二VM全stopped/US150/noPaid/Hosted0/Production禁，尚無VM13。
 
-
 ### 2026-11-18 — M64本輪唯一P2：失敗後診斷混合生命週期
 
 - Root真exported helper/fake proc反例：讀stat12後cmdline時變birth13，舊僅三讀仍OBSERVED/birth EQUAL/KNOWN_TEMPLATE_MATCH，私有m64-root-after-failure-race.json保。與VM12實際原因分開，不把pidfd穩定參照當所有PID路徑讀值同生存期證明。
 - Root同輪准固定前後stat/cgroup邊界（每PID兩stat各4KiB、兩cgroup各8KiB、cmdline8KiB；兩PID總64KiB/100ms軟截止不變），漂移/消失清不可綁argv/parent為不可用；不重讀到成功、不改guard/stop/grace或其他原契約。brief雙根已append；同agent修此唯一P2，Root待delta與finalpacket，不另reviewer。十二VM全stopped/VM13未建立草稿/US150/noPaid/Hosted0/Production禁。
-
 
 ### 2026-11-18 — M64 Root唯一review接受，待fresh VM13
 
 - 同輪唯一P2 afterFailure混合生命週期已修，Root actual exported正常＋四漂移控制／focused12 PASS，原guard/stop/parent-stop保持。capacity41/564、Python57與必要checks綠；原RED/setupFAIL/v1保。
 - Final packet 2bf6f8d439496681282f74f8e716bfd03ab6c6b6d9f23ad6b35d21f4bd87865e，Root receipt b0d7724d324f6d7f867156827db3ae5b27c02f71b0f682fa1c6b7d8038394254；七Source／2323protected／歷史與Original保護直接核符。review雙根已落，不是Native修復或容量PASS。
 - 下一步exact Source提交及Native專用branch normalFF，VM13草稿us-west4-a尚未Create；十二舊VM STOPPED／runner0／US150/noPaid／Hosted0／Production禁，不重跑VM12。
-
 
 ### 2026-11-18 — fresh VM13 單次 Native啟動
 
@@ -3917,12 +3663,10 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Repo先census0；runner33 ephemeral/disableUpdate，officialservice cp-capacity/Restartno/MainPID3545，Docker29.1.3classic overlay2無driver-type、開跑前images/volumes/containers空。run44271087230／job134687575488／attempt1已in_progress；不可rerun。十二舊VM仍STOPPED。
 - 累計配置最大基礎預留估算US24.3108非帳單（exclIP/egress/tax等），budgetUS150/noPaid。等實際full15與加密age/cold/business核，不提前PASS；Local未全過不部署，Hosted0/Production禁。
 
-
 ### 2026-11-18 — M65離線Local predecessor獨立範圍
 
 - VM13 app e46562c仍單次執行中；Root只准同worker在/tmp獨立operator9f9checkout新增predecessor＋directtest兩檔，沿M57契約及原receipt/publication validators實核完整15/15。nonce/remote/mail/Hosted effect不在本task；總executionAuthority NONE。brief三根已落，Root唯一review，無push/deploy。
 - 不改Recovery/Original Source、VM/Local資料、門檻；US150/noPaid/Production禁。若既有validator證據不足先報Root，不造VERIFIED捷徑。
-
 
 ### 2026-11-18 — VM13實際age/cold/業務核符，60註冊PASS，existing3 INCONCLUSIVE，十三VM均停
 
@@ -3931,25 +3675,21 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - hold09:10:56→09:20:56自然完成、job09:20:59failure、runnerauto0；Google strict已停止／normal skip false斷言／100GB留。十三VM均STOPPED，無VM14，budgetUS150/noPaid/Hosted0/Production禁；24.3108maxbase估非帳單，1300GB仍計費。
 - M65獨立/tmp operator三檔離線實作進行，Root唯一review待；M66 operation完整診斷僅draft待dispatch。Root actual exported教師+observer ownedloopback30 requests0.669s/4.610s controls成功，僅合成控制不代Native原因；v1/v2setupfail raw保。先完成M65，再補Native缺失證據，不直接重跑。
 
-
 ### 2026-11-18 — M65 Root唯一review接受，仍離線資格
 
 - operator9f9獨立/tmp三Source已接受，Root一輪0finding；final5files231/必要checks0，55records/rawFAIL保。Root direct2321protected／三Source／Original7/pkglock/575959prefix及8FS＋3duplicate控制PASS。final04f6b4c6afbe41e81f4687ed544b0ec35c1d1f3141f90d456cc073b65ff4efa7，Root a7f705d14d1b900eccccb5c61128f6c0ce9f7d810dbeb345457c33c907a8e514，review三根落。
 - 81fixed files/12MiB actualread，原TS validators完整functional15＋capacity15／request/close/candidate／profileRoot獨立attestation，不造publication檔，不是realNative15PASS。test507<=510理由已准；兩Recovery generated tsbuildinfo經symlink寫，無beforecensus不稱依賴全bytes唯讀，無install/update/Originaldeps改。
 - 下一Root exact-path operator保存及已接受M57/M65七路徑帶app候選，再dispatch M66（當前仍draft）。十三VM STOPPED／runner0／無VM14／US150/noPaid／Hosted0／Production禁，Local5/15未全通不部署。
 
-
 ### 2026-11-18 — M65保存並帶入候選，正式dispatch M66離線完整operation診斷
 
 - M65 operator local6cdc66c9c609f187f7883ce19aeb30a39ae5ed5b（未push）已保存六exactpaths；已接受M57/M65七Source/test以committed exact bytes帶app e465候選、尚未commit，vercel未改，integration receipt私有保存。原首次precommit因known node_modules symlink未列排除而安全停止、未stage；之後只六paths入commit，symlink不追蹤，無回退。
 - 同worker正式只做M66五ownedpaths，完整operation first-invalid/pending閉合診斷；原15s/30reads/window/SLO/return/close保持，Source僅離線。Root唯一review待，task brief SHA 95c1240c4559864b7e6abba49c200dd64734dfd28fa81a9ee0e2f5c6495b927d。Root七檔既有WIP全保，Original Source/Git/deps禁。十三VM STOPPED／runner0／無VM14／US150/noPaid／Hosted0／Production禁。
 
-
 ### 2026-11-18 — VM14啟動工具僅離線準備，未Create
 
 - .git/m66-vm14-startup/offline-plan.json：name cp-capacity-20261118-b14e92／proposed us-west4-a，N2custom12/32/minIceLake/new100GBretain/3h normalSTOP+1min/noRestart/noSA/Ops/snapshot；name-only exactinverse13，startup166c0a24850ee0094d5f82200dc04a59498af81b4616ac3f94ce2724de9de234，8startup＋4courier fakecontrols PASS。無Cloud建立、無runner、無Native，Source admission BLOCKED待M66唯一review與最終combined exactSource。
 - 十三舊VM已STOPPED／runner0；VM14若日後准create，配置maxbase暫估2.03、累計26.3408非帳單，quota/stock與actual設定須當時查，總US150/noPaid，未提前產生費用／承諾可用庫存。
-
 
 ### 2026-11-18 — 使用者繼續，M66同agent恢復／十三VM停機重核
 
@@ -3957,24 +3697,20 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Root Google Console fresh盤點13台全為「已停止」，私有gcp-resume-thirteen-stopped-20261118.json保存；無VM14。只準備b14e92/us-west4-a未建立草稿：N2custom12/32/minIceLake/new100GBretain/3h normalSTOP+1min/noRestart/noSA/Ops/snapshot，startup exact166c0a24850ee0094d5f82200dc04a59498af81b4616ac3f94ce2724de9de234已核，原public testSSH／projectblock，舊custom device移除。console-draft-proof.json／screenshot私有，Source admission仍BLOCKED待M66review與最終exactcombinedSource，沒有Create／runner／Native。
 - 累計配置maxbase預留24.3108非帳單，若後續VM14加2.03暫估26.3408非invoice（exclIP/egress/tax等），US150/noPaid／Hosted0／Production禁；目前Local仍真functional15及capacity5/15PASS，後續診斷未產生全站PASS。
 
-
 ### 2026-11-18 — M66 Root唯一review接受，教師讀取完成缺口待M67
 
 - M66一輪0finding／48files827PASS／必要checks0；final a468244594e2aa910f9bb63eb659c7725f453892170c2bbbfe77aa15fc0f0adc，Root cb612133e829f6a03344d9d121a1e2fdd4ccdc811aadccbd4e416147b2870453。Root真核五Source/2331protected/七WIP/Original九與prefix/六VM13/442歷史records。原15s/guards/sample/return/window不變；fake deadline oldoutcome保持＋新firstInvalid/pending可見，非Native原因證明。
 - Root actual owned Chrome延後1000ms RPC控制，舊教師30次success但0physical request，確定heading-only非資料完成；VM13唯一原因仍UNKNOWN。下一M67只補教師公開UI指定班級總覽完成判定，不延長學生窗口/降30reads/SLO。十三VM停／VM14僅草稿未Create／US150/noPaid／Hosted0/Production禁。
-
 
 ### 2026-11-18 — M67正式授權：教師公開UI資料完成
 
 - Root已接受M66，現在同worker只owns capacity-game.ts＋新capacity-teacher-read.ts＋新directtest，修指定班級與總覽數字資料完成；保30reads/window/SLO/observer15s/原diagnostic stage與protocolfallback。不得只等標題、networkidle、sleep或繞公開UI。先RED/最終48 baseline827＋新test與必要checks，Root唯一review。
 - 原七接受WIP／五M66 frozen／所有歷史/Original/VM13保；無Git/Browser/Cloud/Hosted。十三VM停／VM14未Create／US150/noPaid/Production禁；這不是新Native PASS。
 
-
 ### 2026-11-18 — M67 Root唯一review接受，待最終組合fresh Native
 
 - M67四owned一輪0finding，49files843PASS/fullchecks0；final6acd7b89846449164ad5d5ed273636cd666f429ddf3a20d9dcde12ae798b9ae4，Rooteb90673673732482b359f7c7c127faa678c02ba8e234ff35edba42f8111b7712。Root真核42records/四Source/2329protected/M66五/七WIP/Original九prefix/VM13六/五controls/487history。game僅import+await，原guard/window/30reads/15s/SLO不變，舊test bodies/assertions保。
 - Root自有Chrome delayed40ms與0/0各30POST/30success；錯班/null/error首輪bounded拒絕。修heading-only誤判，非VM13唯一原因／Native PASS。下一最終組合commit後fresh VM14，未Create／十三舊全停／US150/noPaid／Hosted0/Production禁。Staging/Native ref只讀重核仍d92be82/e46562c；帳務trial/net0顯示但幣別UNKNOWN，無升級。
-
 
 ### 2026-11-18 — 最終組合84ec24b／fresh VM14單次Native啟動
 
@@ -3983,37 +3719,31 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Google雙相同收據/獨立hostblock與strictSSH核；IP136.85.143.80雖與13相同，instance/boot/hostkey不同，新known_hosts不共用。boot1fab130f188eafe10c21830ac02991ec56855fce5377c4b2c573bf2cbcf3c93e。runner34 ephemeral/disableUpdate/officialsvc Restartno/MainPID3555，APT0a138/classicDocker29.1.3空store前核。run44301879660/job134793408280/attempt1已in_progress，不rerun。
 - 累計configured maxbase reserve26.3408非invoice（exclIP/egress/tax），14disks1400GB約150/月仍計費，US150/noPaid。trial帳務顯示net0但幣別UNKNOWN，不冒稱USD0實際用量。等真full15與age/cold/business核，未提前PASS；Original G8維持STOPPED85，Hosted0/Production禁。
 
-
 ### 2026-11-18 — VM14真冷備與結果收束／十四VM全STOPPED
 
 - Source84ec24b/run44301879660/job134793408280/runner34，functional15＋capacity3/15（anon3/10/20）PASS；fresh40 wcr-261118-53b07fc40958 INCONCLUSIVE parent新candidate TRACK COMPARE exe/inode/PYTHON→Docker路徑，後11未跑，未到M66/M67教師Native驗證。M64 pair/afterFailure已捕捉，Docker label不是subcommand證明／UNPINNED側帶不是合法exec；registration→local-psql selfexec Docker exec為Source相容候選，非唯一Native原因。
 - 真age1347files216141711B/cold1294/8stop/2DB127表31roles/3vol所有hashmetadata核符，未restore；Rootfinalf0b167028a77a235fb3cc411f0e106ff0825fd67542853f988942698e9361ae7，完整review雙根。原hold12:30:08→12:40:08自然完/jobfailure/runnerauto0；Google normalStop/strict已停止/100GB保、十四全停fresh census。US150/noPaid／maxbase26.3408非invoice／1400GB約150/月仍計費，未永久刪除。
 - 下一先定新程序取得的完整有限修復，Root唯一review；同agent目前只讀Source鏈與較小kernel lifetime方案，無M68實作授權／無VM15。Source84ec frozen、Original G8 STOPPED85／Hosted0/Production禁。
 
-
 ### 2026-11-18 — M68正式授權：fresh pidfd生命週期取得
 
 - Root核定較小kernel-bound acquisition，原after==row僅新candidate取得的image部分由兩pidfd後fresh PID/birth/四UID/逐PIDleaf＋前後fdlive與boot/group pin替代；不以M64側帶/argv判合法exec，不改startup GATE/producer pins/Rootchannel/stop/grace/SLO。seen stale同key碰撞須failclosed、fd只移交/關一次，browser-role要一致imagepin。完整六ownedpaths/16接受Source及歷史/VM13+14原inputs保護見brief；同agent先RED、Python57+新與49/843/fullchecks後Root唯一review。
 - VM14唯一Nativecommand仍UNKNOWN，Source wrapper selfexec為相容候選；Native14原INCONCLUSIVE不重分類。十四VM STOPPED／runner0／無VM15／US150/noPaid／Hosted0/Production禁。Root僅離線Name15 startup/courier8+4fakePASS，proposed us-west3-a待quota/stock核，Source admission BLOCKED；初offline Apple Python觸license錯誤保，改既有Homebrew+CommandLineTools，未接受license。
-
 
 ### 2026-11-18 — VM15僅草稿／無運算資源新增
 
 - c15f03/us-west3-a草稿已備；14台仍STOPPED/runner0。N2custom12/32/minIceLake/new100GBretain/3h normalSTOP+1min/noRestart/noSA/Ops/snapshot/HTTP，startup exact b552cdf3769a5544bdde9f37d92d831562c977c96785e073bf1a7d841826bca5。舊custom device14已在草稿清除；沒有Create/新access/runner/Native，M68Source gate仍BLOCKED。
 - 新區界面undiscount CPU474.07/月、disk12/月；保守0.70/h/下輪2.12/累計planned28.4608非帳單，替代先前2.03/28.3708提案。quota/stock未驗／US150/noPaid。M68已actual behaviorRED，六既有portableNodegate測試窄例外准，同agent實作進行/Root唯一review待。
 
-
 ### 2026-11-18 — M68 manifest必要兩entry範圍更正
 
 - 原manifest46entries包含已owned且已准fixture修改的test_linux_owned_process.py，Root前brief僅parent一entry/其餘45不變要求互相矛盾；static-final checksum FAIL安全擋下。Root准僅parent＋ownedtest兩entry SHA更新、其餘44與總46不變，無新增authority。runtime e5aac frozen不改；原FAIL/freeze保，僅受影響package/closure/static/import/diff/brief format重核，不為checksum重跑49/843與type/lint。
 - 同agent收packet，Root本輪review進行無finding；十四VM停／runner0／VM15僅草稿／Sourceadmission blocked／US150/noPaid／Hosted0/Production禁。
 
-
 ### 2026-11-18 — M68 Root唯一review接受，下一producer前需真kernel控制
 
 - M68一輪0finding、81uniquePython/49files843TS/fullchecks0；packet e1dabb9f03715349896803770e27345f7dd9ecd8060b26b8f72c7ea1e83f65ed/Roota4d4016db452c641e6bcc9e41e2730bcb100de96112035e699857238d12fd633。Root真核66records/六Source/2347protected/Original9+prefix/VM13+14十二inputs/八controls/529history。parent e5aac.../manifest593e73...，manifest46僅兩entry變/其他44、37原函式/GATE等保持；三oldmethod intentional差異明列，原ERROR/RED/discoveryFAIL/staticFAIL保。
 - Source只fakekernel與原六portableNodegate控制，尚非Native合法exec/全站PASS。下一Root exactSource保存，fresh VM15上先有限真Linux核心控制，通過才register/start唯一producer；目前十四VM STOPPED/runner0/VM15僅草稿未Create/US150/noPaid/Sourceadmission仍待exactSource/Kernel gate，Hosted0/Production禁。
-
 
 ### 2026-11-18 — M68 exact Source推送／VM15已建立，producer仍等真kernel控制
 
@@ -4022,7 +3752,6 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Root私有控制編譯通過，僅四Source module＋舊_track有限snippet、獨立新cgroup/自有child，無App/Auth/Hosted。補CREATE部分失敗的新空group回滾；LF替換準備guard安全拒絕，AST確認原即正確LF、未改transport／未實際控制執行。census初short aria字串不符安全停，依實際full label14核符後才Create。
 - US150/noPaid；下輪保守2.12、累計configured base reserve28.4608非invoice，exclIP/egress/tax。15 retained100GB disks估162/月持續計費；待真證據保存後提供具體永久清理清單供action-time確認，未刪任何舊資料。Original G8 STOPPED85／Hosted0／Production禁。
 
-
 ### 2026-11-18 — VM15真kernel四控制PASS／單次Native開始
 
 - Google雙相同PREPARED收據＋獨立ED25519 hostblock核符，strictSSH新known_hosts核boot62699a716eeeb9fca27ba1465f9ab54b72985832514efe6eab33e99f50d93a99。Rootkernel四cases真proc/pidfd/cgroup PASS：舊image轉換拒絕、新同birthimage轉換接受、退出不seen、跨leaf拒絕；8新group/children/fd清。result7ab7c34e544c111ae65717d697b698a0076ca8c2a056f6460e2add7105333e12；非capacity/producer來源授權證明／非VM14原command唯一性。
@@ -4030,13 +3759,11 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - runner35單次ephemeral/disableUpdate/token不列argv不輸出/PAT不離本機，officialsvc cp-capacity MainPID3746/Restartno。APT0a138/classicDocker29.1.3空store核，Source31fe/run44316623943/job134844338003/attempt1 actual in_progress、remote HEAD31fe符。七Root只讀helper exactinverse14→15（downloader三runId全換），25bootstraplogs30940B已本機保存。啟動adapter初hostname次數guard安全拒絕/未產檔，後missing-file命令未SSH，依實際兩occurrences換後編譯/inverse核才一次start。
 - 僅docs追加、app Source凍結；同agent等待期只讀durable nonce後續brief建議，未授權新實作。US150/noPaid/base28.4608非invoice／Original G8 STOPPED85／Hosted0／Production禁。
 
-
 ### 2026-11-18 — M69獨立operator bounded實作授權
 
 - 同agent唯讀確認durable nonce可透過M57 reserveOnce(binding) ports注入，獨立operator toolchain SHA/hash不填app source/webRevision；SAME_SHA/ProtectedMerge tree原比較不變，不豁免31fe完整15/15與真Staging provenance。Root核准fixed批准nonce pre-armed fence/file+dirfsync才暴露first live closure，restart不可復活UNUSED；reserveUNKNOWN跨process單調，arming以前任何byte皆無法寫入的情況明列無port/無durability保證，不冒稱萬能storage。
 - M69brief3e7a5626ec510d9a5e1d43aca08b780d43b1ddc2b896c18a9f0223e113ecf7b9三根，僅operator /private/tmp/colorplay-hosted-root-m65-20261118 base6cdc66c新增四owned nonce Source/tests；2304tracked protected baseline、M57/M65舊檔不可改。准ownTempFS與短命ownedNodechild crash/race、先RED與Hosted union/fullchecks、Root唯一review；無App/Auth/browser/network/Hosted/cloud/Git/docs/deps更動。
 - Native15 Source31fe/job134844338003仍in_progress；app全部Source凍結。M69未完成／無新Hosted權限、merge/deploy/測試mail／Production禁。
-
 
 ### 2026-11-18 — VM15實際5/15與冷備核完／十五VM全STOPPED
 
@@ -4044,12 +3771,10 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 真age2291files221503798B/cold2230/8stop/2DB127tables31roles/3volhashmetadata核，未restore；12inputs frozen projection606d80312c7a5fd9be4f924339b761ab75b9dd1f26d7d90d73aa87d27ad91535，下載lifecycle/game與SSH實際equal另parityreceipt。Rootfinald4b61ff5bc258fe6a1b2786156e10f098cf754729a419af077d94b299ffa432b、完整review雙根。
 - hold14:03:22→14:13:22自然完/job14:13:24failure/runnerauto0，normalStop/skipfalse/Google strict十五全停、1500GB磁碟保；detail/list曾cache stopping，reload後確認，未雙Stop。US150/noPaid/base28.4608非invoice，disks約162/月持續計費，未永久刪。下一M69同輪P2clearance、單一完整Live未留存await診斷範圍，不重跑原Native；app31fe frozen／Original G8 STOPPED85／Hosted0／Production禁。
 
-
 ### 2026-11-18 — M69 durable nonce同輪P2修復接受
 
 - 獨立operator base6cdc新增四owned，Root一輪1P2已修/0open；Rootexported encoder toJSON callback1→0且reject，新增非JSONprimitive guard與兩回歸，舊testprefix/局部inverse/另兩Source不變。7files264PASS/全finalchecks0，packet fd25860e93725bd7f8d64cb0993b3bab4448125fac76f4d6eb7c4a9893a9d2cf/Root7a9bcb1995849dc46a9f51aa387af5bd3ca12381819fd1f12cd83ffcb2a6fb81。Root真核109records/42checks/2304operator/2029app/196history/Original9prefix/24Nativeinputs，初ERROR/RED/FAIL與v1 75records保。
 - nonce先持久prearm file+dirfsync才暴露first closure，restart不復活UNUSED/reserveUNKNOWN單調；noport前無任何durablebyte不誇大保證。真TempFS/ownchild race/crash非硬體斷電；資料檔不自證Root來源authority。operator SHA/hash獨立app31fe，不改sameSHA/tree。尚未commit/push/Hosted接線，下一Root保存exactoperatorSource後繼續完整Live passive診斷brief；app31fe Native15 5/15/十五VM停/runner0／US150/noPaid／Hosted0／Production禁。
-
 
 ### 2026-11-18 — M69獨立保存3081400／M70完整Live被動診斷授權
 
@@ -4057,7 +3782,6 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 同agent M70唯讀提案指出live-created至第一question-intent區間含joins/ACK、outsider、lobby/bind/count/start與writer本身，VM15確切await仍UNKNOWN。PageDiagnostics.realtime含page.evaluate不能新加await；join.observe可重用，兩actorIndex診斷max40會擋未來41–59，非本輪三人根因。Root准九owned Source/tests、gate移出保re-export/inverse、sync memory snapshot、全建立/每人加入/拒絕/每題/報表/原cleanup＋單次best-effortprivate writer，無產品行為或timeout/SLO放寬。
 - M70brief5fe8f9adb47810a2b3a947522e055bfdbe5d3f48d6a506130d02d2eb928f5f57兩根；app .git/m70-live-diagnostics baseline2024protected＋Original9prefix/Native24/M69四/歷史。同agent先RED、49/843既有union+新/fullchecks與Root唯一review，無真App/Auth/browser/network/child/Cloud/Git/deps/docs操作。Original G8 STOPPED85；十五VM全停/repo0。
 - Root已完成VM2–15共14台/1400GB永久清理具體清單與各age/cold收據、frozen connection identities，僅提案未執行；依Owner destructive confirmation規則已問本次確認，等待不算同意。VM1/full本機與GitHub證據/Staging/Production保留。US150/noPaid/base28.4608非invoice，現disks估162/月持續計費；M70獨立繼續、未建VM16／Hosted0／Production禁。
-
 
 ### 2026-11-18 — M70實作中／VM16僅草稿與Staging只讀條件刷新
 
@@ -4067,13 +3791,11 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - M65/M69已reviewed operator成果3081400 normalFF既定remote工具分支（before9f9、Vercelbranch optout false、Native分支不匹配），無VM/runner/Hosted寫入，不只留/tmp。app HEAD31fe仍是M70 base，Source九owned正在改。
 - 十五舊VM全STOPPED/repo0；Owner VM2–15永久清理問題仍pending，沒有默認同意，沒有刪除。Original G8 STOPPED85/九原WIP與prefix保；Hosted0／Production禁。下一等M70最後packet再Root唯一review、exactSource新一輪admission。
 
-
 ### 2026-11-19 — M70 Root唯一review接受／下一exactSource新Local嘗試
 
 - Root一輪0finding、五Source四tests frozen；56files968PASS/type/lint/affectedformat/import/diff/static/inverse/oldtestretention全0。packet dcdfc75d0a304eae8e72eddcb48e766572b4ae30ce7f769e732e142b921524e2/105records，Root真重新核2351不同檔、2024protected/Original9prefix/24Native/M69四/歷史保。完整review2026-11-19-complete-live-lifecycle-m70-review.md雙根。game542/newtest523依brief已有理由例外，其餘七<=500。
 - 全建立至逐題/report/cleanup被動有限stage、sync browser memory快照、診斷40→60；原gate/caller/attachDiagnostics逆向等價、allSettled/timer20s/abort/predicate/erroridentity/cleanupoverride/原SLO不變。writer單次best-effort不保證hungIO免疫、export僅Source+TempFS資格未真cold；VM15原5/15/exactfailedawait UNKNOWN不重分類。
 - 下一Root保存exactSource後新run/VM16單次admission，不重跑舊Native。十五舊VM STOPPED/runner0、VM16尚未Create；VM2–15永久清理Owner問題仍pending、未刪除。US150/noPaid/plan累計30.5808非invoice；Original G8 STOPPED85／Hosted0／Production禁。
-
 
 ### 2026-11-19 — M70 exact873c1da／VM16新單次Local開始
 
@@ -4083,7 +3805,6 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 新機前fresh十五舊VM全STOPPED/repo0。既有inventory分頁CDPfocus逾時兩次，新分頁同browser正常核，未切未授權帳號或使用hiddenAPI。VM2–15永久清理Owner仍pending未刪；累計configured基本預留30.5808非invoice，16×100GB約174/月持續計費、exclIP/egress/tax／US150/noPaid。Original G8 STOPPED85／Hosted0／Production禁。
 - app Source全凍結等待本輪原matrix與真age/cold/business；同agent只讀M60/57/65/69提出下一Staging真provenance adapter最小brief，無Source/網路/Hosted/Git寫入權限，Root唯一review。
 
-
 ### 2026-11-19 — VM16 fresh60 generator barrier定因／M71純16CPU設定接受
 
 - Source873c1da/run44336694492/job134915227564/runner36：functional15 PASS、capacity4/15 PASS（anon3/10/20＋fresh40 wcr-261118-6ac59474cfa6；40全AuthCreated/completed、entry50.952/send177.141ms）；fresh60 wcr-261118-38679b41e9a2 INCONCLUSIVE/send GENERATOR_LIMITED，entry210.817/send251.44>250ms、60 AuthCreated/ownershipKnowntrue但未verify/completed0。後10未跑、未到M70 Live。healthVALID/六parentclosures firstCause null/residue0、timedOutfalse；reason timeout不是實際deadline。
@@ -4092,11 +3813,9 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - M71僅workflow selector12→既有16profile接受，一輪Root0finding/4files52tests+15purePython/YAMLformat/diff/static全0、2032protected/M70九+105records/Original9prefix/32Native/M69四保。packetbd80e9de8a1bb6b62ef5d792ae6b3ad80d8e5cc80f37f91f6769b6a98792e6c3/Rootc856c5b2cb73eb694e41000010b443e9b6070b37e983166ba55700167fdbb283。未commit/push；已有16profile，不新增架構/不加後端4CPU6GiB容量/browser6/Node2/原matrix/SLO全不變。單次較大host是資源餘裕假說，不保證pass。
 - 原hold15:51:03→16:01:03自然完成、job16:01:06failure/runnerauto0；Root normalStop已送且skipGracefalse、Google目前stopping待strictSTOPPED，未重按Stop。新VM17只離線準備e17b85/16CPU32G/startup96860bbd4550aa683eabcd16e7eb08494958b04b514377865e3c8344dc1234db，10bootstrap+4courierfakePASS、quota/stockUNKNOWN、無Create。原M47basehash先核再兩CPUoperand16與新整basehash核，沒有偽造facts。US150/noPaid/next基本預留3.02/累計planned33.6008非invoice；VM2–15永久刪除仍pending／Original G8 STOPPED85／Hosted0／Production禁。
 
-
 ### 2026-11-19 — VM16已正常停止／十六VM全停
 
 - 原hold自然完/job16:01:06failure/runnerauto0；Google fresh inventory十六台strictSTOPPED，normalStop skipGracefalse、100GBretain；未雙Stop或永久刪除。VM16真age/cold/business與251.44ms generator barrier完整Root review2026-11-19-gcp-vm16-reg60-generator-barrier-inconclusive.md雙根，原4/15/後10未跑不改。下一Root保存M71 exact Source後fresh16CPU VM17單次資格對照；quota/stock仍UNKNOWN、US150/noPaid／Original G8 STOPPED85／Hosted0／Production禁。
-
 
 ### 2026-11-19 — M71保存d2919dd但16CPU被試用quota擋下／未啟動Native17
 
@@ -4104,13 +3823,11 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 官方https://docs.cloud.google.com/compute/resource-usage確認FreeTrial不能調quota；Owner不升級付費保持。Root取消仍queued/未啟動16CPU工作（POST202、intent/result保留），不是重跑或刪證據。十六VM全STOPPED/repo0/US150/noPaid；planned33.6008是未執行提案，actualconfigured base reserve仍30.5808非invoice；Root quota screenshot .git/m71-vm17-startup/quota-blocked-20261119.png已展示。
 - 16CPU私有startup/tests原紀錄保，沒有冒稱可用。下一同agent僅只讀評估12CPU內將原公開DOM visible/enabled/focus/readiness移到共同send前準備、burst保每人一次原生Enter的單一完整方案；必保每actor從準備開始15s總期限、真CDP/250ms/60同批/全部診斷/失敗與清理，不呼內部API或假DOM事件。尚未授權M72實作，Root等具體proposal再定brief，唯一review不變。Original G8 STOPPED85／永久清理仍pending／Hosted0／Production禁。
 
-
 ### 2026-11-19 — M72保守共同準備實作授權／仍無新VM
 
 - Root核准同agent七paths，brief2026-11-19-native-send-cohort-m72-brief.md/SHA62c721dc6ad52ee70b5d68584cc37f64a8d81e60c3c0190e320294e8fde915f3，base d2919dd/2028protected。workflow16→既有12；原公開DOM visible/enabled/focus先共同準備、送出瞬間仍fresh完整predicate＋一次可信原生Enter，單人原15s從準備開始不重開、真CDP250ms與60同批/全部診斷/原後端限制不變。prepared失敗/預release失敗零press；release後部分在途不謊稱原子性。Root選保守freshcheck邊界，不需Owner再當技術傳話者。
 - 新helper一次性actor/page/generation/element lease與完整收束、原actualUi/send identity與standalone legacy/customUi保持；有界安全準備摘要原report可留，不能引入新不可定位await黑箱。registration原504准545（保原ownership/finally），其餘六500。先有效actualcallerRED、56/968union+新/fullTSchecks、原assertions與Source/Native歷史保；worker無Git/docs/真browser/network/child/Cloud/Hosted權限，Root唯一review。
 - 16CPU未啟動run44343280274實際terminalcompleted/cancelled，未建立VM17，原M71私有16CPU startup/tests保留。Root新的12CPU VM17離線e17b85/europe-west1-b/startup97fbc9e646474842abf46985215167a2380633433abcbee0da770f3fdd6bb6b0，8bootstrap+4courierfakePASS，獨立v2courier免覆舊檔；sourceAdmission BLOCKED_PENDING_M72_REVIEW_AND_EXACT_SOURCE。next基本預留2.12/cumulativeplanned32.7008非invoice，現actualconfigured reserve30.5808非invoice，quota12遵守但stock仍UNKNOWN。十六VM STOPPED/repo0/US150/noPaid／永久清理仍pending／Original G8 STOPPED85／Hosted0／Production禁。
-
 
 ### 2026-11-19 — VM17僅12CPU草稿／無資源新增
 
@@ -4118,13 +3835,11 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - M72 actual default caller RED已證：actor39 focus未準備完時原39actors可先press；這是同步準備缺口控制，不是Native16 CPU/M70根因證明。實作/負向/union checks進行；Rootreview尚未開始。十六VM STOPPED/repo0，VM17尚無Create/runner；Sourceadmission仍BLOCKED_PENDING_M72_REVIEW_AND_EXACT_SOURCE，US150/noPaid/next2.12/cumulativeplanned32.7008非invoice。
 - Native17應使用新 .git/gcp-vm17-register-one-runner-v2.py（12CPU/97fbc…）與 .git/m72-vm17-startup，不是保留的M71 16CPU v1/96860…；兩版本互相startupsha guard，不覆證據。Original G8 STOPPED85／永久清理仍候Owner／Hosted0／Production禁。
 
-
 ### 2026-11-19 — M72 Root唯一review接受／待exactSource新Local驗證
 
 - 一輪Root0finding接受v2：57files1001PASS與fulltype/lint/affectedformat/import/diff/static/inverse/oldassertretention全0，packet82cc211867e86a799fb537991ca98728a508ad4798009b816c2e9bdb8198e8fb/76records31checks，Root直接2279檔路徑/2028protected/Original9prefix/M70九/M69四/32Native/121history與Rootcold保。完整M72review雙根。
 - 七owned含一unchanged既有UItest，六實際diff；helper446 a0a6767d…、registration520≤545/ui260/newtest468/原test151 bytes不變/registrationtest461，workflow只16→12。原actualUi/send identity與standalone byteinverse/原assertions保。全共同準備後release，burst保原freshDOM＋一次trustedEnter/全arm先行、15s總期限不重開/250與60/SLO全保；failedrelease永久revoke、close drain/全部ownresources嘗試，安全16KiB摘要不冒權威。
 - v1 999綠與兩有效RED/初type/lint/private工具ERROR原紀錄保，final1001才是v2。Root未宣稱Native改善或網站承載PASS；Source未commit/push/無新VM。下一exactSource/新單次run與fresh12CPU VM17（只能v2courier97fbc…，不是M71 16CPU v1）。十六VM STOPPED/repo0/US150/noPaid/stock未知／永久清理pending／Original G8 STOPPED85／Hosted0／Production禁。
-
 
 ### 2026-11-19 — M72保存638ba0f／VM17新12CPU Local正式開始
 
@@ -4134,7 +3849,6 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Rootadmission真核七Source同commit與原M68五kernel modules bytes同31fe，沿用VM15四actual kernel控制、不宣稱VM17重跑，producer仍新校準。七inherited只讀helper exactinverse16→17（downloader三runID全換）＋獨立有界Live reader已outer/embedded compile，runtime/gcp-vm17父0700。
 - app Source全凍結；下一等原full15矩陣/真age+cold+business。不宣稱改善send時序或60全站PASS。US150/noPaid／累計configured基本預留32.7008非invoice／17disks1700GB估184/月持續計費、exclIP/egress/tax；永久清理Owner仍pending未刪。Original G8 STOPPED85／Hosted0／Production禁。
 
-
 ### 2026-11-19 — VM17 truefresh40/60通過／精確定位拒絕後CLOSED覆寫，M73限定修正開始
 
 - Source638ba0f/run44349496804/job134960902166/runner37：functional15 PASS；capacity5/15 PASS（anon3/10/20＋truefresh40 wcr-261118-ffbac785dc36、60 wcr-261118-124603bb78b4），planwsc-261118-149e9db5421f/106identities。40 entry132.651/send86.517ms、AuthCreated/completed40；60 entry234.625/send79.372ms、AuthCreated/completed60、ownershipKnowntrue/complete_cohort/mailboxClosed；M72 allReady/released/closedtrue/pending0/firstFailnull。原250門檻未改，不宣稱時間改善因果或60全站PASS。
@@ -4143,14 +3857,12 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Root授權同agent M73兩檔gate.ts＋新refusaltest，brief2026-11-19-live-refusal-settlement-m73-brief.md/d4f2b127f8282b3226055493ffaec828337e238fef549022787871439ff4dbe0。firstterminal單次決定＋stickyjoinedEver，只允許已denied自有remove的CLOSED，不容unknown/曾joined翻PASS；原20s/一次remove/positivefault/診斷權限全保。先有效factoryRED、原57/1001union＋新/fullchecks，Root唯一review。baseline2034protected/2225immutable/Originalinherited/df19f2d49f8c6461f33adba5bfa06f221b0564db580f14f0735f5d6f05a2dcb4，Rootbaseline-v1碰symlinkdir讀取失敗保、v2改lstat/readlink才PASS。
 - 新VM18僅離線12CPU32G/f18c96/europe-west1-b/startup12ba75512072e948a2b7a5bb03567461a48acebcfd86e8807d4538b3864cb98e，8bootstrap+4courierfakePASS/namepathinverse，不建立或註冊、Sourceadmission仍BLOCKED_PENDING_M73_REVIEW。US150/noPaid/actualconfigured32.7008非invoice/nextproposal2.12累計planned34.8208；17disk1700GB約184/月持續計費，Owner永久清理仍pending未刪。Original G8 STOPPED85／Hosted0／Production禁。
 
-
 ### 2026-11-19 — VM17全收束／M73 Root唯一審查接受
 
 - VM17原hold16:56:33→17:06:33UTC自然完成、job17:06:36failure、ephemeralrunner0；RootskipGracefalse只送一次正常Stop，Google經安全關閉/stopping後fresh十七台strictSTOPPED、100GBretain，無永久刪除。Rootfinal2743e55261dc95c5f02198001c3fd04a3a5a4d91f1c12b0e87692c451c3fee1f；完整報告2026-11-19-gcp-vm17-reg60-pass-outsider-refusal-inconclusive.md雙根，5/15/後九未跑與原失敗不改。
 - M73一輪Root0finding接受：58files1042PASS，必要type/lint/format/import/diff/static全0，packet c941ca1439b9c989b63d83e16d70109ba91b724b0fc03fb358e986705a25fa5b/37records14checks；Root實讀2299paths，final eb93d14aa98e1e55a099f1367638d9edeef31b631297fbd3bac50b1473d68af7。gate283/a2b9c62…/newtest374/8134a29…兩Source，原2有效RED與lintFAIL保；2034protected/2224currentimmutable＋唯一owned gate historical例外按base638/blob/inverse，Original9prefix與M69四核符。完整review雙根。
 - firstterminal單次決定、明確denial允許自有remove CLOSED，stickyjoinedEver/contradiction不容訂閱成功或unknown洗PASS；原20s/一次remove/positivefault/strictclassifier保。subscribe外byteinverse與所有舊testbytes保；完成後任意晚到callback不能回溯改Promise，不宣稱持續監控。只是harness task接受，不是Native60或AC/phase/Hosted通過。
 - 下一保存精確Source，fresh12CPU VM18單次原matrix；既有Native不重跑。18僅offline f18c96/europe-west1-b/startup12ba75512072e948a2b7a5bb03567461a48acebcfd86e8807d4538b3864cb98e，8+4fakePASS、Sourceadmission待新SHA，沒有Create。US150/noPaid/actualconfigured32.7008非invoice/next2.12 planned34.8208；17retaineddisks持續費用/永久清理pending，Original G8 STOPPED85／Hosted0／Production禁。
-
 
 ### 2026-11-19 — M73保存e9fa16a／VM18新12CPU單次Local開始
 
@@ -4161,7 +3873,6 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 八onlyreadonly helpers exactinverse17→18（IP同但freshknown_hosts，downloader三runID均換）outer/embeddedcompile，Root .git/gcp-vm18-root-readonly-helpers-freeze.json；runtime18父0700。app Source凍結，同agentidle待真結果，不自行Native/Cloud/Source。
 - 下一等原15leg矩陣/真age+cold+business，禁止放寬40/60與250ms/SLO或重跑舊run。US150/noPaid；configured基本預留34.8208非invoice，18×100GB保留磁碟約195/月持續計費（exclIP/egress/tax）；永久清理Owner仍pending未刪。Original G8 STOPPED85／Hosted0／Production禁。
 
-
 ### 2026-11-19 — VM18 fresh40/60再次通過／M73真拒絕檢查過，第一題screen_only契約定位
 
 - Sourcee9fa16a/run44356453255/job134985739469/runner38：functional15 PASS（wsb-261118-39c2a3b565ff）；capacity5/15PASS，planwsc-261118-a272f937842c/106identities。fresh40 wcr-261118-254713d8293a全40AuthCreated/completed/entry63.108/send123.76ms；fresh60 wcr-261118-6159c4626555全60/entry186.532/send104.634ms，SLOPASS/ownershipKnown/closedtrue。existing3 wcr-261118-099ddcbaaf3a INCONCLUSIVE、後九未跑。
@@ -4171,7 +3882,6 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 原hold17:37→17:47UTC自然完成、job17:47:03failure/runner0；Root明核skipGracefalse已只送一次正常Stop，目前待Google strictSTOPPED，不宣稱十八全停。下一M74 mode-aware capacity helper僅proposal待Rootbrief，不改產品/投影模式/20題/20s/SLO。Source仍凍結，US150/noPaid/actualconfigured34.8208非invoice、18disk保留計費/永久清理Ownerpending。Original G8 STOPPED85／Hosted0／Production禁。
 - 另Root只讀Staging現況仍d92/activeprotect-staging九checks，alias固定project→dpl_H1XfHX2WpTPV3czy1MrQFqXgrMjf READY；Vercel metadata沒有gitSource，只實讀admin-release/indexHTML各bytes，listfiles359/574/215omitted保持PARTIAL。官方PR73merge雙parents/headtree等值與Supabase auth-login五files/ezbr樣本只供歷史parser樣本，不授候選admit。資料 .git/m74-provenance-samples；Node超64KiB寫入自動檢查拒，改10KiB分段保存後完整SHA核。沒有MCP→M57 Rootports現成橋，parser+callerget不足；暫不實作新橋，先WB5 Localfull15→Rootreview/draftPR/九checks/exactSHAOwner gate。新帳單只讀顯示gross134/credit134/net0/remaining9533、幣別仍UNKNOWN不可稱USD，trial2027-02-17/noPaid；舊分頁focusfail新同browser分頁成功，無帳戶設定修改。
 
-
 ### 2026-11-19 — VM18十八台全停／M74投影模式工具修正正式開始
 
 - Google fresh inventory十八台strictSTOPPED；VM18只送一次normalStop/skipGracefalse、100GBretain，原hold自然完/job17:47:03failure/runner0。Rootfinal8717fa5b764c9c3015b7c1257a3864ccb86bac63064a15cf235637951055dd42、auxdump SHA與本機下載再核相等；完整VM18 review雙根2026-11-19-gcp-vm18-screen-only-question-inconclusive.md。5/15與後九未跑原結果不改，沒有restore／永久刪除。
@@ -4179,13 +3889,11 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - mode只讀既有questionDisplay且不預設unknown；screen_only要求prompt/text未外洩、依題號/請看投影幕作答/答案按鈕；device保原prompt。同步position/count/非host/waiting/options guard，新增readonlyUI checks共享原PROMPT_VISIBLE與OPTIONS_VISIBLE各20s剩餘，不加時間；API不碰Page。保原20題/真click/原submitMeasure/response/outsider/M73/cleanup/SLO，先actualcallerRED再原58/1042union＋新/fullchecks，Root唯一review，不改產品/預設模式或替Source偽造payload。
 - 新19僅offline g19d07/europe-west2-b/12CPU32G/startup2bb17357032c7a61db959e8a9d877735176b2154da6a2e3803a03292dd450b7b，8+4fakePASS、Sourceadmission BLOCKED_PENDING_M74_REVIEW，未Create。actualconfigured34.8208非invoice/next2.12 proposal36.9408、US150/noPaid；18磁碟保留持續計費/Owner永久清理pending。Original G8 STOPPED85／Hosted0／Production禁。
 
-
 ### 2026-11-19 — VM19只有草稿／London價格保守預留修正
 
 - Root在同GCP專案準備g19d07/europe-west2-b草稿，12CPU32G/minIceLake/Ubuntu24.04/new100GBbalancedretain/原3h正常STOP+1min/noRestart/noSA/Workload/Ops/snapshot/HTTP/HTTPS/LB/display，projectSSHblocked/OSloginfalse/原publictestkey，舊device18自訂名取消。startup2bb17357032c7a61db959e8a9d877735176b2154da6a2e3803a03292dd450b7b全文對本機相等；console-draft-proof.json與draft screenshot已存／展示。無quota warning但stock未知，沒有Create/runner/註冊，Sourceadmission仍BLOCKED_PENDING_M74_REVIEW_AND_EXACT_SOURCE。十八現有VM全STOPPED/repo0。
 - Google Console London未折扣compute508.51/月＋100GBdisk12/月，不能把需月持續使用的折扣拿來低估3h。Root把原offline2.12提案另存offline-budget-revision.json，next保守基本預留2.30、cumulativeplanned37.1208，actualconfigured仍34.8208非invoice，exclIP/egress/tax，US150/noPaid。原2.12離線提案保留未覆寫。User不需為已授權總額內的0.18估算修正再確認。
 - M74兩有效actualcallerRED（合法screen_only無prompt/text/2options，API及page-backed都在原QUESTION_OPTIONS失敗）已保，helper/fixture接線和負向deadline矩陣進行；尚未Root正式review。Root請同agent在freeze前只讀對照後半20題至結算的canonical／functional契約，若見範圍外問題只報、不自行擴修。Original G8 STOPPED85／永久清理pending／Hosted0／Production禁。
-
 
 ### 2026-11-19 — M74 Root一輪P2已解決／限定工具契約修正接受
 
@@ -4193,3 +3901,44 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 實際資格分開：P2前full59files1078PASS，P2後affectedLive3files91PASS/new39；不宣稱執行final59/1081。必要fulltype/lint/format/import/diff/static/inverse全0，packet3eb9ddc46df549639d9bc5b8d9e90f07a289d7259ee63ee0099c29f8d8bfe935/56records21checks。Root實讀2379paths、2033tracked/2282currentimmutable/三owned歷史Git、Original9prefix/M69四/Native舊數據保；Rootaudit-v1語法空白FAIL保，v2改空白PASS，非Source失敗。
 - game542/105d9505…、helper96/f5cd847b…、oldgamefixture386/3e5bed72…、oldlifecycle535/caf59854…、newtest492/4e0139f9…五Source；game與兩fixture整檔inverse回basee9，所有原assertions/trace不變。screen_only合法過濾payload不再被強求prompt；device保prompt；mode/position/count/host/waiting/options/privacy負向、原兩stage各20s剩餘deadline/API不碰Page/20題/原測量與outsider/cleanup/SLO保。只是task，不是新Native或60全站通過。
 - 下一保存exactSource再fresh12CPU VM19單次原matrix，既有18run不重跑。十八VM全STOPPED/repo0；19 London草稿未Create，startup2bb17357032c7a61db959e8a9d877735176b2154da6a2e3803a03292dd450b7b、8+4fakePASS，Sourceadmission待新SHA。US150/noPaid/next2.30 planned37.1208/actualconfigured34.8208非invoice，永久清理pending；Original G8 STOPPED85／Hosted0／Production禁。
+
+### 2026-11-19 — M74保存ccc0d67／VM19單次完整Local正式開始
+
+- Root接受M74後exact九paths（五Source＋brief/review/VM18review/handoff）保存ccc0d671c356e2fa7cb25f3f8bf61834ce537f2b/tree6bafa0368e35e17bb404099dc1b88e08c909acda/parente9，normalFF既定Local分支。新run44368068280/job135027087301/attempt1/runner39 actualin_progress18:23:13UTC，exactcheckout完成。不是重跑既有run，Staging/Production未動。
+- 新VM19 cp-capacity-20261118-g19d07/2015422700982391528/europe-west2-b/34.39.52.173，created2026-11-18T18:18:49Z/normalAutoStop21:17:52Z。真N2custom12/32/minIceLake/actualIceLake/Ubuntu24.04x64/new100GBbalancedretain/3h正常STOP+1min/noRestart/noSA/Workload/Ops/snapshot/HTTP/HTTPS/LB/display核符。fresh十八舊VM全strictSTOPPED/repo0才Create。
+- Google雙相同PREPARED＋獨立cloudinitED25519block與fp重算相符，boot34cad9e7f8910026f85a7d4b2a77512f981613c79f83da5735965e8b5bea5105/fps1OfUtUt4m59GyYKo9CCS7wgiJZgigYD/yVqL2tCsfU/newknown_hosts，strictSSHpreflight一致。startup2bb17357032c7a61db959e8a9d877735176b2154da6a2e3803a03292dd450b7b全文一致，8bootstrap+4courierfakePASS。Rootadmission14Source同commit、五kernelmodules同原control，沿用VM15四actualkernel controls，19producer仍fresh校準；初admission沿用Vm18字段標籤已保initial，最終僅改Vm19label/qualification並加priorSHA，Source/boot/14核不變，不宣稱19重跑kernelcontrols。
+- runner39 singleephemeral/disableupdate，registration首次PTY88485只等待同session後exit0，沒有第二POST；PAT留本機/token只SSHstdin。官方svc MainPID3553/Usercp-capacity/Restartno，APT0a138/classicDocker29.1.3空store核；25bootstraplogs31092B本機保存。八只讀helper exactinverse18→19/nameIPSourceRun，downloader三runID全換、outer/embeddedcompile，runtime19父0700。
+- app Source全freeze，同agentidle待真結果；下一原full15leg/真age+cold+business。只達task不宣稱60全站／Hosted／phase通過。US150/noPaid、actualconfigured基本預留37.1208非invoice/exclIPegresstax；19×100GB保留磁碟約206/月持續計費，Owner永久清理仍pending未刪。Original G8 STOPPED85／Hosted0／Production禁。
+
+### 2026-11-19 — VM19後端／校準過／Staging Auth只讀刷新與同NAT邊界保留
+
+- VM19 ccc/run44368068280：Localbackend/profile與fresh kernel calibration已通過，完整功能／容量仍進行，未宣稱任何新leg PASS；Source保持freeze。
+- Root只做固定Staging Auth health一個GET：18:26:47UTC HTTP200/v2.198.0，publickey fp287e53db8aa9e39769d1063303af8595c4cee0be211ffd4c34427e1890c1d0ae；raw3916d83db8068909d914d393a5bf27f1f29614ff38dd78f7b7bd371d9a8b461b，receipt .git/staging-auth-capacity-readonly/hosted-auth-health-native19.json。users0/mail0/settings0，沒有Hostedload。
+- 重新讀既有readonly-findings/auth198-route-confirmation，重要既有邊界：public v2.198 API路由/limiter construction與configupdate維持burst30，先前真vendor constructor/tollbooth synthetic in-process60同key僅30過，即使只把rate升3000仍30；distinctkeys60才全過。這是版本對應Source/離線控制，未attest managed binary或replica routing、未真Hosted失敗，不能假稱提高每5分鐘rate就可解60NAT。先前Dashboard currentlimits/emailhour/Resendplan仍需fresh實核；Local IP-header bypass/Mailpit不替代Hosted同NAT／真郵件證據。不得偽造不同來源IP來宣稱學校同NAT情境過關。
+- 繼續原Localfull15→Rootreview/draftPR/active九checks/exactSHAOwner gate，之後依實際部署/窗口處理Root connector橋、SMTP/HostedsameNAT實證與必要設定決策，不現在繞權限或自行升級。US150/noPaid／Hostedwrites0／Production禁。
+
+### 2026-11-19 — VM19容量8/15通過／40人產生器PSS中止／M75文件格式修正
+
+- Root實際下載官方artifact14459985679（ZIP48368654B/e94cfd5ca0274dff28f292267f07a60cc4ae1bcbc8e73ca79930b1cf8e38308d），真age驗證cipher6e318df5007863cb326541711962279a4db11294f40271ed2d5a34104f19a14d，3646files234068603B；cold3573/snapshot3c5453e81dec6fd203528020e71257a5b5902703776cd84019169ca820f2e475、8服務stop、2DB127tables31roles、三volume逐檔hash/metadata全核。沒有執行restore，封存不等容量PASS。
+- exactccc/run44368068280 functional15PASS、capacity8/15PASS：anon3/10/20、真fresh40/60含SLO、nativefullgame3/10/20至20題與報表。小樣本SLO為NOT_EVALUATED_INSUFFICIENT_SAMPLES。40existing（wcr-261118-9aca727a4847）INCONCLUSIVE，6後續未試；40entry/login都200、skew67.041/134.072ms。firstCollectorInvalid48962.627596為browser_pss超6GiB10046.596ms、峰6875154432B，隨後abort／journeyFailure signalAbortedtrue。無早於guard的operationLifecycle invalid，teacher25次量測後中止。這不是已確認網站timeout，亦不能判40完整通過。
+- Root M75只修Recovery自己累積handoff多餘空行，493080B既有prefix與去空白內容完整不變；Original檔案在修復時全byte不變，575959B保護prefix仍核。prettier handoffPASS、428個changed Source格式PASS；尚未commit，Native19仍ccc。後續exactSHA須重新資格，沒有ancestor例外。
+- 新提案雙根docs/deployment/2026-11-19-vm19-generator-memory-profile-proposal.md：同12CPU32G新版本browserPSS12GiB、舊6G保留，backend4CPU6GiB/Node2GiB/250ms/API SLO/full15均保。原計畫freeze6GiB，已用一題請Owner決定，等待前不實作或建VM20。同agent只讀核計量／配置，Root唯一審查。Native19自然hold18:44:08→18:54:08UTC待完後runner0及正常STOP；此刻尚未關VM。US150/noPaid/基本預留37.1208非invoice；永久刪除pending，Hosted0／Production禁。
+
+### 2026-11-19 — VM19唯一審查封存／19台正常STOP／新工程profile待Owner
+
+- Root final88e1eefdee2aea6889625b326ec43b9432bad6a5a08aac5425a95c73174bdda9，完整報告雙根docs/reviews/2026-11-19-gcp-vm19-reg60-game20-pass-browser-pss-inconclusive.md。真age/cold/業務重算、10parentclosures無殘留、三Livejournal SSH/download parity、14凍結Source＋5kernel modules及Original9檔/prefix均核；未restore、未全站60PASS。40人首因PSS而非已確認網站timeout；PSS峰6.403GiB不等於峰值持續10秒，逐樣本freeRAM UNKNOWN。
+- hold18:44:08→18:54:08UTC原10min自然結束，job18:54:11failure/repo runner0。Root略過正常關機=false只送一次Stop，fresh Google inventory19rows全部strictSTOPPED，proof/screenshot .git/m74-vm19-startup/strict-stopped.json與stopped-20261119.png已保／展示。首次準備fs binding錯在Stop click前，修正import後一次提交；無第二Stop、無刪除。
+- 新12GiB browser配置需改原freeze6GiB，已一題待Owner選擇；尚未改Source／建VM20。若允許，才限定新版本profile/hash pin與真校準、舊6G全保，再同agent實作／Root唯一review／新exactSource及freshfull15，不能追認VM19或放寬產品SLO。M75Root空行fix本機未commit，下一候選必須包含並重新資格。US150/noPaid/預留37.1208非invoice；19保留磁碟約US206/月持續計費，永久清理pending；Hosted0／Production禁。
+
+### 2026-11-19 — Owner核准12GiB／M76實作與VM20草稿
+
+- Owner明確允許新12GiB測試配置、實作／唯一Root審查／完整60人Local，通過後繼續Staging；US150/noPaid/Production禁。舊三profile仍6GiB，原VM19結果不追認。新固定kind LINUX_VM_12CPU_32G_BROWSER12G_V1，backend4CPU6GiB/Node2GiB/10s/PSI/OOM/swap/freshness/250ms/API SLO/full15全部保；不改產品。
+- 同worker正式M76：雙根brief initiald948d4d50a76af85d97ee3c4bd4d6e426da97ef628c26c5afea36eda5bcb093e，Root新增來源證明必要一行linux_suite_support.py tuple後brief8fce28cfc424e91534c39dffeee32f34bf4e30addc84cf97cef562e785a2dd10。initial保護manifest82245c26299c0fd380b5672e9bdebd8b1836346bb712ccde909acbb8825478f1/5961paths（5939file＋22symlink target）/23existingowned＋2optionalnewtests；第14 Source依root-extra-source-01.json獨立例外，beforeeab4e21a95e8b653cffc1b82c9b9c9614374a4551efca3eecb65e5ec465fe9ee，原baseline不改。Root產生器前3次因process global／module不支援／symlink當file失敗，已型別診斷修正，沒有Source寫入。
+- actual newkind與Python selector RED→GREEN已保，worker補完整guards/provenance/pin/calibration/snapshot鏈與fullchecks，尚未review／commit。workerownership限定14工具Source＋directtests，不碰Root M75 handoff空白fix／Original／舊Native證據／M69四Source。
+- Root VM20 h20e18/europe-west2-b草稿：12CPU32G/N2/minIceLake/Ubuntu24.04/new100GBbalancedretain/原3h正常STOP+1min/noRestart/noSA/Workload/Ops/snapshot/HTTP/HTTPS/LB/display/封鎖projectSSH/原測試公鑰。startupbfc325bc5b7ba8ede495a62532d8477729d537fdf5f0f9dd17c790febb2cf596與本機全文一致，8bootstrap＋4courierfakePASS；fresh19strictSTOPPED。Browser4已失連，依troubleshooting轉目前Chrome5，草稿proof/screenshot已保／展示；沒有Create／runner／新存取／VM20run。下一保守基本預留2.30、planned39.4208，actualconfigured仍37.1208非invoice；保留磁碟持續計費、永久清理pending。M76改kernel closure中的host contract/runtime，VM20將在註冊runner前做新exactSource四項真kernel controls，不稱舊五檔都未變。
+
+### 2026-11-19 — M76 Root唯一審查ACCEPTED／新exactSource待保存
+
+- final23782eb0a55c553b0e437d8f71a1ef8e25ea9b95b72fca52ce323f77cd62debf，Root唯一一輪standards0/spec0/open0，雙根review已記。packet802c3ae7bfba702f7db88c7b91353e5da6e29dedebf6fa8c1d079de267ad16be/78records32checks；Sourcefreeze048ac55c065c76d78647b1ebd442e4f0ef88a87dd2bc554310ecb8f1f31c6e7c/18paths=14Source＋4tests/max491。newkind12GiB／oldthree6GiB／Rootrequestkindhashpin全鏈／backend與SLO全保；suite_support僅核准tuple一項，46helpers能力不變、5hash更新。
+- final65files1150TS PASS、Pythonoperator71含新9／contracts129／snapshot34／embeddedVM10 PASS，重疊不加；type/lint/format/import/compile/static/semantic/inverse/diff全0。8項初失敗全保，錯歷史filename discover0/exit5不是PASS，正確bootstrap18已跑；沒有產品1771或Native/kernel通過宣稱。Root直接實讀6068distinctpaths，78records/32logs、5938files＋22symlinks、Original9/prefix、16整檔inverse及舊assertions核。
+- worker保持idle/freeze未commit。Root下一保存exactSource（併M75自己的handoff空白format／必要docs），再freshVM20前註冊四真kernelcontrols／原full15。VM20草稿未Create，startupbfc325bc... offline12fakePASS；fresh19STOPPED。US150/noPaid、next2.30/planned39.4208/actualconfigured37.1208非invoice，永久清理pending／Hosted0／Production禁；通過後繼續Staging，不中途當作最終完成。

@@ -13,7 +13,8 @@ def main():
     raw=private_read(RUNTIME/"execution-profile.json",32768)
     require(digest(raw)==profile_sha,"PROFILE_BYTES_CHANGED")
     observed=observe_profile(ctx)
-    require(json.loads(raw)["kind"]==H.profile_kind(observed["host"]),"ROOT_PROFILE_OBSERVATION_CHANGED")
+    profile=json.loads(raw)
+    require(profile["kind"]==H.profile_kind(observed["host"],profile["kind"]),"ROOT_PROFILE_OBSERVATION_CHANGED")
     require(digest(private_read(RUNTIME/"execution-profile.json",32768))==profile_sha,"PROFILE_BYTES_CHANGED")
     print(json.dumps({"sourceRevision":revision,"challenge":challenge,"observed":observed}),flush=True)
 

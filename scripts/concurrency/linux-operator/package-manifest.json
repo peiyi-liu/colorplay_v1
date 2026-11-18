@@ -17,9 +17,9 @@
       "sha256": "4d9ce7eb760ff8c47da176f582227b1b6d64236e28417f2867839e2b7d7a829b"
     },
     "calibrate-linux-runtime.py": {
-      "bytes": 10202,
+      "bytes": 10218,
       "role": "OPERATOR",
-      "sha256": "9cd1d0f77af6f55950a81ebaa5ee749e4b1dcf91f209ba6a6bc0152d2fbb10e2"
+      "sha256": "a238a151116153305c0ea5992d863b1d0e2173d4f7f1d41e9d837e3db0624f1e"
     },
     "calibration-sample.mjs": {
       "bytes": 4091,
@@ -57,9 +57,9 @@
       "sha256": "7eff330199adadc1a2b06f2c10a68bd1e7b7f4492383736d520026201f2c5710"
     },
     "execution-profile-preflight.py": {
-      "bytes": 1474,
+      "bytes": 1510,
       "role": "OPERATOR",
-      "sha256": "b9637902f3c542cd64f86c5c25c1a5c68fd7582de142d94ae8e2bfb485cf649e"
+      "sha256": "9f2f0ff9ae4e8fd43aa7ae274623361214587d2dc702468a3719da884af6291a"
     },
     "functional-preflight.py": {
       "bytes": 5272,
@@ -82,9 +82,9 @@
       "sha256": "024dd5533b60075d7e5c275812a9833693086a853908865f6203a5ec4521d1b1"
     },
     "linux_host_contract.py": {
-      "bytes": 3474,
+      "bytes": 3857,
       "role": "OPERATOR",
-      "sha256": "b5b7205e514c5cd85dae57eca1ce9adc14b69bf8d24fc461753112a51bea52d3"
+      "sha256": "a600986a80c8c46656a3691f1f496c79718a7d5eba7f0519ecb2c6069b20ed4d"
     },
     "linux_owned_process.py": {
       "bytes": 27795,
@@ -102,9 +102,9 @@
       "sha256": "2c278997e303714df5fc14112799e831405d527b6b94809f6ba8c26c8c49f8c1"
     },
     "linux_runtime_common.py": {
-      "bytes": 17952,
+      "bytes": 17988,
       "role": "OPERATOR",
-      "sha256": "be61c0206409213d1c292b0a9d2ce054e7271ee3cd6529859197e612e90bfcf0"
+      "sha256": "7b468f53e462c77344b584aafd72a28e9a9554d3ecd81e30d60b66e3a7c1105a"
     },
     "local-psql.py": {
       "bytes": 3967,
@@ -122,9 +122,9 @@
       "sha256": "0cf7264f2fcfdc8453288c04c8e1ed8be3bf1a24ef8d4f423828894a474a099b"
     },
     "pin-execution-profile.py": {
-      "bytes": 10284,
+      "bytes": 10318,
       "role": "OPERATOR",
-      "sha256": "2a685ce6b6ffe941eab0b94096073761f68629f260ff9dec03d647d3025532ca"
+      "sha256": "1bab94667ee170b578c17f787b34fd642f4098958410c00f5911a1d156ef3e74"
     },
     "prepare-capacity-leg.mjs": {
       "bytes": 10226,

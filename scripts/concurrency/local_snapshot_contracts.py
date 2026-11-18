@@ -113,7 +113,7 @@ def bindings(source, runtime, plan, environment):
     require(digest(profile_raw) == plan['executionProfileSha256'] and
             digest(context_raw) == plan['executionContextSha256'], 'SNAPSHOT_PROFILE_CHANGED')
     profile, context = decode(profile_raw), decode(context_raw)
-    require(profile['kind'] == H.profile_kind(profile['host']) and context['projectId'] == PROJECT and
+    require(profile['kind'] == H.profile_kind(profile['host'],profile['kind']) and context['projectId'] == PROJECT and
             context['sourceRevision'] == plan['sourceRevision'] and context['instanceNonce'] == plan['instanceNonce'])
     job = exact(context['job'], ['repository', 'runId', 'runAttempt', 'jobName'])
     require(digest(canonical(job)) == plan['jobIdentitySha256'] and

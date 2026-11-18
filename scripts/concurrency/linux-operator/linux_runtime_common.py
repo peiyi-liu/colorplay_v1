@@ -230,7 +230,7 @@ def verify_local_profile(revision,profile_sha,full=False):
     profile,actual_sha=private_json(RUNTIME/"execution-profile.json",32768)
     require(actual_sha==profile_sha,"PROFILE_BYTES_CHANGED")
     host,boot=host_observation(ctx);facts=instance_facts(ctx,boot)
-    require(profile.get("schemaVersion")==1 and profile.get("kind")==H.profile_kind(host),"PROFILE_KIND_INVALID")
+    require(profile.get("schemaVersion")==1 and profile.get("kind")==H.profile_kind(host,profile.get("kind")),"PROFILE_KIND_INVALID")
     require(profile["host"]==host and all(profile["identity"][key]==value for key,value in facts.items()),"HOST_PROFILE_CHANGED")
     verify_executables(ctx,full_hash=full)
     if full:
@@ -260,7 +260,7 @@ def verify_root_snapshot(scope,revision,descriptor):
             require(digest(private_read(RUNTIME/name,131072))==expected_hash,"ROOT_HELPER_CHANGED")
     unchanged()
     observed=observe_profile(ctx,allow_outside_group=True)
-    require(profile=={"schemaVersion":1,"kind":H.profile_kind(observed["host"]),**observed},"ROOT_PROFILE_OBSERVATION_CHANGED")
+    require(profile=={"schemaVersion":1,"kind":H.profile_kind(observed["host"],profile["kind"]),**observed},"ROOT_PROFILE_OBSERVATION_CHANGED")
     require(observed["identity"]["databaseIdentitySha256"]==scope["databaseIdentitySha256"],"DATABASE_PROFILE_CHANGED")
     host_listeners();unchanged()
     return {"bytes":raw.decode("utf-8"),"expectedSha256":expected,"observed":observed}

@@ -30,6 +30,16 @@ export const linuxEngineeringGuardsSchema = z.strictObject({
   memoryPsiSomeAvg10LimitPercent: z.literal(10),
   memoryPsiFullAvg10LimitPercent: z.literal(1),
 });
+const browser12EngineeringGuards = Object.freeze({
+  ...linuxEngineeringGuards,
+  browserPssLimitBytes: 12 * 1024 ** 3,
+} as const);
+export const linuxBrowser12EngineeringGuardsSchema =
+  linuxEngineeringGuardsSchema.extend({
+    browserPssLimitBytes: z.literal(
+      browser12EngineeringGuards.browserPssLimitBytes,
+    ),
+  });
 const hostFields = {
   platform: z.literal('linux'),
   distribution: z.literal('ubuntu-24.04'),
@@ -97,6 +107,13 @@ export const linuxExecutionProfileSchema = z.discriminatedUnion('kind', [
   z.strictObject({
     schemaVersion: z.literal(1),
     kind: z.literal('LINUX_VM_12CPU_32G_V1'),
+    host: paid12Host,
+    identity,
+    backend,
+  }),
+  z.strictObject({
+    schemaVersion: z.literal(1),
+    kind: z.literal('LINUX_VM_12CPU_32G_BROWSER12G_V1'),
     host: paid12Host,
     identity,
     backend,
@@ -187,3 +204,13 @@ export const executionProfileField = (scope: {
   scope.executionProfileSha256 === undefined
     ? {}
     : { executionProfileSha256: scope.executionProfileSha256 };
+
+/** Policy follows independently hash-approved profile bytes, never CPU inference. */
+export const executionProfileGuards = (
+  authority: ExecutionProfileAuthority,
+) => {
+  const bound = requireExecutionProfile(authority.sha256, authority);
+  return bound?.profile.kind === 'LINUX_VM_12CPU_32G_BROWSER12G_V1'
+    ? browser12EngineeringGuards
+    : linuxEngineeringGuards;
+};

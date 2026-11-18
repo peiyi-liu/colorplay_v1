@@ -39,7 +39,7 @@ def approved_inputs(revision,request_sha):
     raw=private_read(RUNTIME/"bootstrap-input.json",65536)
     require(digest(raw)==request_sha,"BOOTSTRAP_REQUEST_CHANGED")
     value=json.loads(raw)
-    require(value.get("schemaVersion")==1 and value.get("confirmation")in{H.target(H.FREE)["confirmation"],H.target(H.VM)["confirmation"],H.target(H.VM12)["confirmation"]} and value.get("sourceRevision")==revision and value.get("repository")=="peiyi-liu/colorplay_v1","BOOTSTRAP_APPROVAL_INVALID")
+    require(value.get("schemaVersion")==1 and value.get("confirmation")in{H.target(H.FREE)["confirmation"],H.target(H.VM)["confirmation"],H.target(H.VM12)["confirmation"],H.target(H.VM12_BROWSER12)["confirmation"]} and value.get("sourceRevision")==revision and value.get("repository")=="peiyi-liu/colorplay_v1","BOOTSTRAP_APPROVAL_INVALID")
     target=H.request_target(value,os.environ)
     job=value["job"]
     require(job=={"runId":os.environ.get("GITHUB_RUN_ID"),"runAttempt":1,"jobName":"capacity-linux"} and os.environ.get("GITHUB_RUN_ATTEMPT")=="1" and os.environ.get("GITHUB_REPOSITORY")==value["repository"] and os.environ.get("GITHUB_JOB")==job["jobName"] and os.environ.get("GITHUB_SHA")==revision,"JOB_IDENTITY_CHANGED")
@@ -108,8 +108,9 @@ def main():
     ctx=validate_context({"schemaVersion":1,"sourceRevision":revision,"projectId":PROJECT,"job":{"repository":request["repository"],**request["job"]},"instanceNonce":request["instanceNonce"],"generatorCgroupRelativePath":"/colorplaygenerator"+suffix+".slice/workload","backendCgroupRelativePath":"/colorplaybackend"+suffix+".slice","containers":actual_containers(),"binaries":{"node":node_pin,"browser":browsers}})
     write_once(RUNTIME/"execution-context.json",ctx)
     observed=observe_profile(ctx,allow_outside_group=True)
-    require(H.profile_kind(observed["host"])==H.request_target(request)["kind"],"ROOT_PROFILE_OBSERVATION_CHANGED")
-    profile={"schemaVersion":1,"kind":H.profile_kind(observed["host"]),**observed}
+    kind=H.request_target(request)["kind"]
+    require(H.profile_kind(observed["host"],kind)==kind,"ROOT_PROFILE_OBSERVATION_CHANGED")
+    profile={"schemaVersion":1,"kind":kind,**observed}
     profile_sha=write_once(RUNTIME/"execution-profile.json",profile)
     names={"functional-preflight.py","canonical-baseline.py","media-readback.py","capacity-root-readonly.py","capacity-registration-readback.py","capacity-retention-readback.py","capacity-preflight-readback.py","execution-profile-preflight.py","linux-host-sample.py","backend-cgroup-sample.py","linux_proc.py","linux_cgroup.py","linux_runtime_common.py","linux_host_contract.py"}
     closure_sha=write_once(RUNTIME/"execution-profile-helper-closure.json",{"schemaVersion":1,"sourceRevision":revision,"executionProfileSha256":profile_sha,"files":{name:digest(private_read(RUNTIME/name,131072)) for name in sorted(names)}})

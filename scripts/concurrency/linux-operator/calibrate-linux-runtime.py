@@ -105,7 +105,7 @@ def main():
     ctx=context();profile,profile_sha=private_json(RUNTIME/"execution-profile.json",32768)
     require(profile_sha==pin["executionProfileSha256"],"PROFILE_CHANGED")
     observed=observe_profile(ctx,allow_outside_group=True)
-    require(profile=={"schemaVersion":1,"kind":H.profile_kind(observed["host"]),**observed},"PROFILE_OBSERVATION_CHANGED")
+    require(profile=={"schemaVersion":1,"kind":H.profile_kind(observed["host"],profile["kind"]),**observed},"PROFILE_OBSERVATION_CHANGED")
     node=ctx["binaries"]["node"]["path"];checks=[];processes=[]
     PHASE='PERMISSIONS'
     PERMISSIONS=kernel_permission_snapshot(ctx)

@@ -195,7 +195,7 @@ def create_bootstrap_request(revision):
     host = module('linux_bootstrap_contracts').H
     target = host.environment_target(ENV)
     request = {'schemaVersion': 1, 'confirmation': target['confirmation'], 'sourceRevision': revision, 'repository': 'peiyi-liu/colorplay_v1', 'job': {'runId': os.environ['GITHUB_RUN_ID'], 'runAttempt': 1, 'jobName': 'capacity-linux'}, 'instanceNonce': secrets.token_hex(16), 'operatorPackageManifestSha256': digest((SOURCE / 'scripts/concurrency/linux-operator/package-manifest.json').read_bytes()), 'toolchainSha256': digest(private(TOOLS / 'toolchain.json'))}
-    if target['kind'] in (host.VM, host.VM12):request['provenance'] = host.provenance(host.VM)
+    if target['kind'] in (host.VM, host.VM12, host.VM12_BROWSER12):request['provenance'] = host.provenance(host.VM)
     folder = PARENT / 'requests'
     folder.mkdir(mode=0o700)
     path = folder / 'bootstrap-input.json'

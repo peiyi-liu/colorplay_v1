@@ -60,7 +60,12 @@ it('loads paid/free runtime authority through actual fresh helper observations',
     await import('../../scripts/concurrency/execution-profile-runtime');
   const { ROOT_RUNTIME_DIRECTORY, linuxClosureNames } =
     await import('../../scripts/concurrency/root-helper-contracts');
-  for (const profile of [paid(), paid(12), syntheticLinuxRuntime().profile]) {
+  for (const profile of [
+    paid(),
+    paid(12),
+    { ...paid(12), kind: 'LINUX_VM_12CPU_32G_BROWSER12G_V1' },
+    syntheticLinuxRuntime().profile,
+  ]) {
     const profileBytes = JSON.stringify(profile),
       profileSha = sha256(profileBytes);
     const files = Object.fromEntries(

@@ -173,7 +173,7 @@ class NativeIO:
         self.context=context;self.profile=profile
         root=self.load_root()
         root.validate_context(context)
-        C.require({'schemaVersion':1,'kind':root.H.profile_kind(profile['host']),**root.observe_profile(context,allow_outside_group=True)}==profile,
+        C.require({'schemaVersion':1,'kind':root.H.profile_kind(profile['host'],profile['kind']),**root.observe_profile(context,allow_outside_group=True)}==profile,
                   'SNAPSHOT_PROFILE_CHANGED')
         fd=self.process(plan['preview']);os.close(fd)
         self.barrier(plan,context)

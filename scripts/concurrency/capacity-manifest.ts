@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import {
-  linuxEngineeringGuards,
+  executionProfileGuards,
+  linuxBrowser12EngineeringGuardsSchema,
   linuxEngineeringGuardsSchema,
 } from './execution-profile';
 import { sha256 } from './local-runtime';
@@ -98,6 +99,7 @@ export const capacityManifestSchema = z.strictObject({
   engineeringGuards: z.union([
     engineeringGuardsSchema,
     linuxEngineeringGuardsSchema,
+    linuxBrowser12EngineeringGuardsSchema,
   ]),
   identities: z.array(alias).length(106),
   retention: z.literal('ALL_OWNED_AUTH_PROFILE_LEDGER_MEDIA_AUDIT_RETAINED'),
@@ -131,6 +133,7 @@ export const createCapacityManifest = (
     backendModes.length > 2
   )
     return capacityFailure();
+  const profile = capacityExecutionProfile(scope);
   const reg40 = members(40),
     reg60 = members(60),
     game = ['T1', ...reg60.slice(0, 59)];
@@ -204,8 +207,8 @@ export const createCapacityManifest = (
   return capacityManifestSchema.parse({
     schemaVersion: 1,
     scope,
-    engineeringGuards: capacityExecutionProfile(scope)
-      ? linuxEngineeringGuards
+    engineeringGuards: profile
+      ? executionProfileGuards(profile)
       : capacityEngineeringGuards,
     identities: ['T1', 'T2', 'S1', 'S2', 'A1', 'R1', ...reg40, ...reg60],
     retention: 'ALL_OWNED_AUTH_PROFILE_LEDGER_MEDIA_AUDIT_RETAINED',
