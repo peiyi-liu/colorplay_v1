@@ -1,3 +1,4 @@
+import { waitForCapacityTeacherOverview } from './capacity-teacher-read';
 import {
   gameObserve,
   gameErrorClass,
@@ -415,6 +416,7 @@ export const readCapacityTeacherDuringLoad = async (
               throw error;
             }
             note('HEADING', 'RETURNED', index);
+            await waitForCapacityTeacherOverview(actor.page, classroomId);
           } else
             await createTeacherContentRepository(
               actor.client,

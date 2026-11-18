@@ -3908,3 +3908,69 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 同輪唯一P2 afterFailure混合生命週期已修，Root actual exported正常＋四漂移控制／focused12 PASS，原guard/stop/parent-stop保持。capacity41/564、Python57與必要checks綠；原RED/setupFAIL/v1保。
 - Final packet 2bf6f8d439496681282f74f8e716bfd03ab6c6b6d9f23ad6b35d21f4bd87865e，Root receipt b0d7724d324f6d7f867156827db3ae5b27c02f71b0f682fa1c6b7d8038394254；七Source／2323protected／歷史與Original保護直接核符。review雙根已落，不是Native修復或容量PASS。
 - 下一步exact Source提交及Native專用branch normalFF，VM13草稿us-west4-a尚未Create；十二舊VM STOPPED／runner0／US150/noPaid／Hosted0／Production禁，不重跑VM12。
+
+
+### 2026-11-18 — fresh VM13 單次 Native啟動
+
+- M64 exact11paths提交 e46562c5504a66e0dff6815f2d75f3a62bccef53／tree8c3cbfe7766030e7e42cebf3a3620975da6d6b74／parent116442a，normalFF已推隔離Native branch，Vercel該branch optout false；無merge/deploy。
+- VM13 cp-capacity-20261118-a13d80／8032201484975266067／us-west4-a／actual及minIceLake／N2custom12/32／新100GBretain，created08:55:26UTC，3h正常STOP+1min/noRestart/noSA/Ops/snapshot。Google雙相同收據＋hostblock及strictSSH匹配，bootaf9f6e4b6ff4b24d58174d2b6246130ce9ff646487004d6ca7c3000da479f59d。
+- Repo先census0；runner33 ephemeral/disableUpdate，officialservice cp-capacity/Restartno/MainPID3545，Docker29.1.3classic overlay2無driver-type、開跑前images/volumes/containers空。run44271087230／job134687575488／attempt1已in_progress；不可rerun。十二舊VM仍STOPPED。
+- 累計配置最大基礎預留估算US24.3108非帳單（exclIP/egress/tax等），budgetUS150/noPaid。等實際full15與加密age/cold/business核，不提前PASS；Local未全過不部署，Hosted0/Production禁。
+
+
+### 2026-11-18 — M65離線Local predecessor獨立範圍
+
+- VM13 app e46562c仍單次執行中；Root只准同worker在/tmp獨立operator9f9checkout新增predecessor＋directtest兩檔，沿M57契約及原receipt/publication validators實核完整15/15。nonce/remote/mail/Hosted effect不在本task；總executionAuthority NONE。brief三根已落，Root唯一review，無push/deploy。
+- 不改Recovery/Original Source、VM/Local資料、門檻；US150/noPaid/Production禁。若既有validator證據不足先報Root，不造VERIFIED捷徑。
+
+
+### 2026-11-18 — VM13實際age/cold/業務核符，60註冊PASS，existing3 INCONCLUSIVE，十三VM均停
+
+- e46562c／run44271087230/job134687575488/attempt1/runner33，functional15與capacity5/15PASS（anon3/10/20＋fresh40/60真註冊SLO），第6existing3因教師第2輪AFTER_ACTIVE active0停止，後9未跑。Root實核age2287files219921196B、cold2226/8服務/127表31roles/三vol hashes/metadata一致，未restore；雙根完整review已落，Rootfinal 64ad361542e17101b8cff2ddb43a47ae7509c978b74214749696e020f0cdb410。
+- Native首stop TEACHER_FAILURE index1／students16s完／measure末21356.5ms；15s settle與等待相符但pending/firstinvalid未保，唯一HTTP/observer原因UNKNOWN。M64未觸發，不能說合法exec已驗；原SLO/guards未改。
+- hold09:10:56→09:20:56自然完成、job09:20:59failure、runnerauto0；Google strict已停止／normal skip false斷言／100GB留。十三VM均STOPPED，無VM14，budgetUS150/noPaid/Hosted0/Production禁；24.3108maxbase估非帳單，1300GB仍計費。
+- M65獨立/tmp operator三檔離線實作進行，Root唯一review待；M66 operation完整診斷僅draft待dispatch。Root actual exported教師+observer ownedloopback30 requests0.669s/4.610s controls成功，僅合成控制不代Native原因；v1/v2setupfail raw保。先完成M65，再補Native缺失證據，不直接重跑。
+
+
+### 2026-11-18 — M65 Root唯一review接受，仍離線資格
+
+- operator9f9獨立/tmp三Source已接受，Root一輪0finding；final5files231/必要checks0，55records/rawFAIL保。Root direct2321protected／三Source／Original7/pkglock/575959prefix及8FS＋3duplicate控制PASS。final04f6b4c6afbe41e81f4687ed544b0ec35c1d1f3141f90d456cc073b65ff4efa7，Root a7f705d14d1b900eccccb5c61128f6c0ce9f7d810dbeb345457c33c907a8e514，review三根落。
+- 81fixed files/12MiB actualread，原TS validators完整functional15＋capacity15／request/close/candidate／profileRoot獨立attestation，不造publication檔，不是realNative15PASS。test507<=510理由已准；兩Recovery generated tsbuildinfo經symlink寫，無beforecensus不稱依賴全bytes唯讀，無install/update/Originaldeps改。
+- 下一Root exact-path operator保存及已接受M57/M65七路徑帶app候選，再dispatch M66（當前仍draft）。十三VM STOPPED／runner0／無VM14／US150/noPaid／Hosted0／Production禁，Local5/15未全通不部署。
+
+
+### 2026-11-18 — M65保存並帶入候選，正式dispatch M66離線完整operation診斷
+
+- M65 operator local6cdc66c9c609f187f7883ce19aeb30a39ae5ed5b（未push）已保存六exactpaths；已接受M57/M65七Source/test以committed exact bytes帶app e465候選、尚未commit，vercel未改，integration receipt私有保存。原首次precommit因known node_modules symlink未列排除而安全停止、未stage；之後只六paths入commit，symlink不追蹤，無回退。
+- 同worker正式只做M66五ownedpaths，完整operation first-invalid/pending閉合診斷；原15s/30reads/window/SLO/return/close保持，Source僅離線。Root唯一review待，task brief SHA 95c1240c4559864b7e6abba49c200dd64734dfd28fa81a9ee0e2f5c6495b927d。Root七檔既有WIP全保，Original Source/Git/deps禁。十三VM STOPPED／runner0／無VM14／US150/noPaid／Hosted0／Production禁。
+
+
+### 2026-11-18 — VM14啟動工具僅離線準備，未Create
+
+- .git/m66-vm14-startup/offline-plan.json：name cp-capacity-20261118-b14e92／proposed us-west4-a，N2custom12/32/minIceLake/new100GBretain/3h normalSTOP+1min/noRestart/noSA/Ops/snapshot；name-only exactinverse13，startup166c0a24850ee0094d5f82200dc04a59498af81b4616ac3f94ce2724de9de234，8startup＋4courier fakecontrols PASS。無Cloud建立、無runner、無Native，Source admission BLOCKED待M66唯一review與最終combined exactSource。
+- 十三舊VM已STOPPED／runner0；VM14若日後准create，配置maxbase暫估2.03、累計26.3408非帳單，quota/stock與actual設定須當時查，總US150/noPaid，未提前產生費用／承諾可用庫存。
+
+
+### 2026-11-18 — 使用者繼續，M66同agent恢復／十三VM停機重核
+
+- 上輪M66因agent usage limit中斷（不是Source/test gate失敗）；使用者繼續後同agent已恢復可執行，不換模型／不開新agent。HEAD仍e46562c、M57/M65七檔RootWIP保留；partial新helper與actual RED原檔保，Root唯一review未開始／Source未freeze。
+- Root Google Console fresh盤點13台全為「已停止」，私有gcp-resume-thirteen-stopped-20261118.json保存；無VM14。只準備b14e92/us-west4-a未建立草稿：N2custom12/32/minIceLake/new100GBretain/3h normalSTOP+1min/noRestart/noSA/Ops/snapshot，startup exact166c0a24850ee0094d5f82200dc04a59498af81b4616ac3f94ce2724de9de234已核，原public testSSH／projectblock，舊custom device移除。console-draft-proof.json／screenshot私有，Source admission仍BLOCKED待M66review與最終exactcombinedSource，沒有Create／runner／Native。
+- 累計配置maxbase預留24.3108非帳單，若後續VM14加2.03暫估26.3408非invoice（exclIP/egress/tax等），US150/noPaid／Hosted0／Production禁；目前Local仍真functional15及capacity5/15PASS，後續診斷未產生全站PASS。
+
+
+### 2026-11-18 — M66 Root唯一review接受，教師讀取完成缺口待M67
+
+- M66一輪0finding／48files827PASS／必要checks0；final a468244594e2aa910f9bb63eb659c7725f453892170c2bbbfe77aa15fc0f0adc，Root cb612133e829f6a03344d9d121a1e2fdd4ccdc811aadccbd4e416147b2870453。Root真核五Source/2331protected/七WIP/Original九與prefix/六VM13/442歷史records。原15s/guards/sample/return/window不變；fake deadline oldoutcome保持＋新firstInvalid/pending可見，非Native原因證明。
+- Root actual owned Chrome延後1000ms RPC控制，舊教師30次success但0physical request，確定heading-only非資料完成；VM13唯一原因仍UNKNOWN。下一M67只補教師公開UI指定班級總覽完成判定，不延長學生窗口/降30reads/SLO。十三VM停／VM14僅草稿未Create／US150/noPaid／Hosted0/Production禁。
+
+
+### 2026-11-18 — M67正式授權：教師公開UI資料完成
+
+- Root已接受M66，現在同worker只owns capacity-game.ts＋新capacity-teacher-read.ts＋新directtest，修指定班級與總覽數字資料完成；保30reads/window/SLO/observer15s/原diagnostic stage與protocolfallback。不得只等標題、networkidle、sleep或繞公開UI。先RED/最終48 baseline827＋新test與必要checks，Root唯一review。
+- 原七接受WIP／五M66 frozen／所有歷史/Original/VM13保；無Git/Browser/Cloud/Hosted。十三VM停／VM14未Create／US150/noPaid/Production禁；這不是新Native PASS。
+
+
+### 2026-11-18 — M67 Root唯一review接受，待最終組合fresh Native
+
+- M67四owned一輪0finding，49files843PASS/fullchecks0；final6acd7b89846449164ad5d5ed273636cd666f429ddf3a20d9dcde12ae798b9ae4，Rooteb90673673732482b359f7c7c127faa678c02ba8e234ff35edba42f8111b7712。Root真核42records/四Source/2329protected/M66五/七WIP/Original九prefix/VM13六/五controls/487history。game僅import+await，原guard/window/30reads/15s/SLO不變，舊test bodies/assertions保。
+- Root自有Chrome delayed40ms與0/0各30POST/30success；錯班/null/error首輪bounded拒絕。修heading-only誤判，非VM13唯一原因／Native PASS。下一最終組合commit後fresh VM14，未Create／十三舊全停／US150/noPaid／Hosted0/Production禁。Staging/Native ref只讀重核仍d92be82/e46562c；帳務trial/net0顯示但幣別UNKNOWN，無升級。

@@ -111,28 +111,59 @@ vi.mock('@playwright/test', async (original) => {
   const actual = await original<typeof import('@playwright/test')>();
   return {
     ...actual,
-    expect: (value: { syntheticHeading?: () => Promise<void> }) =>
-      value.syntheticHeading
+    expect: (value: {
+      syntheticHeading?: () => Promise<void>;
+      syntheticValue?: string;
+      syntheticCompletion?: string;
+    }) => {
+      if (value.syntheticValue !== undefined)
+        return {
+          toHaveValue: (expected: string) => {
+            actual.expect(value.syntheticValue).toBe(expected);
+            return Promise.resolve();
+          },
+        };
+      if (value.syntheticCompletion !== undefined)
+        return {
+          toBeVisible: () => Promise.resolve(),
+          toHaveText: (expected: RegExp) => {
+            actual.expect(value.syntheticCompletion).toMatch(expected);
+            return Promise.resolve();
+          },
+        };
+      return value.syntheticHeading
         ? { toBeVisible: value.syntheticHeading }
-        : actual.expect(value),
+        : actual.expect(value);
+    },
   };
 });
 const teacherFixture = (failure?: 'GOTO' | 'HEADING' | 'MEASURE') => {
   const sentinel = new TypeError('PRIVATE_ERROR_MUST_NOT_APPEAR'),
     trace: string[] = [];
+  const completed = { syntheticCompletion: '0/0' };
+  const overview = {
+    syntheticHeading: () => Promise.resolve(),
+    locator: () => ({
+      filter: () => ({ locator: () => ({ locator: () => completed }) }),
+    }),
+  };
   const page = {
+    getByLabel: () => ({ syntheticValue: 'synthetic' }),
     goto: async () => {
       await Promise.resolve();
       trace.push('GOTO');
       if (failure === 'GOTO') throw sentinel;
     },
-    getByRole: () => ({
-      syntheticHeading: async () => {
-        await Promise.resolve();
-        trace.push('HEADING');
-        if (failure === 'HEADING') throw sentinel;
-      },
-    }),
+    getByRole: (role: string) =>
+      role === 'region'
+        ? overview
+        : {
+            syntheticHeading: async () => {
+              await Promise.resolve();
+              trace.push('HEADING');
+              if (failure === 'HEADING') throw sentinel;
+            },
+          },
   };
   const actor: CapacityGameActor = {
     actorIndex: 0,

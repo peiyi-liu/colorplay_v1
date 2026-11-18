@@ -1,3 +1,4 @@
+import { captureCapacityOperationLifecycle } from './capacity-operation-diagnostics';
 import {
   createCapacityGameDiagnostics,
   captureCapacityOperationAccounting,
@@ -546,6 +547,9 @@ export const createCapacityJourneys = (
           nativeSloSource: 'CDP_HTTP_ONLY',
           browserErrors: errors.diagnostics(),
           gameWork: gameDiagnostics.seal(),
+          operationLifecycle: [...observers.values()].map(
+            captureCapacityOperationLifecycle,
+          ),
           operationAccounting: [...observers.values()].map((observer) =>
             captureCapacityOperationAccounting(observer),
           ),
