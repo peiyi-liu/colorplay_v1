@@ -1,3 +1,4 @@
+import { createOnboardingLogout } from './capacity-onboarding-logout';
 import {
   createRegistrationFirstReason,
   registrationEndpoint,
@@ -60,6 +61,15 @@ const incoming = z.object({
   type: z.string().max(50).optional(),
   request: z.object({ url: z.string().max(4096), method: z.string().max(10) }),
 });
+const onboardingControllers = new WeakMap<
+  object,
+  ReturnType<typeof createOnboardingLogout> & {
+    finalizeCounter(): void;
+    isLive(): boolean;
+  }
+>();
+export const getCapacityOnboardingController = (observer: object) =>
+  onboardingControllers.get(observer);
 export const createCapacityRequestObserver = async (
   scope: CapacityScope,
   context: BrowserContext,
@@ -83,6 +93,9 @@ export const createCapacityRequestObserver = async (
     return capacityFailure();
   }
   const diagnostic = createRegistrationFirstReason();
+  const onboarding = createOnboardingLogout(scope.supabaseUrl, (id) =>
+    cdp.send('Network.getResponseBody', { requestId: id }),
+  );
   const records = new Map<string, Action | null>();
   const kinds = new Map<string, ReturnType<typeof registrationEndpoint>>();
   let current: Action | null = null,
@@ -124,6 +137,11 @@ export const createCapacityRequestObserver = async (
       clearTimeout(action.timer);
       action.reject();
       notify(action, 'INVALID');
+      if (
+        action.phase === 'registration_complete' ||
+        action.phase === 'post_registration_login'
+      )
+        onboarding.cancel('ABORT');
       diagnostic.note(code, action.phase);
     }
   };
@@ -198,6 +216,14 @@ export const createCapacityRequestObserver = async (
           kinds.get(value.requestId),
         );
       }
+      onboarding.request(
+        value.requestId,
+        value.request.url,
+        value.request.method,
+        typeof input === 'object' &&
+          input !== null &&
+          Object.hasOwn(input, 'redirectResponse'),
+      );
       if (action) {
         action.requests++;
         if (action.requests !== 1) {
@@ -220,6 +246,7 @@ export const createCapacityRequestObserver = async (
     try {
       const value = actionResponseSchema.parse(input);
       const action = records.get(value.requestId);
+      onboarding.response(value.requestId, value.response.status);
       if (value.response.status >= 400) {
         unexpectedHttpErrors++;
         diagnostic.note(
@@ -259,6 +286,7 @@ export const createCapacityRequestObserver = async (
         action.done = true;
         clearTimeout(action.timer);
         actionsCompleted++;
+        onboarding.completed(action.phase, action.generation);
         action.resolve({
           actorIndex,
           phase: action.phase,
@@ -269,6 +297,7 @@ export const createCapacityRequestObserver = async (
           physicalRequests: 1,
         });
       }
+      onboarding.finished(value.requestId);
     } catch {
       fail('FINISHED_PARSE');
     }
@@ -278,6 +307,7 @@ export const createCapacityRequestObserver = async (
       const value = actionFailedSchema.parse(input);
       const action = records.get(value.requestId);
       const kind = kinds.get(value.requestId);
+      onboarding.failed(value.requestId);
       records.delete(value.requestId);
       kinds.delete(value.requestId);
       if (action) terminate(action, 'ACTION_NETWORK_FAILURE');
@@ -294,12 +324,20 @@ export const createCapacityRequestObserver = async (
     ['Network.responseReceived', response],
     ['Network.loadingFinished', finished],
     ['Network.loadingFailed', failed],
+    [
+      'Network.dataReceived',
+      (value: unknown) => {
+        onboarding.data(value);
+      },
+    ],
   ] as const;
   for (const [event, listener] of listeners) cdp.on(event, listener);
   const closed = () => {
+    onboarding.cancel('ABORT');
     fail('PAGE_CLOSED');
   };
   const aborted = () => {
+    onboarding.cancel('ABORT');
     fail('ABORT');
   };
   const isStopped = () => signal.aborted || disposed;
@@ -308,6 +346,7 @@ export const createCapacityRequestObserver = async (
   const dispose = async () => {
     disposed = true;
     available = false;
+    onboarding.cancel('DISPOSE');
     diagnostic.note('DISPOSE');
     terminate(current);
     for (const [event, listener] of listeners) cdp.off(event, listener);
@@ -330,7 +369,7 @@ export const createCapacityRequestObserver = async (
     await dispose().catch(() => undefined);
     return capacityFailure();
   }
-  return {
+  const observer = {
     arm: (phase: CapacityActionPhase) => {
       if (
         !available ||
@@ -344,6 +383,7 @@ export const createCapacityRequestObserver = async (
         return capacityFailure();
       }
       generation++;
+      onboarding.arm(phase, generation);
       let resolve: (value: CapacityActionObservation) => void = () => undefined,
         reject: () => void = () => undefined;
       const finished = new Promise<CapacityActionObservation>((yes, no) => {
@@ -381,14 +421,24 @@ export const createCapacityRequestObserver = async (
         {
           available: available && !disposed && !signal.aborted,
           actionsCompleted,
-          unexpectedHttpErrors,
+          unexpectedHttpErrors:
+            unexpectedHttpErrors -
+            (onboarding.discount() === 1 && unexpectedHttpErrors > 0 ? 1 : 0),
           unexpectedNetworkFailures,
           pendingAction: current !== null && !current.done,
         },
-        diagnostic.snapshot,
+        () => ({ ...diagnostic.snapshot(), onboarding: onboarding.snapshot() }),
       ),
     dispose,
   };
+  onboardingControllers.set(observer, {
+    ...onboarding,
+    isLive: () => available && !disposed && !signal.aborted,
+    finalizeCounter() {
+      onboarding.finalize();
+    },
+  });
+  return observer;
 };
 export type CapacityRequestObserver = Awaited<
   ReturnType<typeof createCapacityRequestObserver>

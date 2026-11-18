@@ -27,6 +27,7 @@ import {
 } from './capacity-network';
 import {
   createCapacityRequestObserver,
+  getCapacityOnboardingController,
   type CapacityRequestObserver,
 } from './capacity-request-observer';
 export interface NativeCapacityActor {
@@ -41,6 +42,82 @@ interface SendBinding {
   subscribe(listener: (value: SendPulse) => void): () => void;
 }
 const sendBindings = new WeakMap<NativeCapacityActor, SendBinding>();
+const onboardingBindings = new WeakMap<
+  object,
+  {
+    app: string;
+    current(): boolean;
+    control: NonNullable<ReturnType<typeof getCapacityOnboardingController>>;
+  }
+>();
+export const openCapacityOnboardingLogout = (actor: NativeCapacityActor) => {
+  const binding = onboardingBindings.get(actor);
+  try {
+    if (!binding?.current()) return undefined;
+    const url = new URL(actor.page.url());
+    if (
+      url.origin !== binding.app ||
+      url.pathname !== '/register' ||
+      url.search ||
+      url.hash
+    ) {
+      binding.control.cancel('OWNER');
+      return undefined;
+    }
+    const lease = binding.control.begin();
+    if (!lease) return undefined;
+    return {
+      cancel: () => {
+        lease.cancel();
+      },
+      complete() {
+        try {
+          const destination = new URL(actor.page.url());
+          if (
+            !binding.current() ||
+            destination.origin !== binding.app ||
+            destination.pathname !== '/login' ||
+            destination.search ||
+            destination.hash
+          )
+            lease.cancel();
+          else lease.complete();
+        } catch {
+          lease.cancel();
+        }
+      },
+    };
+  } catch {
+    binding?.control.cancel('OWNER');
+    return undefined;
+  }
+};
+export const completeCapacityOnboardingLogin = (actor: NativeCapacityActor) => {
+  const binding = onboardingBindings.get(actor);
+  try {
+    const url = new URL(actor.page.url());
+    if (
+      binding?.current() &&
+      url.origin === binding.app &&
+      url.pathname === '/app' &&
+      !url.search &&
+      !url.hash
+    )
+      binding.control.loginComplete();
+    else binding?.control.cancel('OWNER');
+  } catch {
+    binding?.control.cancel('OWNER');
+  }
+};
+export const finalizeCapacityOnboardingLogout = (actor: object) => {
+  const binding = onboardingBindings.get(actor);
+  try {
+    if (binding?.current()) binding.control.finalizeCounter();
+    else binding?.control.cancel('OWNER');
+  } catch {
+    binding?.control.cancel('OWNER');
+  }
+};
 export const getNativeCapacitySendBinding = (actor: NativeCapacityActor) => {
   const binding = sendBindings.get(actor);
   return binding?.current() ? binding : undefined;
@@ -248,6 +325,26 @@ export const createNativeCapacityBrowser = (
         running();
         const actor = { actorIndex, context, page, observer };
         const ownedActor = actor;
+        const onboarding = getCapacityOnboardingController(observer);
+        if (onboarding)
+          onboardingBindings.set(actor, {
+            control: onboarding,
+            app: scope.appUrl,
+            current: () =>
+              ownedActor === actor &&
+              ownedActor.actorIndex === actorIndex &&
+              ownedActor.context === context &&
+              ownedActor.page === page &&
+              ownedActor.observer === observer &&
+              !stopping &&
+              !failed &&
+              popups === 0 &&
+              !signal.aborted &&
+              !page.isClosed() &&
+              contexts.has(context) &&
+              observers.has(observer) &&
+              onboarding.isLive(),
+          });
         if (nativeSource)
           sendBindings.set(actor, {
             current: () =>

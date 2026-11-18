@@ -21,7 +21,11 @@ import {
   loginCapacityActor,
   type CapacityEntryIdentity,
 } from './capacity-browser-entry';
-import type { NativeCapacityActor } from './capacity-browser-runtime';
+import {
+  openCapacityOnboardingLogout,
+  completeCapacityOnboardingLogin,
+  type NativeCapacityActor,
+} from './capacity-browser-runtime';
 export interface CapacityRegistrationUi {
   send: (
     actor: NativeCapacityActor,
@@ -78,26 +82,34 @@ export const actualUi: CapacityRegistrationUi = {
       .waitFor({ state: 'visible' });
   },
   complete: async (actor, identity, admit) => {
-    await actor.page
-      .getByRole('button', { name: '下一步', exact: true })
-      .click();
-    await actor.page
-      .getByLabel('帳號（學號）', { exact: true })
-      .fill(identity.account);
-    await actor.page
-      .getByLabel('密碼', { exact: true })
-      .fill(identity.password);
-    await actor.page
-      .getByLabel('密碼確認', { exact: true })
-      .fill(identity.password);
-    admit();
-    await actor.page
-      .getByRole('button', { name: '完成註冊', exact: true })
-      .click();
-    await actor.page.waitForURL((url) => url.pathname === '/login');
+    const lease = openCapacityOnboardingLogout(actor);
+    try {
+      await actor.page
+        .getByRole('button', { name: '下一步', exact: true })
+        .click();
+      await actor.page
+        .getByLabel('帳號（學號）', { exact: true })
+        .fill(identity.account);
+      await actor.page
+        .getByLabel('密碼', { exact: true })
+        .fill(identity.password);
+      await actor.page
+        .getByLabel('密碼確認', { exact: true })
+        .fill(identity.password);
+      admit();
+      await actor.page
+        .getByRole('button', { name: '完成註冊', exact: true })
+        .click();
+      await actor.page.waitForURL((url) => url.pathname === '/login');
+      lease?.complete();
+    } catch (error) {
+      lease?.cancel();
+      throw error;
+    }
   },
   postLogin: async (actor, identity, signal, admit) => {
     await loginCapacityActor(actor, identity, signal, undefined, admit);
+    completeCapacityOnboardingLogin(actor);
   },
 };
 const actorReportSchema = z.strictObject({

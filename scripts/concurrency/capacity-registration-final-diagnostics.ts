@@ -1,3 +1,5 @@
+import { finalizeCapacityOnboardingLogout } from './capacity-browser-runtime';
+import { onboardingLogoutEvidenceSchema } from './capacity-onboarding-logout';
 import { performance } from 'node:perf_hooks';
 import { z } from 'zod';
 import type { PrivateJournal } from './private-journal';
@@ -17,6 +19,7 @@ const endpoint = z.enum([
   'AUTH_OTP',
   'AUTH_VERIFY',
   'AUTH_LOGIN',
+  'AUTH_LOGOUT',
   'STUDENT_REGISTER',
   'OTHER_API',
   'EXTERNAL',
@@ -61,6 +64,7 @@ export const registrationFirstReasonSchema = z.strictObject({
 const metadataSchema = z.strictObject({
   collection: z.enum(['OBSERVED', 'UNOBSERVED', 'UNAVAILABLE']),
   firstReason: registrationFirstReasonSchema.nullable(),
+  onboarding: onboardingLogoutEvidenceSchema.optional(),
   proxy: z
     .strictObject({
       collection: z.enum(['OBSERVED', 'UNOBSERVED', 'UNAVAILABLE']),
@@ -152,6 +156,15 @@ export const registrationEndpoint = (
 ): z.infer<typeof endpoint> => {
   try {
     const parsed = new URL(url);
+    if (
+      !parsed.username &&
+      !parsed.password &&
+      !parsed.hash &&
+      parsed.origin === api &&
+      parsed.pathname === '/auth/v1/logout' &&
+      parsed.search === '?scope=local'
+    )
+      return 'AUTH_LOGOUT';
     if (parsed.username || parsed.password || parsed.search || parsed.hash)
       return 'UNKNOWN';
     if (parsed.origin === app)
@@ -262,6 +275,7 @@ export const observeRegistrationFinalGate = async (
     accepted = !(
       !available ||
       actors.some((actor, index) => {
+        finalizeCapacityOnboardingLogout(actor);
         const sample = actor.observer.snapshot();
         const rejected =
           !sample.available ||

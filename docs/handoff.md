@@ -3530,3 +3530,44 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - VM3真Source00704e8/run44189447502/job134414633079最後completed/failure；functional15與anon3/10/20 PASS，fresh40 phaseentry/skew268.381ms>250/Auth0，finalgate檔0。Root先前「再停尾端」進度說得太早，已Codex更正；M50尾gate原因仍UNKNOWN，不能當診斷失敗或網站註冊FAIL。947files214168261B實際age+冷備份+business核，25bootlogs30940B保；詳docs/reviews/2026-11-18-gcp-vm3-entry-result.md。
 - GoogleConsole真CPU IntelBroadwell vsVM2 AMDRome；healthVALID但barrier無效。Root准M51一次同M50程式的N2/minIceLake12CPU32GB100GB/3hSTOP+1m對照，不改backend4CPU6GiB/browser6GiB/Node2GiB/250ms及其他門檻。新commit只環境plan/結果，10Source/tests hash逐檔相同，不搬舊PASS；私有startup4ff09cd9…一處NAME替換/8fake PASS。Root 606f6bdba4fe72cff6e968b3e8913af2dfab5b95e115c3d80518351ee419b397；docs/superpowers/plans/2026-11-18-n2-environment-m51-plan.md。
 - VM3 exactinstance369862048023145784已Console確認停止且保截圖.git/gcp-vm3-stopped-20261118.jpg；runner23已移除1/repo0，原3disk仍計費。N2草稿d9e462/us-east1-c/minIceLake尚未建立，UI長期折扣0.44/hr不作3h價，採0.56/hr×3≈1.68base另extras；US150不升paid/Production禁。若一次N2仍無法250ms，停止單台12CPU generator假設，不盲換/放寬；下一exactSHA後實機核才新push attempt1。
+
+
+### 2026-11-18 — M51固定N2真機／新job已啟動
+
+- exact4docs commit0270cac80871a0bde3039f05acee03d7c2969e3a/tree737e4993cfb297d78adab803ee1196034eff431b，產品與測試程式10hash仍同00704e8；explicitGitHubURL推隔離VMbranch/Vercel=false，新run44196367479/job134438781467/push attempt1，未rerun舊job。
+- N2 VM4 d9e462/instance8771879674655629553/us-east1-c/136.108.130.220，23:07:10UTC建立。GoogleConsole核n2-custom-12-32768、actual與minimum均IntelIceLake、officialUbuntu24 image20261105/100GBbalanced；3hSTOP+1m/noSA/Ops/HTTP/noSnapshots保持，舊3VM均stopped保disk。草稿曾因改N2被UI重設Debian，Create前已明確改回Ubuntu24並真receipt核，不曾在Debian執行。
+- Publicstartup4ff09cd9…單處NAME替換/8fake；Google serial pinLKwswxew…與boot73509c5e…，SSH核12CPU/31.335GiB/UID1001/Docker29.1.3 classic/空Docker。courier4mock PASS、一token/一ephemeralrunner24，API核name/label/Source/job；官方svcUsercp-capacity/Restart=no真啟動。
+- 下一本次完整functional15/原15legs、firstcausefailstop、實際age/cold/business核；若同250ms仍過不了，不盲換機/放寬，停止此單機假設。US150不升paid/Production禁/Hosted0。
+
+
+### 2026-11-18 — VM4 N2同步門檻通過／local logout403首因已證
+
+- Source0270cac/run44196367479/job134438781467/attempt1，functional15與anon3/10/20 PASS，fresh40 INCONCLUSIVE；40sent/verified/completed/Authcreated，entry67.09ms/send213.971ms<250。原finalgate actor0 HTTP403/phase null/UNKNOWN、unexpectedHttpErrors1，其餘39原短路未觀測，不能倒填。
+- Root fixedhostkey/boot/source/exact ownedcontainerid/name/image核，Auth/Kong均stopped，唯讀47s window：40個POST local logout403/session_not_found、無其他HTTP>=400；SDK本地signout契約容許此情況。M50觀測已定位工具全域>=400誤判，不是網站權限概括FAIL；M52精確lifecycle+code有界修正，brief docs/superpowers/plans/2026-11-18-onboarding-logout-m52-brief.md，同一agent離線／Root唯一review，不回填舊PASS。
+- 實際artifact14380541746/ZIP43452189B/cipher38514ce2…/1388files215956355B age核，cold1335/8自然stop/2DB127tables/3volumeshash核，未restore；25bootlogs30940B保runtime/gcp-vm4。詳docs/reviews/2026-11-18-gcp-vm4-logout-result.md。job23:31:20UTC finalfailure、runner24自移除1/repo0，Root正常stopVM4保100GBdisk待Console終態；磁碟仍計費／US150／不升paid／Hosted0／Production禁。
+
+
+### 2026-11-18 — VM4 Console已停止／M52離線實作中
+
+- exactinstance8771879674655629553 GoogleConsole確認「已停止」，正常shutdown未勾skip，100GBdisk保留仍計費；截圖.git/gcp-vm4-stopped-20261118.jpg。舊4VM皆停，GitHub單次runner24已移除1/repo0，沒有運作中測試VM。Rootfinal.git/gcp-vm4-root-final-review.json包含實際custody/business/finalgate核與停機截圖hash。
+- M52同一implementer已接精確預期logout辨識，Root唯一review；不回填VM4 INCONCLUSIVE，未改Staging/Hosted/Production，US150不升paid。下一freeze/review/exact新Source及fresh Local驗證，原完整矩陣不減。
+
+
+### 2026-11-18 — M52離線中／下輪N2草稿不計運算
+
+- Root offline startup5e3eceb2172d4b270e150c7c3eb42ec1ee3e18fcadf6135618cef95da98983fd，只VM_NAME改e83f26/inverse與M47base exact/8fake PASS；未新建VM、無Native。Console草稿us-west1-b（保central1/east1各200/250GB舊disk，避免刪證據）、N2 custom12/32/minIceLake、Ubuntu24x64 image20261105/100GBbalanced保disk，3hSTOP+1m/noRestart/noSA/Ops/snapshot/HTTP，原publictestkeyonly/projectSSHblocked，Startup textarea與本機byte內容真exact；未按Create，待M52 Rootreview/exactSHA。0.56USD/hr保守base估3h1.68+extras。
+- 唯讀Billing現trialactive/90days至2027-02-17，credit顯$9727但currency UNKNOWN不當USD；費用頁$0且明示數小時至>24h延遲，不宣稱實際花費0。US150、不升paid；四VM皆stopped保disk計費，runner0。Rootowned .git/m52-vm5-startup/**不進Source。
+
+
+### 2026-11-18 — M52 Root唯一review一項P2／同輪修正中
+
+- Root已讀6owned檔完整約1022行diff，初packet d9e573cd531c17c0674ee1e496455408012fcc1e765b740c6e281da52721a9ec／61records28checks integrity核。初7-file101PASS/fullchecks綠不等於Root接受。
+- Root獨立exported helper真重現：error_code原unexpected＋escaped duplicate變session_not_found、code原401＋escaped duplicate變403，finalize均1/預期0。P2為raw literal-key regex不能阻擋JSON.parse last-wins，.git/m52-root-initial-controls.json保2違反；同一agent同輪回修，原packet不覆蓋。
+- agent回報已改完整JSON string-token key掃描，只允canonical code/error_code/msg且每key唯一，再原closed parse；真RED2→GREEN focused52、helper325/test497，Root尚待v2freeze＋獨立controls，不預先ALLOW。下一final核/同輪delta，exactSource後freshVM5；草稿未Create／全部舊VM stopped／US150/noPaid/Hosted0/Production禁。
+
+
+### 2026-11-18 — M52同輪P2關閉／Root唯一review接受
+
+- 6owned Source/tests，v2packet2d6943d8bfc3d00dae1f34e0e1dfaf7da567faa50905929044e461be9de7f01a／101records43checks全hash核，v1原61records/manifest不動。原P2 escaped duplicate key已在parse前以canonical/unique token資格拒，真RED2→GREEN；未解0。Root7files104tests＋新19與原45獨立controls PASS；worker最終fullchecks0，初FAIL資格詳review。
+- Root核2279非ownedGit/operator45/history121/Original7+true575959prefix/pkglock/M51 private startupadapter不動，原registration.ts gate+Rootreadback全byte不動，6檔均≤500。Rootreceipt.git/m52-root-review.json SHA3fd3aae2e4be87d235e98c3c6bb7144c1ac7ce7d6e676858f3299f1cef92abd0；docs/reviews/2026-11-18-onboarding-logout-m52-review.md。
+- 只離線接受，VM4舊真run保INCONCLUSIVE，無Local60/Hosted/phasePASS。下一exact新Source10paths、freshVM5草稿e83f26/us-west1-b同N2minIceLake12/32，3hSTOP+1m/noSA/Ops/HTTP，原完整矩陣／US150/noPaid/Production禁；舊4VM仍stopped保disk計費。
