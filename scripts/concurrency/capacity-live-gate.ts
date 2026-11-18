@@ -136,8 +136,16 @@ export const createCapacityLiveGate = (
   };
   const subscribe = (sessionId: string, refusal = false) =>
     within(async (owned) => {
-      if (owned.aborted || closed) return capacityFailure();
-      const state = { explicit: false, joined: false };
+      const stopped = () => owned.aborted || closed;
+      if (stopped()) return capacityFailure();
+      const state = {
+        explicit: false,
+        joinedEver: false,
+        contradiction: false,
+      };
+      let decided = false,
+        removing = false,
+        finished = false;
       observeCapacityLiveGate(observe, { stage: 'SUBSCRIBE_START', refusal });
       const channel = client
         .channel(`live-session:${sessionId}`, {
@@ -146,6 +154,8 @@ export const createCapacityLiveGate = (
         .on('broadcast', { event: 'live_state' }, notify);
       const pending = new Promise<void>((resolve, reject) => {
         const done = (ok: boolean) => {
+          if (decided) return;
+          decided = true;
           owned.removeEventListener('abort', abort);
           if (ok) resolve();
           else reject(new Error('CAPACITY_EVIDENCE_INVALID'));
@@ -155,29 +165,42 @@ export const createCapacityLiveGate = (
         };
         owned.addEventListener('abort', abort, { once: true });
         channel.subscribe((status, error) => {
-          if (closed || signal.aborted) return;
-          if (state.joined) {
-            if (status !== REALTIME_SUBSCRIBE_STATES.SUBSCRIBED && !refusal) {
+          if (
+            closed ||
+            signal.aborted ||
+            (refusal && (finished || owned.aborted))
+          )
+            return;
+          const hadJoined = state.joinedEver;
+          if (status === REALTIME_SUBSCRIBE_STATES.SUBSCRIBED)
+            state.joinedEver = true;
+          if (hadJoined && !refusal) {
+            if (status !== REALTIME_SUBSCRIBE_STATES.SUBSCRIBED) {
               faulted = true;
               notify();
             }
-            observeCapacityLiveGate(observe, {
-              stage: 'CHANNEL_STATUS',
-              status,
-              error,
-              refusal,
-              explicit: state.explicit,
-            });
-            return;
-          }
-          if (status === REALTIME_SUBSCRIBE_STATES.SUBSCRIBED) {
-            state.joined = true;
-            done(!refusal);
           } else {
-            state.explicit =
+            const explicit =
               status === REALTIME_SUBSCRIBE_STATES.CHANNEL_ERROR &&
               isExplicitPermissionDenial(error);
-            done(refusal && state.explicit && !state.joined);
+            if (!decided) {
+              state.explicit = explicit;
+              done(
+                refusal
+                  ? explicit && !state.joinedEver
+                  : status === REALTIME_SUBSCRIBE_STATES.SUBSCRIBED,
+              );
+            } else if (
+              refusal &&
+              !(
+                state.explicit &&
+                !state.joinedEver &&
+                (explicit ||
+                  (removing && status === REALTIME_SUBSCRIBE_STATES.CLOSED))
+              )
+            ) {
+              state.contradiction = true;
+            }
           }
           observeCapacityLiveGate(observe, {
             stage: 'CHANNEL_STATUS',
@@ -191,21 +214,31 @@ export const createCapacityLiveGate = (
       });
       let failed = false;
       try {
-        await pending;
-      } catch {
-        failed = true;
+        try {
+          await pending;
+        } catch {
+          failed = true;
+        }
+        if (refusal) {
+          removing = true;
+          const removed = await client.removeChannel(channel);
+          observeCapacityLiveGate(observe, {
+            stage: 'REMOVE_CHANNEL',
+            removal: removed,
+            refusal,
+          });
+          if (removed !== 'ok') return capacityFailure();
+        }
+        if (
+          stopped() ||
+          failed ||
+          (refusal &&
+            (!state.explicit || state.joinedEver || state.contradiction))
+        )
+          return capacityFailure();
+      } finally {
+        finished = true;
       }
-      if (refusal) {
-        const removed = await client.removeChannel(channel);
-        observeCapacityLiveGate(observe, {
-          stage: 'REMOVE_CHANNEL',
-          removal: removed,
-          refusal,
-        });
-        if (removed !== 'ok') return capacityFailure();
-      }
-      if (failed || (refusal && (!state.explicit || state.joined)))
-        return capacityFailure();
     });
   return {
     notify,

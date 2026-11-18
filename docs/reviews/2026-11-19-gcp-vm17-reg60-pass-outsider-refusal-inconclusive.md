@@ -1,0 +1,25 @@
+# VM17 — 首次註冊40/60通過，Live拒絕狀態覆寫已定位
+
+結論：functional15 PASS；capacity5/15 PASS（匿名3/10/20、真首次註冊40/60）。既有帳號完整遊戲3人 INCONCLUSIVE，後九未執行；不代表60全站或Staging通過。Root已核實際下載／解密／cold資料，正常停止VM17，十七台測試機全STOPPED。
+
+## 實際結果
+
+Source638ba0f63ba898dc3cebd70276dc4d0413dd7ea5/tree9f43d7fa32e1d62d92614397bf231fe4f25bbc24；run44349496804/job134960902166/attempt1/runner37。VM cp-capacity-20261118-e17b85/2348819339765901910/europe-west1-b，boot36999d8570f3754f1c9ea87edefe66746aead024e9b29f06a6f3c6d858fbbba5；實際12CPU32GiB/IceLake，原backend4CPU6GiB。
+
+planwsc-261118-149e9db5421f/106identities；functional wsb-261118-4adbe68fc5f3。fresh40 wcr-261118-ffbac785dc36全40 AuthCreated/completed、entry132.651/send86.517ms；fresh60 wcr-261118-124603bb78b4全60 AuthCreated/completed、entry234.625/send79.372ms。均原250ms內、ownershipKnowntrue、complete_cohort、mailboxClosed，SLO PASS；M72共同準備allReady/released/closedtrue、pending0、firstFailnull。只證本輪條件下通過，不宣稱改善時間的單因果。
+
+## 首個失敗定位
+
+existing3 wcr-261118-99c7febe976e於OUTSIDER_REFUSAL失敗。實際M70 Live診斷ordinal42 JOIN_INVALID_CODE、45 NOT_FOUND，兩predicate true；51 CHANNEL_ERROR/refusaltrue/explicittrue；原removeChannel觸發52 CLOSED，工具重算explicitfalse；53removeok；54原finalpredicate失敗。這是拒絕證據被自有清理覆寫，未見outsider成功訂閱證據，後續Live尚未驗。檔b30a204cb49af3636926a5303f5e9db09bf4fae8455a4d5de4b9d2846752b5a0，Root獨立SSH與下載bytes一致。
+
+firstJourneyFailure26825.962311ms/signalAbortedfalse、elapsed27488.757675ms/timedOutfalse，lasthealthVALID。七parentclosures contextMatches/OBSERVED、firstCause null/residue0。generic timeout reason不構成已證deadline或網站容量失敗。M73只修該harness狀態決定，原失敗保留，之後用新Source新單次matrix驗證。
+
+## 實際保存與收束
+
+artifact14448653194 ZIP44827064B/SHAffce4cf259796cb3c79a38ac6696ee3cb11b23b5c89169dc5485c56070b3eb95；cipher44826926B/SHA84e9a32c947fe086be09dc3aef35accdf928aaeefeffe3e55edc41f2aaddf6ca。Root真age2292files221947533B、outer1e23cfa1660e6a76a7ad66034c997fdf209d376e8f8ded2efacad99a369d1619；cold2231/snapshot1bd0ac2e339fda059b50c641020972c64adbc8f17f0aa448662d007685da30bc、八stop/角色proof、兩DB127表31roles、三vol所有filehash/portablemetadata均核。runtime2079datafiles/34publicreconstructible/metadataonly0；25bootstraplogs31092B；未restore。最初relativeoutput被驗證器拒後改absolute才PASS，未改驗證器或證據。
+
+本機actualfiles位於live-recovery-runtime/gcp-vm17/downloads/files/files；Rootactualoutputs .git/gcp-vm17-root-cold-business-reviews.json、七inputs first-projection、十inputs closure-projection；Rootfinal2743e55261dc95c5f02198001c3fd04a3a5a4d91f1c12b0e87692c451c3fee1f。原hold16:56:33→17:06:33UTC自然完成，job17:06:36failure、ephemeralrunner0。Root明核skipGracefalse後只送一次正常Stop；狀態經安全關閉／stopping，fresh inventory最後十七台strictSTOPPED，100GBretain。無永久刪除，VM2–15清理仍候Owner。
+
+## 下一步與限制
+
+M73兩檔修正經Root唯一review接受與58files1042/fullchecks後，才能保存新exactSource、新12CPU VM18單次原15矩陣；既有run不重跑、不減人數、不寬250ms或任何SLO。US150/noPaid；actualconfigured基本預留32.7008非invoice，next2.12只是proposal；17磁碟1700GB估184/月持續計費、另IP/egress/tax。Original G8 STOPPED85；Hosted0，Production禁止，AC/phase/realdevice不因此宣稱通過。
