@@ -7,6 +7,16 @@ import {
 } from './capacity-browser-runtime';
 import type { SendClickObserver } from './capacity-send-diagnostics';
 import { capacityFailure } from './capacity-scope';
+import {
+  capacityCohortButtonName,
+  capacityCohortErrorClass as errorClass,
+  capacityPreparedButtonReady,
+  capacityLoginCohortContext,
+  capacityLoginUrlMatches,
+  capacityLoginFrameMatches,
+  type CapacityCohortIntent,
+  type CapacityLoginCohortInput,
+} from './capacity-browser-entry-ui';
 const phase = z.enum([
   'UNOBSERVED',
   'VISIBLE',
@@ -52,6 +62,8 @@ export const capacitySendCohortSummarySchema = z.strictObject({
 type Phase = z.infer<typeof phase>;
 interface Row {
   actor: NativeCapacityActor;
+  intent: CapacityCohortIntent;
+  owner: object;
   page: Page;
   observer: NativeCapacityActor['observer'];
   binding: ReturnType<typeof getNativeCapacitySendBinding>;
@@ -81,44 +93,12 @@ const requireTrue = (value: unknown) => {
 };
 const hasHandle = (value: unknown) =>
   typeof value === 'object' && value !== null;
-const errorClass = (error: unknown): 'ERROR' | 'TYPE_ERROR' | 'OTHER' => {
-  try {
-    return error instanceof TypeError
-      ? 'TYPE_ERROR'
-      : error instanceof Error
-        ? 'ERROR'
-        : 'OTHER';
-  } catch {
-    return 'OTHER';
-  }
-};
-// This is the same final readonly predicate as standalone actualUi.send,
-// with an additional identity check against the prepared element handle.
-const ready = (
-  node: HTMLElement | SVGElement,
-  expected: HTMLElement | SVGElement,
-) => {
-  if (node !== expected || !(node instanceof HTMLButtonElement)) return false;
-  const rect = node.getBoundingClientRect();
-  return (
-    node.ownerDocument === document &&
-    node.isConnected &&
-    node.type === 'button' &&
-    node.matches(':enabled') &&
-    node.tabIndex >= 0 &&
-    !node.closest('[inert]') &&
-    document.activeElement === node &&
-    Number.isFinite(rect.width) &&
-    Number.isFinite(rect.height) &&
-    rect.width > 0 &&
-    rect.height > 0 &&
-    getComputedStyle(node).visibility === 'visible'
-  );
-};
-export const consumeCapacitySendPreparation = (
+const consume = (
   actor: NativeCapacityActor,
   admit: () => void,
-  observer?: SendClickObserver,
+  observer: SendClickObserver | undefined,
+  intent: CapacityCohortIntent,
+  owner?: object,
 ): Promise<void> | undefined => {
   const row = active.get(actor);
   if (!row) {
@@ -130,7 +110,8 @@ export const consumeCapacitySendPreparation = (
       return capacityFailure();
     return undefined;
   }
-  if (row.consumed) return capacityFailure();
+  if (row.consumed || row.intent !== intent || (owner && row.owner !== owner))
+    return capacityFailure();
   const emit = (state: 'ENTERED' | 'RETURNED' | 'FAILED') => {
     try {
       observer?.({ state });
@@ -157,9 +138,13 @@ export const consumeCapacitySendPreparation = (
         locator = row.locator;
       if (!handle || !locator) return capacityFailure();
       row.phase = 'FRESH_DOM';
-      const valid = await locator.evaluate(ready, handle, {
-        timeout: row.check(),
-      });
+      const valid = await locator.evaluate(
+        capacityPreparedButtonReady,
+        { expected: handle, intent },
+        {
+          timeout: row.check(),
+        },
+      );
       requireTrue(valid);
       admit();
       row.phase = 'PRESS';
@@ -177,11 +162,14 @@ export const consumeCapacitySendPreparation = (
   row.work = work;
   return work;
 };
-export const createCapacitySendCohort = (
+const createCohort = (
   actors: readonly NativeCapacityActor[],
   admit: () => void,
   signal: AbortSignal,
-  now: () => number = () => performance.now(),
+  now: () => number,
+  intent: CapacityCohortIntent,
+  owner: object,
+  login?: ReturnType<typeof capacityLoginCohortContext>,
 ) => {
   let state: 'PREPARING' | 'READY' | 'RELEASED' | 'FAILED' | 'CLOSED' =
     'PREPARING';
@@ -231,8 +219,11 @@ export const createCapacitySendCohort = (
             )
               return capacityFailure();
             const page = actor.page;
+            let navigated = false;
             const row: Row = {
               actor,
+              intent,
+              owner,
               page,
               observer: actor.observer,
               binding: getNativeCapacitySendBinding(actor),
@@ -258,7 +249,15 @@ export const createCapacitySendCohort = (
                   !row.binding ||
                   getNativeCapacitySendBinding(actor) !== row.binding ||
                   !row.binding.current() ||
-                  page.isClosed()
+                  page.isClosed() ||
+                  (login &&
+                    !capacityLoginUrlMatches(
+                      page.url(),
+                      login.origin,
+                      navigated
+                        ? (login.destinations[actor.actorIndex] ?? '')
+                        : '/login',
+                    ))
                 )
                   return capacityFailure();
                 const at = now();
@@ -277,7 +276,19 @@ export const createCapacitySendCohort = (
                 note(row, error);
               },
               navigation(frame) {
-                if (frame === page.mainFrame()) row.invalid = true;
+                if (frame !== page.mainFrame()) return;
+                if (
+                  login &&
+                  row.consumed &&
+                  row.phase === 'PRESS' &&
+                  capacityLoginFrameMatches(
+                    frame,
+                    login.origin,
+                    login.destinations[actor.actorIndex] ?? '',
+                  )
+                )
+                  navigated = true;
+                else row.invalid = true;
               },
               closing() {
                 row.invalid = true;
@@ -297,7 +308,7 @@ export const createCapacitySendCohort = (
                 row.page.on('framenavigated', row.navigation);
                 row.page.on('close', row.closing);
                 const button = row.page.getByRole('button', {
-                  name: '傳送驗證碼',
+                  name: capacityCohortButtonName(intent),
                   exact: true,
                 });
                 row.locator = button;
@@ -318,9 +329,13 @@ export const createCapacitySendCohort = (
                 row.handle = handle;
                 row.phase = 'PREPARE_DOM';
                 requireTrue(
-                  await button.evaluate(ready, handle, {
-                    timeout: row.check(),
-                  }),
+                  await button.evaluate(
+                    capacityPreparedButtonReady,
+                    { expected: handle, intent },
+                    {
+                      timeout: row.check(),
+                    },
+                  ),
                 );
                 row.check();
                 row.ready = true;
@@ -443,4 +458,38 @@ export const createCapacitySendCohort = (
     },
   };
   return controller;
+};
+
+export const createCapacitySendCohort = (
+  actors: readonly NativeCapacityActor[],
+  admit: () => void,
+  signal: AbortSignal,
+  now: () => number = () => performance.now(),
+) => createCohort(actors, admit, signal, now, 'OTP_SEND', {});
+export const consumeCapacitySendPreparation = (
+  actor: NativeCapacityActor,
+  admit: () => void,
+  observer?: SendClickObserver,
+) => consume(actor, admit, observer, 'OTP_SEND');
+export const createCapacityLoginCohort = (
+  input: CapacityLoginCohortInput,
+  now: () => number = () => performance.now(),
+) => {
+  const owner = {},
+    login = capacityLoginCohortContext(input);
+  const cohort = createCohort(
+    input.actors,
+    input.admit,
+    input.signal,
+    now,
+    'EXISTING_LOGIN',
+    owner,
+    login,
+  );
+  return {
+    ...cohort,
+    perform: (actor: NativeCapacityActor) =>
+      consume(actor, input.admit, undefined, 'EXISTING_LOGIN', owner) ??
+      capacityFailure(),
+  };
 };

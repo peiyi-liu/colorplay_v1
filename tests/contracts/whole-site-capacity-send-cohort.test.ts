@@ -92,16 +92,28 @@ const fixture = (size = 1) => {
       }),
       evaluate: vi.fn(
         (
-          callback: (node: HTMLElement, expected: HTMLElement) => boolean,
+          callback: (
+            node: HTMLElement,
+            input: {
+              expected: HTMLElement;
+              intent: 'OTP_SEND' | 'EXISTING_LOGIN';
+            },
+          ) => boolean,
           argument: unknown,
         ) => {
           trace.push(`dom:${String(actorIndex)}`);
           vi.stubGlobal('document', node.ownerDocument);
+          const input = argument as {
+            expected: unknown;
+            intent: 'OTP_SEND' | 'EXISTING_LOGIN';
+          };
           return Promise.resolve(
-            callback(
-              node as unknown as HTMLElement,
-              (argument === handle ? original : argument) as HTMLElement,
-            ),
+            callback(node as unknown as HTMLElement, {
+              expected: (input.expected === handle
+                ? original
+                : input.expected) as HTMLElement,
+              intent: input.intent,
+            }),
           );
         },
       ),

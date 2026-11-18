@@ -1,0 +1,27 @@
+# Native21 — 登入physical barrier不足，8/15容量通過
+
+Root唯一一輪審查結束：INCONCLUSIVE，沒有完整60人PASS。Root final933ee99a34b4808d5740dd8fdad3ef5ae8696a9192afe74e511b0e74c623ab94。
+
+## 實測範圍
+
+exactSourcebc2581a6afa3b4d4b7779de7957619afb35499ef/tree23d9a47005b726f69db6860320b138fc0d6aad80/run44404679498/job135156629863/attempt1；VM21i21f29/940860808812012431/europe-west3-b，runner41/MainPID3654/Restartno。12CPU32GiB N2/IceLake/Ubuntu24.04/new100GBretain/3h正常STOP+1min；新12GiBbrowserkind/原backend4CPU6GiB與所有產品SLO保。Google雙receipt/keyblock/strictSSH、31Source/5kernel、四項fresh真kernelcontrols與完整package原閉集合均核；Source實讀在M79修改授權前。
+
+functional15PASS；capacity8/15PASS：anon3/10/20、真fresh40/60（兩SLO PASS）、existing nativefullgame3/10/20至20題／報表。小樣本game的SLO為NOT_EVALUATED_INSUFFICIENT_SAMPLES，不作效能PASS。40existing wcr-261118-fb0a0f5b0fc3 INCONCLUSIVE；6後續（existing60及backend3/10/20/40/60）沒有嘗試。remainingLegs7包含本次失敗，不誤稱7全未試。
+
+## 確認阻擋與修法
+
+40entry與login各40physicalHTTP200；entry70.017ms VALID，login346.639ms GENERATOR_LIMITED，超原250ms，actorsCompleted0/readback0。firstJourneyFailure13092.826794／signalAbortedfalse，finally13851.847904→stop13852.033757→abort14104.268027；collectorInvalidnull、healthVALID、PSS4170339328B/Node385200128B/PSI-swap-OOM全0，receipt timedOutfalse。Generic failureReasons的timeout／productFAIL屬缺證cascade，不能當網站timeout或12GiB再超限。
+
+Root實碼核capacityEntryUi.submit仍locator.click，existing-login未像OTP全cohort提前focus／handle／actionability；這是具體harness gap與合理修法，尚非獨立證明browser scheduling所有可能唯一原因。M79只補登入固定intent/genuine lease/全prepare→全arm→一次nativeEnter，保15s與250ms、原Rootreadback及OTP/postreg。正常login主frame導航只限已consumed/PRESS後/approvedorigin及role目的地，不能把成功導航當成功證據。修後需新exactSource＋freshVM22原full15，不重跑或追認本次。
+
+## 真證據與保留
+
+artifact14476657330／ZIP48174851B/8abfa7418aa9cb8ee191f6a0e88d4bfa96e81d29329882e0a6aaa95d50d6fbfc；cipher48174713B/dcb12458a932020da91ba0193f60482aff70dd81c1b606b72fe9ef7a80614ccf。Root真age AEAD3517files232642359B/outereb8a979f83a9ee20987f45665fc5b5613031fb29f9c1f6c43531145976aed9a7。cold3444/snapshotd253bdb7dbd39400c568245264baadc3af6a7cfa36faa72e3816fdc5a0372c72；8servicesstop／2DB127tables31roles／三volume逐檔hash與portablemetadata、runtime3292datafiles＋34publiccode核。未restore，封存不代表容量PASS。
+
+Root重算functional15與原capacity8鏈/close/publication，10parentclosures complete/noCause/noResidue；三Live passive PARTIAL日誌SSH/download全byte一致、無firstFailure，40在login前已停所以沒有40Live journal。Original9/prefix與M76/M77凍結Source核。Root讀game helper輸出超過內部30k bound導致JSON截斷，該失敗已保，完整加密下載獨立核，不假造缺失欄位。
+
+## 關閉與邊界
+
+原hold22:14:12→22:24:12UTC自然10分鐘，job22:24:16failure／repo runners0後正常Stop一次，skipGracefalse；freshGoogle21rows全strictSTOPPED／externalIP釋放。proof/screenshot .git/m77-vm21-startup/strict-stopped.json與stopped-20261119.png。沒有permanentdelete、重啟、第二Stop或舊run重試。
+
+基本預留US41.7208非invoice／總budgetUS150/noPaid，保留21×100GB磁碟持續計費（現有永久清理問題尚待Owner答覆）；下一VM22草稿工具offline8+4fakePASS/預留2.30/planned44.0208，但尚未Create。Hosted0／Production禁；Staging仍d92be82ba188c3bf6618f1d70cd92f63a4eabfac（本輪唯讀核），完整Local通過後才繼續整合。

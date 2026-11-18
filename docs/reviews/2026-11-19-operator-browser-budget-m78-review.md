@@ -1,0 +1,11 @@
+# M78 — 獨立operator12GiB驗證器相容性審查
+
+Root唯一一輪 ACCEPTED；standards0/spec0/open0。Root final SHA256 ecfa13f3954027db93d767a7b8a87894b0fdc55340e01e3c3c28396c341e9b7b。
+
+只在 /private/tmp/colorplay-hosted-root-m65-20261118 對齊三TS validator與兩tests，5檔逐byte等於已核bc2581a6afa3b4d4b7779de7957619afb35499ef。舊6GiB/new12GiB profile與hash批准鏈、backend4CPU6GiB／Node2GiB／原時間窗與產品SLO完整保留；不以CPU自動升級。M57/M65/M69與nonce store未改。
+
+packet952d9da52e0eeafad3911066cbaa7633bc298c7bff43223c867c5297c48fd206／23records9checks，actual old validators RED4FAIL11PASS（EXECUTION_PROFILE_INVALID），只移植已核validators後15PASS；受影響14files357PASS，fulltype/lint/format/import/diff/static全0。Root直接實讀2371distinctpaths，23records／9logs、2327protected（含23symlink targets）、Original9/prefix與Recovery5 Source核，5檔與gitshow bc及workingbytes三方精確一致。
+
+保護原dirty operator docs/handoff.md及node_modules link。Typecheck改一個已揭露生成型node tsbuildinfo快取；不聲稱整個依賴目錄唯讀，無快取還原／刪除。所有owned<=500。AC：沿用已核全站容量計畫的profile驗證與full15前置；本task無新產品AC，沒有M65真15項前序或Hosted／Native全站60PASS宣稱。
+
+仍需Root實際connector證據交付橋接、真Local完整15收據與Staging exact merge/deployment/migration/key／mail／fixture/window驗證。executionAuthority NONE；沒有Cloud/VM/runner/Hosted/DB/Auth/Mail呼叫。後續不得以caller JSON自造觀測或ancestor豁免。

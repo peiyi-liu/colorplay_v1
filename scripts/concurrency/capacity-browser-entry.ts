@@ -1,8 +1,5 @@
 import * as lifecycle from './capacity-generator-diagnostics';
-import type {
-  CapacityRunDiagnostics,
-  CapacityReadySubphase,
-} from './capacity-run-diagnostics';
+import type { CapacityRunDiagnostics } from './capacity-run-diagnostics';
 import { performance } from 'node:perf_hooks';
 import { z } from 'zod';
 import {
@@ -23,142 +20,25 @@ import type {
   CapacityActionObservation,
 } from './capacity-request-observer';
 import type { PrivateJournal } from './private-journal';
-export const capacityEntryIdentitySchema = z.strictObject({
-  alias: z.string().regex(/^(T1|REG(?:40|60)_[0-9]{2})$/u),
-  account: z.string().regex(/^[a-z0-9]{3,20}$/u),
-  password: z.string().min(6).max(128),
-  displayName: z.string().min(2).max(40),
-  role: z.enum(['student', 'teacher']),
-  userId: z.uuid().nullable(),
-  email: z.string().max(254).optional(),
-  fullName: z.string().min(1).max(40).optional(),
-  nickname: z.string().min(2).max(16).optional(),
-  classCode: z
-    .string()
-    .regex(/^[A-Za-z0-9]{8}(?:[A-Za-z0-9]{8})?$/u)
-    .optional(),
-});
-export type CapacityEntryIdentity = z.infer<typeof capacityEntryIdentitySchema>;
-export interface CapacityEntryUi {
-  landing: (actor: NativeCapacityActor, scope: CapacityScope) => Promise<void>;
-  ready: (
-    actor: NativeCapacityActor,
-    scope: CapacityScope,
-    identity: CapacityEntryIdentity | undefined,
-    registration: boolean,
-    step?: (phase: CapacityReadySubphase) => void,
-  ) => Promise<void>;
-  submit: (actor: NativeCapacityActor) => Promise<void>;
-  confirmed: (
-    actor: NativeCapacityActor,
-    identity: CapacityEntryIdentity,
-  ) => Promise<void>;
-}
-const loginFields = async (
-  actor: NativeCapacityActor,
-  identity: CapacityEntryIdentity,
-  step?: (phase: CapacityReadySubphase) => void,
-) => {
-  if (identity.role === 'teacher') {
-    step?.('TEACHER_PORTAL');
-    await actor.page.getByText('教師端登入', { exact: true }).click();
-  }
-  step?.('ACCOUNT');
-  await actor.page
-    .getByRole('textbox', { name: '帳號', exact: true })
-    .fill(identity.account);
-  step?.('PASSWORD');
-  await actor.page.getByLabel('密碼', { exact: true }).fill(identity.password);
-  step?.('LOGIN_BUTTON_VISIBLE');
-  await actor.page
-    .getByRole('button', { name: '登入', exact: true })
-    .waitFor({ state: 'visible' });
-};
-export const capacityEntryUi: CapacityEntryUi = {
-  landing: async (actor, scope) => {
-    if (actor.page.url() !== 'about:blank') return capacityFailure();
-    await actor.page.goto(scope.appUrl);
-    await actor.page
-      .getByRole('heading', { name: 'ColorPlay', exact: true })
-      .waitFor({ state: 'visible' });
-  },
-  ready: async (actor, scope, identity, registration, step) => {
-    step?.('LANDING_CTA');
-    await actor.page
-      .getByRole('link', { name: '開始冒險', exact: true })
-      .click();
-    step?.('LOGIN_ROUTE');
-    await actor.page.waitForURL(
-      (url) => url.origin === scope.appUrl && url.pathname === '/login',
-    );
-    if (!registration) {
-      if (!identity) return capacityFailure();
-      await loginFields(actor, identity, step);
-      return;
-    }
-    step?.('REGISTER_CTA');
-    await actor.page
-      .getByRole('link', { name: '註冊帳號', exact: true })
-      .click();
-    step?.('REGISTER_ROUTE');
-    await actor.page.waitForURL(
-      (url) => url.origin === scope.appUrl && url.pathname === '/register',
-    );
-    step?.('NAME');
-    await actor.page
-      .getByLabel('名字', { exact: true })
-      .fill(identity?.fullName ?? '匿名準備');
-    step?.('NICKNAME');
-    await actor.page
-      .getByLabel('暱稱', { exact: true })
-      .fill(identity?.nickname ?? `準備${String(actor.actorIndex)}`);
-    step?.('CLASS');
-    await actor.page
-      .getByLabel('班級序號', { exact: true })
-      .fill(identity?.classCode ?? 'ABCDEFGH');
-    step?.('NEXT');
-    await actor.page
-      .getByRole('button', { name: '下一步', exact: true })
-      .click();
-    step?.('EMAIL');
-    await actor.page
-      .getByLabel('E-mail', { exact: true })
-      .fill(
-        identity?.email ??
-          `${scope.planId}.prepare.${String(actor.actorIndex)}@colorplay.test`,
-      );
-    step?.('SEND_BUTTON_VISIBLE');
-    await actor.page
-      .getByRole('button', { name: '傳送驗證碼', exact: true })
-      .waitFor({ state: 'visible' });
-  },
-  submit: async (actor) => {
-    await actor.page.getByRole('button', { name: '登入', exact: true }).click();
-  },
-  confirmed: async (actor, identity) => {
-    await actor.page.waitForURL(
-      (url) =>
-        url.pathname === (identity.role === 'teacher' ? '/teacher' : '/app'),
-    );
-    await actor.page
-      .getByText(
-        identity.role === 'teacher'
-          ? `${identity.displayName}・教師端`
-          : identity.displayName,
-        { exact: true },
-      )
-      .first()
-      .waitFor({ state: 'visible' });
-    if (identity.role === 'teacher')
-      await actor.page
-        .getByRole('form', { name: '分析篩選', exact: true })
-        .waitFor({ state: 'visible' });
-    else
-      await actor.page
-        .locator('.lobby--map-fullscreen .chapter-map-shell')
-        .waitFor({ state: 'visible' });
-  },
-};
+import {
+  capacityEntryIdentitySchema,
+  capacityEntryUi,
+  loginFields,
+  type CapacityEntryIdentity,
+  type CapacityEntryUi,
+} from './capacity-browser-entry-ui';
+export {
+  capacityEntryIdentitySchema,
+  capacityEntryUi,
+} from './capacity-browser-entry-ui';
+export type {
+  CapacityEntryIdentity,
+  CapacityEntryUi,
+} from './capacity-browser-entry-ui';
+import {
+  createCapacityLoginCohort,
+  capacitySendCohortSummarySchema,
+} from './capacity-send-cohort';
 export const capacityActorStem = (legId: string, index: number) =>
   `${legId.replaceAll('_', '-')}-a${String(index).padStart(2, '0')}`;
 export const dispatchCapacityActions = async (
@@ -255,6 +135,7 @@ export const capacityEntryReportSchema = z.strictObject({
   uiElapsedMs: z.number().nonnegative(),
   readbackRequests: z.number().int().nonnegative(),
   anonymousNoMutationProof: z.boolean().nullable(),
+  loginPreparation: capacitySendCohortSummarySchema.optional(),
 });
 export interface CapacityEntryOptions {
   diagnostics?: CapacityRunDiagnostics;
@@ -326,6 +207,7 @@ export const runCapacityEntryBarrier = async (
       ))
   )
     return capacityFailure();
+  let loginCohort: ReturnType<typeof createCapacityLoginCohort> | undefined;
   const actors: NativeCapacityActor[] = [],
     ui = options.ui ?? capacityEntryUi,
     began = performance.now();
@@ -460,12 +342,42 @@ export const runCapacityEntryBarrier = async (
           ),
         ),
       );
-      const logins = await dispatchCapacityActions(
-        actors,
-        'login',
-        ui.submit,
-        signal,
-      );
+      let logins: CapacityActionObservation[];
+      try {
+        if (ui === capacityEntryUi) {
+          if (!identities) return capacityFailure();
+          loginCohort = createCapacityLoginCohort({
+            actors,
+            scope,
+            plan,
+            legId,
+            identities,
+            signal,
+            admit: () => {
+              requireCapacityScope(scope);
+              signal.throwIfAborted();
+            },
+          });
+          await loginCohort.prepare();
+          loginCohort.release();
+        }
+        logins = await dispatchCapacityActions(
+          actors,
+          'login',
+          loginCohort
+            ? (actor) => loginCohort?.perform(actor) ?? capacityFailure()
+            : ui.submit,
+          signal,
+        );
+      } finally {
+        if (loginCohort) {
+          try {
+            await loginCohort.close();
+          } finally {
+            report.loginPreparation = loginCohort.snapshot();
+          }
+        }
+      }
       report.observations.push(...logins);
       report.submit = evaluateBarrier(
         logins.map(({ actorIndex, requestAtMs, clock }) => ({
