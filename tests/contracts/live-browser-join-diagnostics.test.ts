@@ -9,7 +9,10 @@ import {
   createCapacityReceipt,
   sanitizeCapacityReceipt,
 } from '../../scripts/live/capacity-receipt';
-import { createBrowserJoinDiagnostics } from '../e2e/helpers/live-browser-join-diagnostics';
+import {
+  createBrowserJoinDiagnostics,
+  type BrowserJoinSnapshot,
+} from '../e2e/helpers/live-browser-join-diagnostics';
 import {
   createLiveConnectionDiagnostics,
   liveDiagnosticsForPage,
@@ -452,4 +455,18 @@ describe('browser join diagnostic snapshots', () => {
       }),
     );
   });
+});
+
+it('retains exact diagnostic actor indexes 1/40/41/59/60 and rejects 61', () => {
+  for (const actorIndex of [1, 40, 41, 59, 60]) {
+    const observe = vi.fn<(snapshot: BrowserJoinSnapshot) => void>();
+    const collector = createBrowserJoinDiagnostics(actorIndex);
+    const attempt = collector.begin(observe);
+    attempt.start('navigation');
+    attempt.passed();
+    attempt.finish('connected');
+    expect(collector.snapshot().actorIndex).toBe(actorIndex);
+    expect(observe.mock.lastCall?.[0].actorIndex).toBe(actorIndex);
+  }
+  expect(() => createBrowserJoinDiagnostics(61).snapshot()).toThrow();
 });

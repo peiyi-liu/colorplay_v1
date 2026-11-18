@@ -1,3 +1,4 @@
+import { liveDiagnosticsForPage } from '../e2e/helpers/live-connection-diagnostics';
 import { parseCapacityScope } from '../../scripts/concurrency/capacity-scope';
 import { EventEmitter } from 'node:events';
 import type { Page } from '@playwright/test';
@@ -321,4 +322,60 @@ describe('actual dynamic Native Live start flow', () => {
       value: { sessionId, position: 1, questionCount: 20 },
     });
   });
+});
+
+it('actual PageDiagnostics synchronous snapshot reuses only existing memory, never page.evaluate', async () => {
+  const evaluate = vi.fn(() => Promise.reject(new Error('NO_PAGE_IO')));
+  const page = Object.assign(new EventEmitter(), {
+    addInitScript: () => Promise.resolve(),
+    evaluate,
+  });
+  const diagnostics = await browserHelper.attachDiagnostics(
+    page as unknown as Page,
+  );
+  expect(diagnostics.safeRealtimeSnapshot?.()).toMatchObject({
+    collection: 'UNOBSERVED',
+    generation: 0,
+  });
+  liveDiagnosticsForPage.get(page as unknown as Page)?.beginGeneration(1);
+  const socket = Object.assign(new EventEmitter(), {
+    url: () => 'ws://synthetic/realtime/v1/websocket?SYNTHETIC_PRIVATE',
+  });
+  page.emit('console', {
+    type: () => 'error',
+    text: () => 'SYNTHETIC_PRIVATE',
+  });
+  page.emit('pageerror', { name: 'SYNTHETIC_PRIVATE' });
+  page.emit('response', {
+    url: () => 'http://synthetic/SYNTHETIC_PRIVATE',
+    status: () => 500,
+    request: () => ({ method: () => 'GET' }),
+  });
+  page.emit('websocket', socket);
+  socket.emit('framesent', {
+    payload: JSON.stringify({
+      event: 'phx_join',
+      topic: 'live-session:SYNTHETIC_PRIVATE',
+      ref: 'SYNTHETIC_PRIVATE',
+      payload: {},
+    }),
+  });
+  socket.emit('framereceived', {
+    payload: JSON.stringify({
+      event: 'phx_reply',
+      topic: 'live-session:SYNTHETIC_PRIVATE',
+      ref: 'SYNTHETIC_PRIVATE',
+      payload: { status: 'ok' },
+    }),
+  });
+  const snapshot = diagnostics.safeRealtimeSnapshot?.();
+  expect(snapshot).toMatchObject({
+    collection: 'OBSERVED',
+    generation: 1,
+    socketCount: 1,
+    statusSequence: ['SUBSCRIBED'],
+    counts: { consoleErrors: 1, pageErrors: 1, serverErrors: 1 },
+  });
+  expect(JSON.stringify(snapshot)).not.toContain('SYNTHETIC_PRIVATE');
+  expect(evaluate).not.toHaveBeenCalled();
 });

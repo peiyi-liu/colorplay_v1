@@ -16,7 +16,7 @@ const stepSchema = z.enum([
   'subscription_ack',
 ]);
 const eventSchema = z.object({
-  actorIndex: z.number().int().min(1).max(40),
+  actorIndex: z.number().int().min(1).max(60),
   stage: z.enum([
     'ws_open',
     'channel_join',
@@ -47,7 +47,7 @@ const countsSchema = z.object({
   serverErrors: count,
 });
 export const browserJoinSnapshotSchema = z.object({
-  actorIndex: z.number().int().min(1).max(40),
+  actorIndex: z.number().int().min(1).max(60),
   outcome: z.enum([
     'not_run',
     'running',

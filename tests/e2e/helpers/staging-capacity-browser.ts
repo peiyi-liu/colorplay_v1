@@ -146,7 +146,23 @@ export const buildLiveJoinEvidence = (
   };
 };
 
+export type SafeRealtimeSnapshot = Readonly<{
+  collection: 'OBSERVED' | 'UNOBSERVED' | 'PARTIAL';
+  generation: number;
+  counts: Readonly<{
+    consoleErrors: number;
+    pageErrors: number;
+    serverErrors: number;
+  }>;
+  events: readonly LiveDiagnosticEvent[];
+  statusSequence: readonly SafeSubscriptionStatus[];
+  socketCount: number;
+  errorCount: number;
+  closeCount: number;
+  truncated: boolean;
+}>;
 export type PageDiagnostics = Readonly<{
+  safeRealtimeSnapshot?: () => SafeRealtimeSnapshot;
   waitForSubscriptionAck: (
     timeoutMs: number,
     signal?: AbortSignal,
@@ -348,6 +364,29 @@ export const attachDiagnostics = async (
     });
   });
   return {
+    safeRealtimeSnapshot: () => {
+      const generation = liveDiagnostics.generation(),
+        events = liveDiagnostics.events();
+      const truncated =
+        events.length > 16 ||
+        subscriptionStatusSequence.length >= MAX_SAFE_REALTIME_EVENTS;
+      return {
+        collection:
+          generation === 0 ? 'UNOBSERVED' : truncated ? 'PARTIAL' : 'OBSERVED',
+        generation,
+        counts: {
+          consoleErrors: consoleErrors.length,
+          pageErrors: pageErrors.length,
+          serverErrors: serverErrors.length,
+        },
+        events: events.slice(-16),
+        statusSequence: [...subscriptionStatusSequence],
+        socketCount: realtimeSocketCount,
+        errorCount: realtimeErrorCount,
+        closeCount: realtimeCloseCount,
+        truncated,
+      };
+    },
     waitForSubscriptionAck: (timeoutMs, signal) => {
       if (signal?.aborted || page.isClosed()) return Promise.resolve(false);
       if (subscriptionStatusSequence.includes('SUBSCRIBED'))
