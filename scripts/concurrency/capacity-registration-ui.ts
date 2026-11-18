@@ -1,3 +1,7 @@
+import {
+  consumeCapacitySendPreparation,
+  capacitySendCohortSummarySchema,
+} from './capacity-send-cohort';
 import type {
   CapacitySendDiagnostics,
   SendClickObserver,
@@ -55,6 +59,8 @@ const requireReady = (value: unknown) => {
 };
 export const actualUi: CapacityRegistrationUi = {
   send: async (actor, admit, observer) => {
+    const prepared = consumeCapacitySendPreparation(actor, admit, observer);
+    if (prepared) return prepared;
     admit();
     const emit = (state: 'ENTERED' | 'RETURNED' | 'FAILED') => {
       try {
@@ -196,6 +202,7 @@ export const capacityRegistrationReportSchema = z.strictObject({
   authCreatedActors: z.number().int().min(0).max(60).nullable(),
   ownershipKnown: z.boolean(),
   sendBarrier: barrierResultSchema.nullable(),
+  sendPreparation: capacitySendCohortSummarySchema.optional(),
   entrySkewMs: z.number().nonnegative().nullable(),
   mailboxClosed: z.boolean(),
   elapsedMs: z.number().nonnegative(),

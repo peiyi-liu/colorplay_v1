@@ -18,7 +18,7 @@ jobs:
     runs-on: colorplay-local-vm-20261118-a61f29
     timeout-minutes: 150
     env:
-      COLORPLAY_LOCAL_HOST_PROFILE_KIND: LINUX_VM_16CPU_32G_V1
+      COLORPLAY_LOCAL_HOST_PROFILE_KIND: LINUX_VM_12CPU_32G_V1
     defaults:
       run:
         shell: bash

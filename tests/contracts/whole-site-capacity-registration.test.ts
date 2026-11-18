@@ -1,3 +1,4 @@
+import { actualUi } from '../../scripts/concurrency/capacity-registration-ui';
 import { registrationFinalGateSchema } from '../../scripts/concurrency/capacity-registration-final-diagnostics';
 import { createCapacitySendDiagnostics } from '../../scripts/concurrency/capacity-send-diagnostics';
 import type { CapacityRegistrationUi } from '../../scripts/concurrency/capacity-registration-ui';
@@ -8,6 +9,18 @@ import { runCapacityRegistration } from '../../scripts/concurrency/capacity-regi
 import { parseCapacityScope } from '../../scripts/concurrency/capacity-scope';
 import { createCapacityManifest } from '../../scripts/concurrency/capacity-manifest';
 import { capacityFixture } from './helpers/whole-site-capacity';
+const nativeBindings = vi.hoisted(
+  () => new WeakMap<object, { current(): boolean }>(),
+);
+vi.mock(
+  '../../scripts/concurrency/capacity-browser-runtime',
+  async (original) => ({
+    ...(await original<
+      typeof import('../../scripts/concurrency/capacity-browser-runtime')
+    >()),
+    getNativeCapacitySendBinding: (actor: object) => nativeBindings.get(actor),
+  }),
+);
 const setup = async () => {
   const h = await capacityFixture(),
     scope = parseCapacityScope(h.input, h.proof),
@@ -393,4 +406,56 @@ it('actual final diagnostic writer failure cannot turn an otherwise completed co
   expect(result.report.result).toBe('FAIL');
   expect(result.report.completedActors).toBe(40);
   expect(h.ui.verify).toHaveBeenCalledTimes(40);
+});
+
+it('actual registration caller does not press any actor if one parallel native preparation is pending then fails', async () => {
+  const h = await setup();
+  let release: () => void = () => undefined;
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const sentinel = Error('SYNTHETIC_PREPARATION_FAILED');
+  const press = vi.fn(() => Promise.resolve());
+  const focus = vi.fn(async (index: number) => {
+    if (index === 39) {
+      await held;
+      throw sentinel;
+    }
+  });
+  for (const actor of h.leases) {
+    const handle = { dispose: vi.fn(() => Promise.resolve()), press };
+    const locator = {
+      waitFor: vi.fn(() => Promise.resolve()),
+      isEnabled: vi.fn(() => Promise.resolve(true)),
+      focus: () => focus(actor.actorIndex),
+      evaluate: vi.fn(() => Promise.resolve(true)),
+      elementHandle: vi.fn(() => Promise.resolve(handle)),
+      press,
+    };
+    actor.page = {
+      getByRole: () => locator,
+      on: vi.fn(),
+      off: vi.fn(),
+      mainFrame: () => null,
+      isClosed: () => false,
+    } as unknown as NativeCapacityActor['page'];
+    nativeBindings.set(actor, { current: () => true });
+  }
+  const work = runCapacityRegistration({ ...h, ui: actualUi });
+  await vi.waitFor(() => {
+    expect(focus).toHaveBeenCalledTimes(40);
+  });
+  const beforeRelease = press.mock.calls.length;
+  release();
+  const result = await work;
+  expect(result.report.sendPreparation).toMatchObject({
+    allReady: false,
+    released: false,
+    closed: true,
+    pending: 0,
+    firstFailure: { actorIndex: 39, phase: 'FOCUS' },
+  });
+  expect(beforeRelease).toBe(0);
+  expect(press).not.toHaveBeenCalled();
+  expect(result.report.result).toBe('FAIL');
 });

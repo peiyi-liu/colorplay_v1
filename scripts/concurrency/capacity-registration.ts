@@ -1,3 +1,4 @@
+import { createCapacitySendCohort } from './capacity-send-cohort';
 import { observeRegistrationFinalGate } from './capacity-registration-final-diagnostics';
 import {
   observeSendBatch,
@@ -155,6 +156,7 @@ export const runCapacityRegistration = async (
       state.readbackDriverMs += Math.max(0, now() - at);
     }
   };
+  let sendCohort: ReturnType<typeof createCapacitySendCohort> | undefined;
   try {
     fresh = capacityRegistrationFreshSchema.parse(
       await oracle.fresh({
@@ -261,6 +263,11 @@ export const runCapacityRegistration = async (
       }),
     );
     check();
+    if (ui === actualUi) {
+      sendCohort = createCapacitySendCohort(entry.actors, check, signal);
+      await sendCohort.prepare();
+      sendCohort.release();
+    }
     const sendAt = now();
     const sent = await observeSendBatch(options.sendDiagnostics, () =>
       dispatchCapacityActions(
@@ -289,6 +296,7 @@ export const runCapacityRegistration = async (
         },
       ),
     );
+    if (sendCohort) await sendCohort.close();
     report.sendBarrier = evaluateBarrier(
       sent.map(({ actorIndex, requestAtMs, clock }) => ({
         actorIndex,
@@ -422,6 +430,14 @@ export const runCapacityRegistration = async (
   } catch {
     if (report.result !== 'INCONCLUSIVE') report.result = 'FAIL';
   } finally {
+    if (sendCohort) {
+      try {
+        await sendCohort.close();
+      } catch {
+        report.result = 'FAIL';
+      }
+      report.sendPreparation = sendCohort.snapshot();
+    }
     if (report.result !== 'PASS' && fresh)
       await Promise.allSettled(
         states.map(async (state) => {
