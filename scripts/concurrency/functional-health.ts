@@ -1,4 +1,8 @@
 import {
+  observeDocumentCdp,
+  observeDocumentFrame,
+} from './functional-document-observation';
+import {
   registerImageTransport,
   observeImageCdp,
   imageCdpResponse,
@@ -172,6 +176,7 @@ export const createFunctionalHealth = (
         info.cdp = cdp;
         await images.attach(page, cdp);
         const documentListener = (raw: unknown) => {
+          observeDocumentFrame(page, raw);
           mediaObservation.document(page, raw);
         };
         cdp.on('Page.frameNavigated', documentListener);
@@ -179,6 +184,7 @@ export const createFunctionalHealth = (
           cdp.off('Page.frameNavigated', documentListener),
         );
         const requestListener = (raw: unknown) => {
+          observeDocumentCdp(page, 'request', raw);
           try {
             const event = z
               .object({
@@ -280,6 +286,7 @@ export const createFunctionalHealth = (
           }
         };
         const responseListener = (raw: unknown) => {
+          observeDocumentCdp(page, 'response', raw);
           try {
             const event = z
               .object({
@@ -308,6 +315,7 @@ export const createFunctionalHealth = (
           }
         };
         const failedListener = (raw: unknown) => {
+          observeDocumentCdp(page, 'failed', raw);
           try {
             const event = z
               .object({ requestId: z.string(), errorText: z.string().max(512) })
@@ -370,6 +378,7 @@ export const createFunctionalHealth = (
           }
         };
         const finishedListener = (raw: unknown) => {
+          observeDocumentCdp(page, 'finished', raw);
           observe(async () => {
             const event = z.object({ requestId: z.string() }).parse(raw);
             const record = records.get(

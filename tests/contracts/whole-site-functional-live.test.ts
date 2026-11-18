@@ -1,3 +1,5 @@
+import { createLiveDiagnostics } from '../../scripts/concurrency/functional-live-diagnostics';
+import type { PrivateJournal } from '../../scripts/concurrency/private-journal';
 import { describe, expect, it, vi } from 'vitest';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { LiveSessionState } from '../../src/features/live/types';
@@ -233,5 +235,21 @@ describe('functional Live preserves its existing actor lifecycle', () => {
     );
     await base.actor.close();
     expect(h.evidence.requests).toBe(0);
+  });
+});
+
+it('unwrapped failure cannot blame an already returned diagnostic step', async () => {
+  const writes: unknown[] = [];
+  const diagnostic = createLiveDiagnostics(syntheticScope(), [], {
+    write: (_name: string, value: unknown) => {
+      writes.push(value);
+      return Promise.resolve();
+    },
+  } as PrivateJournal);
+  await diagnostic.step('REPORT_RPC', () => Promise.resolve(42));
+  diagnostic.operationFailure(new Error('SYNTHETIC_PRIVATE'));
+  await diagnostic.finish();
+  expect(writes[0]).toMatchObject({
+    operationFailure: { stage: 'UNOBSERVED' },
   });
 });

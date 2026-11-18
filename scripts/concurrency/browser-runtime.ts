@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { observeDocumentRoute } from './functional-document-observation';
 import {
   enableImageTransport,
   observeImageRoute,
@@ -59,6 +60,7 @@ export const restrictFunctionalBrowser = async (
   await context.route('**/*', async (route) => {
     const observation = observeMediaRoute(route.request());
     const image = observeImageRoute(route.request());
+    const document = observeDocumentRoute(route.request());
     const observe = <T>(
       stage: 'FETCH' | 'PARSE' | 'HOOK' | 'FULFILL' | 'DISPOSE',
       operation: () => Promise<T>,
@@ -67,12 +69,17 @@ export const restrictFunctionalBrowser = async (
         ? observation.run(stage, operation)
         : image
           ? image.run(stage, operation)
-          : operation();
+          : document
+            ? document.run(stage, operation)
+            : operation();
     try {
       const origin = new URL(route.request().url()).origin;
       if (![app, api.origin].includes(origin)) {
         image?.branch('ORIGIN_BLOCK');
-        await route.abort('blockedbyclient');
+        document?.branch('ORIGIN_BLOCK');
+        await (document
+          ? document.run('ABORT', () => route.abort('blockedbyclient'))
+          : route.abort('blockedbyclient'));
         return;
       }
       const meta = hooks
@@ -88,7 +95,10 @@ export const restrictFunctionalBrowser = async (
             boundedHttpHook(() => policy(meta), hooks.signal),
           )) === 'drop'
         ) {
-          await route.abort('failed');
+          document?.branch('POLICY_DROP');
+          await (document
+            ? document.run('ABORT', () => route.abort('failed'))
+            : route.abort('failed'));
           return;
         }
       }
@@ -108,12 +118,20 @@ export const restrictFunctionalBrowser = async (
       );
       observation?.headers(response);
       image?.headers(response);
+      const responseStatus = () => {
+        const status = response.status();
+        document?.status(status);
+        return status;
+      };
       try {
-        if (staticImage && response.status() === 304)
+        if (staticImage && responseStatus() === 304)
           throw Error('FUNCTIONAL_BROWSER_FAILED');
-        if (response.status() >= 300 && response.status() < 400) {
+        if (responseStatus() >= 300 && responseStatus() < 400) {
           image?.branch('REDIRECT_BLOCK');
-          await route.abort('blockedbyclient');
+          document?.branch('REDIRECT_BLOCK');
+          await (document
+            ? document.run('ABORT', () => route.abort('blockedbyclient'))
+            : route.abort('blockedbyclient'));
           return;
         }
         if (hooks?.afterResponse && meta) {
@@ -129,7 +147,10 @@ export const restrictFunctionalBrowser = async (
               boundedHttpHook(() => policy(meta, parsed), hooks.signal),
             )) === 'drop'
           ) {
-            await route.abort('failed');
+            document?.branch('POLICY_DROP');
+            await (document
+              ? document.run('ABORT', () => route.abort('failed'))
+              : route.abort('failed'));
             return;
           }
         }
@@ -137,12 +158,19 @@ export const restrictFunctionalBrowser = async (
       } finally {
         await observe('DISPOSE', () => response.dispose());
       }
-    } catch {
+    } catch (error) {
+      document?.caught(error);
       image?.branch('CATCH_ABORT');
-      await route.abort('failed').catch(() => undefined);
+      document?.branch('CATCH_ABORT');
+      await (
+        document
+          ? document.run('ABORT', () => route.abort('failed'))
+          : route.abort('failed')
+      ).catch(() => undefined);
     } finally {
       observation?.close();
       image?.close();
+      document?.close();
     }
   });
   await context.routeWebSocket('**/*', (socket) => {

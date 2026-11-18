@@ -3605,3 +3605,53 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 5owned Source/tests，packet9c9af64621670b8b6d3b2eeb4f32ac6d756a77ac01262c85dfebc784a5842cba/59records22checks全hash核，未解finding0。memory firstcause閉集與原track/stop實際值，caller原pre snapshot binding＋stop/close後wx600 sideband，writer best-effort原return/exception/PASS不動、缺診斷UNKNOWN。
 - worker12新pure＋2舊pure分列PASS，必要checks最後0，初RED/interfaceERROR/deadline fake/setup/style失敗原保；Root19額外controls含11原新版operation/clock trace、PID/UID拒絕、敏感錯誤、caller exception identity與VM5真profile job/boot hash對照PASS。Source347/143/114等均≤500；Root2284protected/operator其餘42/283history/Original7trueprefix/pkglock/M52六檔全核。Rootreceipt.git/m53-root-review.json SHAde0c5322f6e33c91c35cf47e257e28ec62dd4198ddd0361a826230e91544f651，詳docs/reviews/2026-11-18-parent-stop-m53-review.md。
 - 僅Source工具接受，VM5原首因UNKNOWN/M52未真機走到，舊結果不回填。五VM仍stopped/runner0，VM6草稿f14b8c同N2IceLake12/32/us-west1-b未Create，startup a435ad2a…只NAME替換/8fake與UI textarea exact；下一exact新Source/fresh job＋完整矩陣與真sideband/cold核。US150/noPaid/Hosted0/Production禁。
+
+
+### 2026-11-18 — M53 exact新Source／VM6 zone-a新job啟動
+
+- exact9paths commit e7063d63d4ed4ee6dff4af87db4ac2e6430fe46d/tree0ecd26406638bbc66cd25d3cda404e629df2cb0d，隔離VMbranch normalFF4ada→e706/Vercel=false；新run44217510715/job134510925057/push attempt1，舊job未rerun。
+- 原f14b8c/us-west1-b Create回resource pool unavailable，無boot／runner／Native；保.git/m53-vm6-startup/zone-b-create-failure.json與截圖，failed zone-b orphan disk狀態待查。只改同region的zone-a，N2/minIceLake12CPU32GB100GB/全部guards不變。UI retry編輯曾重設default SA/Ops/snapshots，Create前全改回None/off且啟動textarea與a435ad2a… exact。
+- 實際VM6 f14b8c/instance2354073094086245965/us-west1-a/136.66.239.179，01:34:26UTC建立；Console actual/min IceLake/officialUbuntu24x64 image20261105、3hSTOP+1m/noRestart/noSA/Ops/snapshot/HTTP核。Google serial兩收據一致、bootff8e50bc…/hostkey66/W7zHf…固定，SSH12CPU/31.335GiB/UID1001/systemdcgv2/classic29.1.3＋空Docker真核。
+- courier4fake PASS，一token一ephemeralrunner26，API核ID/name/label與新job綁定；officialsvcUsercp-capacity/Restart=no真start。Rootstart.git/gcp-vm6-root-start-receipt.json；尚無本輪容量結果。下一functional15/原15legs firstcausefailstop＋真ParentStop sideband/contextMatches/collection/age/cold/business核；舊5VM皆stopped保disk計費，US150/noPaid/Hosted0/Production禁。
+
+
+### 2026-11-18 — VM6 functional Live FAIL／實際 M53 sideband 已核
+
+- Source e7063d63d4ed4ee6dff4af87db4ac2e6430fe46d、run44217510715/job134510925057/attempt1：前9功能階段PASS，live_finalized FAIL、後5及所有容量legs NOT_RUN；無Local40/60或M52真finalgate證據。
+- 真M53 profile/boot/job/Source binding 全核、OBSERVED/contextMatches=true/firstCause=null，父cancel/timeout/overflow=false，子exit1/signalnull/residue0。僅本輪functional無父取消，VM5舊首因仍UNKNOWN。Live T1/page8 APP_DOCUMENT GET request2259 ERR_FAILED，其3筆console/network/log為同請求；同一agent正唯讀診斷，不改Source/重跑。
+- artifact14389367163 ZIP25093455B/63f6da64…、真age490files155644637B/cold455/8stop/2DB127tables/3volumes hash與metadata核、未restore，25bootlogs30940B保runtime/gcp-vm6；Rootfirst .git/gcp-vm6-root-first-review.json，詳 docs/reviews/2026-11-18-gcp-vm6-functional-live-result.md。producer cleanup失敗與outer程序已釋放不同層，原FAIL保留。
+- VM6待10min hold完成後正常stop。Console磁碟清單六個各100GB，f14只有zone-a；無zone-b殘留列、無刪除。六台最大配置base估算US10.136非帳單，US150/noPaid/Hosted0/Production禁；Local未過不部署Staging。
+
+
+### 2026-11-18 — M54合併診斷範圍核准／同一agent只離線
+
+- 唯讀定位confirmed在結算前，operation與finally錯會被原safely壓碼；APP_DOCUMENT未保存Root分支/意圖，不能定report goto或timeout。凍結一次完整診斷：teacher每題尾段與結算/report全部step＋operation/cleanup兩首因＋actualPage/ownedroute/CDP唯一關聯，原順序/guard/timeout/health/PASS不改。
+- 只5Source/4tests，無產品/operator/M52/M53/exporter/workflow；functional-health既有613行本輪窄cap650、其餘≤500。詳 docs/superpowers/plans/2026-11-18-functional-live-finish-m54-brief.md。同一agent actual factory fake RED→離線，Root唯一review；不Native/Cloud/commit。VM6證據已保、待hold完成stop；US150/noPaid/Hosted0/Production禁。
+
+
+### 2026-11-18 — VM6已停止／M54離線中
+
+- job44217510715/134510925057於01:59:14UTC completed/failure，runner26自動移除1/repo0。Root保真age/cold資料後正常shutdown，不略過grace；GoogleConsole exactinstance2354073094086245965顯示已停止（UI更新中），截圖.git/gcp-vm6-stopped-20261118.jpg；100GBdisk仍保留計費。六VM全部stopped，無刪除/Hosted/Production。
+- Rootfinal.git/gcp-vm6-root-final-review.json SHAc2b2780f59fca4329f07317964f80d4a17dfb3b59d797d70f65bd11bd958e2ff。M54同一agent已actual journey假ports有效RED（前setup失敗原保）、正在5Source/4tests離線；原M52/M53/operator/產品與health/timeouts不動，Root唯一review。離線只預備VM7新名稱a76d91 startup13ccefd2…/8fakePASS，未Create/region未定/Source待M54審查；不舊job重跑。US150/noPaid。
+
+
+### 2026-11-18 — Staging Auth 控制台唯讀核對／未改設定
+
+- exact Staging Supabase onkxnkzeixpezetkmocf，UI當下refresh150/5min/IP、verify30/5min/IP、signup/signin300/5min/IP、useremail間隔60s、IP forwarding off；custom SMTP已啟用smtp.resend.com:465，未讀credentials/未存設定/未寄信。email每小時額度欄未觀測到數字、Resend方案額度UNKNOWN。
+- 官方GoTrue v2.198.0 Source已另存：token密碼登入/refresh共用limiter、constructor burst30；UI refill額度不等於burst容量。以上是同IP60的風險依據，非實際Hosted60 FAIL或PASS，不以假IP、跳OTP或改額度充當通過。下一Hosted窗口仍須exact候選/遷移唯一pending/受控信與上限/收斂方案；先完成Local。Staging branch唯讀再核仍d92be82…，沒有merge/deploy/Hosted寫入。
+- 安全收據.git/staging-auth-readonly-complete-20261118.json。M54同一agent離線繼續，六VM全stopped/US150/noPaid/Production禁。
+
+
+### 2026-11-18 — M54唯一review三項P2／同輪合併修正
+
+- Root直接actual helper假ports核出：外層未包步驟錯誤誤標已完成step；intent結束後新request誤配舊generation；main Root request與外iframe CDP同URL被稱OBSERVED。初3FAIL原保.git/m54-root-initial-controls.json，非Native。須全補UNKNOWN/active lifecycle/main-frame provenance，原操作/health/exception不改。
+- Root准最小純type第6Source functional-document-observation-types.ts≤180與dochelper≤500，為lint格式及主frame被動觀測留空間，無產品/operator/M52/M53擴張。雙brief追加，同一agent同輪修正/保freeze歷史，Root只關finding與最後checks。
+- VM7 a76d91草稿us-south1-a同N2minIceLake12/32/100新disk保留，3h正常STOP+1min/noRestart/noSA/Ops/HTTP/snapshot全UI核、新startup13ccefd2…exact；未Create。新區域保留目前六disk（原三region各200/250GB不足再加100），草稿base運算465.73/月÷730約0.638/h，以0.67/h保守保留3h約2.0212，不含IP/流量/稅；US150/noPaid。REST等效editor可見input只有294字截斷而JSONparse失敗，私有partial保留，未當完整配置證明，未執行REST/CLI。
+
+
+### 2026-11-18 — M54唯一review接受／最終690＋Root16 controls
+
+- 6Source/4tests，freeze-v3 SHA709e2e5f…；packet58718637ef972babd59e48cf9aeb872ec10e864673901c86925d5fbd6bccd995/84records35checks全hash核，v1原33raw與所有FAIL保留。真final-affected45files690tests16.22s、type/lint/globalformat/import/diff/static0；681/687與affected-final僅歷史。
+- 本輪3P2全CLOSED：未包錯誤不得誤標已完成step；active且unique pending才配對，新側不能接ended/closed/terminal row（含3完成順序）；重用既有Page.frameNavigated主frame pin/loader、iframe或缺pin UNKNOWN，無新CDP/HTTP。Root6原陰性＋10額外正負控制PASS，合法晚terminal保留，open0。
+- 私有ASTstyle工具曾污染新fixture前綴，已停用；原25assertion AST/19cases保留並Root核初可見/最終fixture，未聲稱缺副本的污染前bytes相等。primitive throw單行具理由lint例外保原拋值。Doc504 cap510具理由/health622 cap650，puretypes82不runtime循環。Root2287非owned/operator45/M52/M53/Original7 true575959prefix/pkglock核。Rootreview.git/m54-root-review.json SHAcd642c1a39975be0d7f7657a8b14f5188e21829f7a61e1c75072a44cc7ab1c96；詳 docs/reviews/2026-11-18-functional-live-finish-m54-review.md。
+- 只Source工具接受，不把VM6 FAIL/M52未走到/Local60當PASS。下一exact14paths新Source與freshVM7原矩陣，草稿a76d91/us-south1-a未Create；六VM均stopped保disk計費/runner0/US150/noPaid/Hosted0/Production禁。
