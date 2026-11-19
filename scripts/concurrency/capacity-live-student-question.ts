@@ -67,20 +67,43 @@ const remainingBudget = (signal: AbortSignal, now: () => number) => {
     return 20000 - (at - began);
   };
 };
+export interface PromptWaitObservation {
+  wait: 'COUNTER' | 'MODE_TEXT';
+  state: 'ENTERED' | 'RETURNED' | 'FAILED';
+}
 export const waitCapacityLiveStudentPrompt = async (
   page: Page,
   question: ReturnType<typeof capacityLiveStudentQuestion>,
   signal: AbortSignal,
   now: () => number = () => performance.now(),
+  observe?: (event: PromptWaitObservation) => void,
 ) => {
   const remaining = remainingBudget(signal, now);
-  await expect(
-    page.getByText(question.counterText, { exact: false }).first(),
-  ).toBeVisible({ timeout: remaining() });
-  await expect(
-    page.getByText(question.displayText, { exact: true }).first(),
-  ).toBeVisible({ timeout: remaining() });
-  remaining();
+  let wait: PromptWaitObservation['wait'] = 'COUNTER';
+  const note = (state: PromptWaitObservation['state']) => {
+    try {
+      observe?.({ wait, state });
+    } catch {
+      /* Passive only. */
+    }
+  };
+  try {
+    note('ENTERED');
+    await expect(
+      page.getByText(question.counterText, { exact: false }).first(),
+    ).toBeVisible({ timeout: remaining() });
+    note('RETURNED');
+    wait = 'MODE_TEXT';
+    note('ENTERED');
+    await expect(
+      page.getByText(question.displayText, { exact: true }).first(),
+    ).toBeVisible({ timeout: remaining() });
+    remaining();
+    note('RETURNED');
+  } catch (error) {
+    note('FAILED');
+    throw error;
+  }
 };
 export const waitCapacityLiveStudentOptions = async (
   buttons: Locator,

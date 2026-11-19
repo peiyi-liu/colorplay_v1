@@ -1,3 +1,4 @@
+import { beginCapacityLiveStateRead } from '../../../scripts/concurrency/capacity-live-question-observation';
 import { performance } from 'node:perf_hooks';
 
 import type { Page, Request } from '@playwright/test';
@@ -236,12 +237,21 @@ export const observeLiveSnapshots = (
   diagnostics: LiveConnectionDiagnostics,
 ) => {
   const generations = new WeakMap<Request, number>();
+  const reads = new WeakMap<
+    Request,
+    ReturnType<typeof beginCapacityLiveStateRead>
+  >();
   page.on('request', (request) => {
     if (
       request.method() === 'POST' &&
       new URL(request.url()).pathname === '/rest/v1/rpc/get_live_session_state'
-    )
+    ) {
       generations.set(request, diagnostics.generation());
+      reads.set(
+        request,
+        beginCapacityLiveStateRead(page, request, diagnostics.generation()),
+      );
+    }
   });
   page.on('response', (response) => {
     const generation = generations.get(response.request());
@@ -261,18 +271,30 @@ export const observeLiveSnapshots = (
       );
       return;
     }
-    void response
+    const task = response
       .json()
       .then((body: unknown) => {
+        const parsed = stateSchema.safeParse(body);
         diagnostics.record(
           generation,
           'snapshot',
-          stateSchema.safeParse(body).success ? 'ok' : 'error',
+          parsed.success ? 'ok' : 'error',
         );
+        try {
+          if (parsed.success && diagnostics.generation() === generation)
+            reads.get(response.request())?.complete(parsed.data);
+        } catch {
+          /* Optional passive projection cannot alter the original event. */
+        }
       })
       .catch(() => {
         diagnostics.record(generation, 'snapshot', 'error', 'transport');
       });
+    try {
+      reads.get(response.request())?.track(task);
+    } catch {
+      /* Passive only. */
+    }
   });
 };
 

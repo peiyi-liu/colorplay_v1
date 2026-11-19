@@ -1,3 +1,4 @@
+import type { CapacityLiveQuestionObservation } from './capacity-live-question-observation';
 import {
   capacityLiveStudentQuestion as studentQuestion,
   waitCapacityLiveStudentPrompt as waitStudentPrompt,
@@ -52,6 +53,7 @@ export const runCapacityLiveGame = async (
   classroomId: string,
   journal: PrivateJournal,
   signal: AbortSignal,
+  questionObservation?: CapacityLiveQuestionObservation,
 ) => {
   const host = actors[0];
   if (!host || actors.length < 3 || actors.length > 60)
@@ -256,6 +258,8 @@ export const runCapacityLiveGame = async (
       main.rejected('JOIN_BATCH');
       return capacityFailure();
     }
+    for (const a of actors)
+      if (a.page) questionObservation?.bind(a.page, a.actorIndex, sessionId);
     let deniedJoin = false,
       deniedState = false;
     main.enter('OUTSIDER_JOIN');
@@ -352,7 +356,18 @@ export const runCapacityLiveGame = async (
             await a.measure('submit_answer', 'warm', async () => {
               if (a.page) {
                 trace.enter('PROMPT_VISIBLE', position);
-                await waitStudentPrompt(a.page, ready, signal);
+                await waitStudentPrompt(
+                  a.page,
+                  ready,
+                  signal,
+                  undefined,
+                  questionObservation?.watch(
+                    a.page,
+                    a.actorIndex,
+                    position,
+                    state,
+                  ),
+                );
                 trace.returned();
                 trace.enter('OPTIONS_VISIBLE', position);
                 const buttons = a.page
@@ -533,7 +548,13 @@ export const runCapacityLiveGame = async (
       try {
         for (const b of bindings)
           diagnostic.captureRealtime(b.actorIndex, b.diagnostics);
-        await journal.write('capacity-live-diagnostics', diagnostic.seal());
+        const write = async () => {
+          if (questionObservation)
+            diagnostic.question(questionObservation.snapshot());
+          await journal.write('capacity-live-diagnostics', diagnostic.seal());
+        };
+        if (questionObservation) questionObservation.handoff(write);
+        else await write();
       } catch {
         /* Best effort only; never replace original result/exception. */
       }

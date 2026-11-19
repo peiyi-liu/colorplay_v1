@@ -267,3 +267,155 @@ it('keeps pending and unexecuted stage timings null, separate from UI readiness'
     closed: null,
   });
 });
+
+it('passively reuses the original single state body and parse; throwing projection does not create a transport error', async () => {
+  const projection =
+    await import('../../scripts/concurrency/capacity-live-question-observation');
+  const schema =
+    await import('../../src/features/live/api/live-repository-schemas');
+  const complete = vi.fn(() => {
+    throw Error(SECRET);
+  });
+  const tasks: Promise<unknown>[] = [];
+  const begin = vi
+    .spyOn(projection, 'beginCapacityLiveStateRead')
+    .mockReturnValue({
+      complete,
+      track: (task) => {
+        tasks.push(task);
+      },
+    });
+  const parse = vi.spyOn(schema.stateSchema, 'safeParse');
+  const callbacks = new Map<string, (value: never) => void>();
+  const page = {
+    on: (event: string, callback: (value: never) => void) =>
+      callbacks.set(event, callback),
+  } as unknown as Page;
+  const diagnostic = createLiveConnectionDiagnostics(() => 0);
+  observeLiveSnapshots(page, diagnostic);
+  diagnostic.beginGeneration(1);
+  const req = {
+    method: () => 'POST',
+    url: () => 'https://synthetic.invalid/rest/v1/rpc/get_live_session_state',
+  } as Request;
+  const body = {
+    session_id: '18400000-0000-0000-0000-000000000001',
+    state: 'lobby',
+    state_version: 1,
+    current_position: 0,
+    question_count: 3,
+    participant_count: 1,
+    rules_version: 'synthetic',
+    question_display: 'device',
+    server_time: '2026-11-12T00:00:00Z',
+    is_host: false,
+    mode: 'individual',
+    team_count: null,
+  };
+  const json = vi.fn(() => Promise.resolve(body));
+  const response = {
+    request: () => req,
+    ok: () => true,
+    json,
+  } as unknown as Response;
+  callbacks.get('request')?.(req as never);
+  callbacks.get('response')?.(response as never);
+  await Promise.allSettled(tasks);
+  expect(json).toHaveBeenCalledTimes(1);
+  expect(parse).toHaveBeenCalledTimes(1);
+  expect(complete).toHaveBeenCalledTimes(1);
+  expect(diagnostic.events()).toEqual([
+    { actorIndex: 1, stage: 'snapshot', outcome: 'ok', elapsedMs: 0 },
+  ]);
+  expect(JSON.stringify(diagnostic.events())).not.toContain(SECRET);
+  begin.mockRestore();
+  parse.mockRestore();
+});
+
+it.each(['prototype', 'function', 'array', 'accessor', 'proxy'] as const)(
+  'actual question owner rejects %s Node getters without invoking them and accepts null-prototype own public fields',
+  async (kind) => {
+    const { capacityFixture } = await import('./helpers/whole-site-capacity');
+    const { parseCapacityScope } =
+      await import('../../scripts/concurrency/capacity-scope');
+    const { createCapacityLiveQuestionObservation } =
+      await import('../../scripts/concurrency/capacity-live-question-observation');
+    const f = await capacityFixture(),
+      scope = parseCapacityScope(f.input, f.proof);
+    const fields = {
+      stateVersion: 1,
+      currentPosition: 1,
+      questionCount: 20,
+      questionDisplay: 'screen_only',
+      isHost: false,
+    };
+    let calls = 0;
+    const get = () => {
+      calls++;
+      return 'question_open';
+    };
+    const inherited =
+      kind === 'prototype'
+        ? Object.assign(
+            Object.create({
+              get state() {
+                return get();
+              },
+            }) as object,
+            fields,
+          )
+        : kind === 'proxy'
+          ? new Proxy(fields, {
+              get() {
+                return get();
+              },
+            })
+          : Object.assign(
+              Object.defineProperty(
+                kind === 'function'
+                  ? () => undefined
+                  : kind === 'array'
+                    ? []
+                    : {},
+                'state',
+                { get },
+              ),
+              fields,
+            );
+    const owner = createCapacityLiveQuestionObservation(
+      scope,
+      new AbortController().signal,
+    );
+    owner.watch(
+      {} as Page,
+      1,
+      1,
+      inherited as import('../../src/features/live/types').LiveSessionState,
+    );
+    expect(calls).toBe(0);
+    expect(owner.snapshot()).toMatchObject({
+      collection: 'UNAVAILABLE',
+      rows: [],
+    });
+    const own = createCapacityLiveQuestionObservation(
+      scope,
+      new AbortController().signal,
+    );
+    own.watch(
+      {} as Page,
+      1,
+      1,
+      Object.assign(Object.create(null) as object, fields, {
+        state: 'question_open',
+      }) as import('../../src/features/live/types').LiveSessionState,
+    );
+    expect(own.snapshot().rows[0]?.node).toMatchObject({
+      state: 'question_open',
+      stateVersion: 1,
+    });
+    owner.stopAccepting();
+    own.stopAccepting();
+    await owner.finish();
+    await own.finish();
+  },
+);

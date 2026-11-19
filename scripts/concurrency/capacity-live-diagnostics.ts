@@ -1,3 +1,4 @@
+import { capacityLiveQuestionObservationSchema } from './capacity-live-question-observation';
 import {
   classifyCapacityLiveError as safeError,
   assertCapacityLiveObservationData as dataOnly,
@@ -201,6 +202,8 @@ export const createCapacityLiveDiagnostics = (
     firstCleanupFailure: Point | null = null,
     firstCallbackError: Point | null = null;
   let saved: ReturnType<typeof build> | null = null;
+  let questionObservation:
+    z.infer<typeof capacityLiveQuestionObservationSchema> | undefined;
   const actor = (index: number) => {
     if (!Number.isInteger(index) || index < 0 || index > 60) throw Error();
     let row = actors.get(index);
@@ -397,10 +400,18 @@ export const createCapacityLiveDiagnostics = (
     firstCallbackError,
     head,
     tail,
+    ...(questionObservation ? { questionObservation } : {}),
     actors: [...actors.values()].sort((a, b) => a.actorIndex - b.actorIndex),
   });
   return {
     context,
+    question: (value: unknown) => {
+      guard(() => {
+        dataOnly(value);
+        questionObservation =
+          capacityLiveQuestionObservationSchema.parse(value);
+      });
+    },
     sdk: (index: number, event: LiveGateObservation) => {
       try {
         if (

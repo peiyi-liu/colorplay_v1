@@ -14,6 +14,29 @@ import type { PageDiagnostics } from '../e2e/helpers/staging-capacity-browser';
 import { emptyBrowserJoinSnapshot } from '../e2e/helpers/live-browser-join-diagnostics';
 import { createCapacityLiveDiagnostics } from '../../scripts/concurrency/capacity-live-diagnostics';
 import { LiveRepositoryError } from '../../src/features/live/types';
+const promptUi = vi.hoisted(() => ({ fail: '' }));
+vi.mock('@playwright/test', async (load) => {
+  const actual = await load<typeof import('@playwright/test')>();
+  return {
+    ...actual,
+    expect: (target: unknown) => {
+      if (
+        promptUi.fail &&
+        target &&
+        typeof target === 'object' &&
+        'text' in target
+      ) {
+        return {
+          toBeVisible: () =>
+            Reflect.get(target, 'text') === promptUi.fail
+              ? Promise.reject(Error('SYNTHETIC_PRIVATE'))
+              : Promise.resolve(),
+        };
+      }
+      return actual.expect(target);
+    },
+  };
+});
 const create = () => {
   let now = 0;
   return createCapacityLiveDiagnostics(
@@ -278,3 +301,174 @@ it('unmatched returns, excessive nesting and present nonfunction realtime ports 
   } as unknown as PageDiagnostics);
   expect(malformed.seal()).toMatchObject({ collection: 'UNAVAILABLE' });
 });
+
+it('question observation is a strict bounded nonauthority projection and malformed data never escapes', () => {
+  const d = create();
+  const value = {
+    schemaVersion: 1,
+    authority: 'NON_AUTHORITY',
+    collection: 'UNOBSERVED',
+    closed: true,
+    pending: 0,
+    overflow: false,
+    rows: [],
+  };
+  d.question(value);
+  const sealed = d.seal();
+  expect(sealed).toMatchObject({ questionObservation: value });
+  expect(Object.isFrozen(sealed.questionObservation)).toBe(true);
+  for (const malformed of [
+    { ...value, raw: 'SYNTHETIC_PRIVATE' },
+    { ...value, rows: Array.from({ length: 61 }, () => ({})) },
+    new Proxy(
+      {},
+      {
+        get() {
+          throw Error('SYNTHETIC_PRIVATE');
+        },
+      },
+    ),
+    Object.defineProperty({}, 'rows', {
+      get() {
+        throw Error('SYNTHETIC_PRIVATE');
+      },
+    }),
+  ]) {
+    const x = create();
+    expect(() => {
+      x.question(malformed);
+    }).not.toThrow();
+    expect(x.seal().collection).toBe('UNAVAILABLE');
+    expect(JSON.stringify(x.seal())).not.toContain('SYNTHETIC_PRIVATE');
+  }
+});
+
+it.each(['COUNTER', 'MODE_TEXT'] as const)(
+  'actual Live caller classifies %s rejection, keeps PROMPT_VISIBLE and never arms or dispatches an answer',
+  async (failedWait) => {
+    const browser = await import('../e2e/helpers/staging-capacity-browser');
+    const gates = await import('../../scripts/concurrency/capacity-live-gate'),
+      teacher = await import('../../scripts/concurrency/teacher-live');
+    const observation =
+      await import('../../scripts/concurrency/capacity-live-question-observation');
+    const f = await capacityFixture(),
+      scope = parseCapacityScope(f.input, f.proof),
+      signal = new AbortController().signal;
+    const state = {
+      sessionId: '11000000-0000-4000-8000-000000000001',
+      state: 'question_open',
+      stateVersion: 4,
+      currentPosition: 1,
+      questionCount: 20,
+      questionDisplay: 'screen_only',
+      isHost: false,
+      question: {
+        position: 1,
+        questionId: 'synthetic',
+        publicOptions: [{ id: 'a' }, { id: 'b' }],
+      },
+    };
+    const arm = vi.fn(),
+      click = vi.fn();
+    const page = {
+      on: vi.fn(),
+      off: vi.fn(),
+      getByText: (text: string) => ({ first: () => ({ text }) }),
+      getByRole: () => ({ getByRole: () => ({ click }) }),
+      waitForResponse: arm,
+    } as unknown as import('@playwright/test').Page;
+    promptUi.fail =
+      failedWait === 'COUNTER' ? '第 1 / 20 題' : '請看投影幕作答';
+    vi.spyOn(browser, 'attachDiagnostics').mockResolvedValue({
+      waitForSubscriptionAck: () => Promise.resolve(true),
+    } as unknown as PageDiagnostics);
+    vi.spyOn(browser, 'joinLiveThroughUi').mockResolvedValue([
+      { outcome: 'connected', durationMs: 1, lobbyMs: 1, realtimeMs: 1 },
+    ] as Awaited<ReturnType<typeof browser.joinLiveThroughUi>>);
+    vi.spyOn(teacher, 'bindFunctionalLiveSession').mockResolvedValue(20);
+    vi.spyOn(gates, 'createCapacityLiveGate').mockReturnValue({
+      subscribe: () => Promise.resolve(),
+      close: () => undefined,
+      wait: () => Promise.resolve(state),
+    } as unknown as ReturnType<typeof gates.createCapacityLiveGate>);
+    const clients = Array.from(
+      { length: 4 },
+      () => ({}) as SupabaseClient<Database>,
+    );
+    const outsideClient = clients[3];
+    if (!outsideClient) throw Error('SYNTHETIC_FIXTURE_MISSING');
+    vi.spyOn(liveApi, 'createLiveRepository').mockImplementation(
+      (client) =>
+        ({
+          listSectionOptions: () =>
+            Promise.resolve([
+              { sectionId: 'section', quizTemplateId: 'template' },
+            ]),
+          createActivity: () => Promise.resolve({ activityId: 'activity' }),
+          createSession: () =>
+            Promise.resolve({
+              sessionId: state.sessionId,
+              joinCode: '123456',
+              stateVersion: 1,
+            }),
+          startSession: () => Promise.resolve(),
+          openQuestion: () => Promise.resolve(),
+          join: () =>
+            Promise.reject(new LiveRepositoryError('JOIN_INVALID_CODE')),
+          getState: () =>
+            client === clients[3]
+              ? Promise.reject(new LiveRepositoryError('NOT_FOUND'))
+              : Promise.resolve({ ...state, participantCount: 2 }),
+        }) as unknown as LiveRepository,
+    );
+    const actors = clients.slice(0, 3).map((client, actorIndex) => ({
+      actorIndex,
+      client,
+      ...(actorIndex ? { page } : {}),
+      measure: <T>(_op: unknown, _cache: unknown, action: () => Promise<T>) =>
+        action(),
+    }));
+    const owner = observation.createCapacityLiveQuestionObservation(
+        scope,
+        signal,
+      ),
+      writes: unknown[] = [];
+    await expect(
+      runCapacityLiveGame(
+        scope,
+        actors,
+        {
+          actorIndex: 3,
+          client: outsideClient,
+          measure: vi.fn(),
+        },
+        'classroom',
+        {
+          directory: 'synthetic',
+          write: (name, value) => {
+            if (name === 'capacity-live-diagnostics') writes.push(value);
+            return Promise.resolve();
+          },
+        },
+        signal,
+        owner,
+      ),
+    ).rejects.toThrow('CAPACITY_EVIDENCE_INVALID');
+    expect(arm).not.toHaveBeenCalled();
+    expect(click).not.toHaveBeenCalled();
+    expect(writes).toEqual([]);
+    owner.stopAccepting();
+    await owner.finish();
+    expect(writes).toHaveLength(1);
+    expect(writes[0]).toMatchObject({
+      firstFailure: { stage: 'PROMPT_VISIBLE' },
+      questionObservation: {
+        closed: true,
+        pending: 0,
+        rows: [{ failedWait }, { failedWait }],
+      },
+    });
+    vi.restoreAllMocks();
+    promptUi.fail = '';
+  },
+);

@@ -1,3 +1,4 @@
+import { createCapacityLiveQuestionObservation } from './capacity-live-question-observation';
 import { captureCapacityOperationLifecycle } from './capacity-operation-diagnostics';
 import {
   createCapacityGameDiagnostics,
@@ -88,6 +89,10 @@ export const createCapacityJourneys = (
         })
       : undefined;
   const gameDiagnostics = createCapacityGameDiagnostics();
+  const liveQuestionObservation = createCapacityLiveQuestionObservation(
+    scope,
+    signal,
+  );
   let stopping = false,
     business = 0,
     id = 0;
@@ -184,6 +189,7 @@ export const createCapacityJourneys = (
       const actor = await native.createActor(index);
       check();
       errors.track(actor);
+      liveQuestionObservation.register(actor);
       const observer = await generatorOperation(
         generator?.observe,
         'OPERATION_OBSERVER',
@@ -494,6 +500,7 @@ export const createCapacityJourneys = (
           classRecord.classroomId,
           runtime.journal,
           signal,
+          liveQuestionObservation,
         );
         outsider = live.outsiderDenied;
       }
@@ -513,6 +520,7 @@ export const createCapacityJourneys = (
       generatorEmit(generator?.observe, 'STOP', 'ENTERED');
       try {
         stopping = true;
+        liveQuestionObservation.stopAccepting();
         for (const read of initialReads.values()) read.finish();
         const pending = [...initialReads.values()].map((r) => r.task);
         const results = await Promise.allSettled([
@@ -557,6 +565,7 @@ export const createCapacityJourneys = (
         originalFailed = false;
         return health;
       } finally {
+        await liveQuestionObservation.finish();
         await sendDiagnostics?.finish(runtime.journal);
         if (generator) {
           generatorEmit(
