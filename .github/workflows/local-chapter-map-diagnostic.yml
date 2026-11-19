@@ -42,7 +42,30 @@ jobs:
       - name: Install locked dependencies
         run: pnpm install --frozen-lockfile
       - name: Run fixed ephemeral Local experiment
+        id: experiment
         run: python3 -B scripts/concurrency/diagnose-chapter-map-read.py --run
+      - name: Install standard age for failed experiment encryption
+        if: ${{ always() && !cancelled() && steps.experiment.outcome == 'failure' }}
+        run: sudo apt-get update && sudo apt-get install --yes age
+      - name: Encrypt only fixed failed experiment evidence
+        if: ${{ always() && !cancelled() && steps.experiment.outcome == 'failure' }}
+        run: python3 -B scripts/concurrency/export_chapter_map_cli_failure.py --export-driver-failure
+      - name: Validate only failed experiment ciphertext
+        id: failure
+        if: ${{ always() && !cancelled() && steps.experiment.outcome == 'failure' }}
+        run: python3 -B scripts/concurrency/export_chapter_map_cli_failure.py --validate-driver-failure
+      - name: Upload validated failed experiment ciphertext
+        if: ${{ always() && !cancelled() && steps.failure.outputs.driver_failure_artifact == 'true' }}
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+        with:
+          name: local-chapter-map-failure-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/chapter-map-diagnostic/failure-public/diagnostic-output.age
+            ${{ runner.temp }}/chapter-map-diagnostic/failure-public/receipt.json
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 0
+          overwrite: false
       - name: Validate only the closed public numeric projection
         id: projection
         if: ${{ always() && !cancelled() }}

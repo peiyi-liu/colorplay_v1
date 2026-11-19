@@ -193,11 +193,16 @@ class ExportTests(unittest.TestCase):
         self.assertIn('diagnose-chapter-map-read.py --run', workflow)
         self.assertIn('diagnose-chapter-map-read.py --validate', workflow)
         self.assertIn('safe-result.json', workflow)
-        for value in ('export_chapter_map_cli_failure.py --capture', 'export_chapter_map_cli_failure.py --validate', 'sudo apt-get', 'continue-on-error:', 'secrets.', 'workflow_dispatch:'):
+        for value in ('export_chapter_map_cli_failure.py --capture', 'export_chapter_map_cli_failure.py --validate\n', 'continue-on-error:', 'secrets.', 'workflow_dispatch:'):
             self.assertNotIn(value, workflow)
         self.assertIn('steps.projection.outputs.safe_artifact', workflow)
         self.assertIn('chapter-map-diagnostic/safe-result.json', workflow)
-        self.assertNotIn('command-output.age', workflow);self.assertNotIn('failure_artifact', workflow)
+        self.assertNotIn('command-output.age', workflow);self.assertNotIn('steps.failure.outputs.failure_artifact', workflow)
+        self.assertIn('steps.experiment.outcome', workflow)
+        self.assertIn('export_chapter_map_cli_failure.py --export-driver-failure', workflow)
+        self.assertIn('export_chapter_map_cli_failure.py --validate-driver-failure', workflow)
+        self.assertIn('failure-public/diagnostic-output.age', workflow)
+        self.assertIn('driver_failure_artifact', workflow)
         self.assertIn('retention-days: 1', workflow);self.assertIn('overwrite: false', workflow)
 
 

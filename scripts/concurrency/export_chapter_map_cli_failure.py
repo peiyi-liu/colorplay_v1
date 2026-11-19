@@ -185,13 +185,117 @@ def validate_artifact(environment):
     return True
 
 
+
+DRIVER_FOLDER = 'chapter-map-diagnostic'
+DRIVER_FILES = ('outcome-private.json', 'diagnostic-context-private.json', 'control-failure-private.json', 'first-command-stdout-private.bin', 'first-command-stderr-private.bin')
+DRIVER_FILE_LIMIT = 4 * 1024**2
+DRIVER_PLAIN_LIMIT = 8 * 1024**2
+DRIVER_ARTIFACT_LIMIT = 12 * 1024**2
+
+
+def read_driver_leaf(folder, name):
+    need(name in (*DRIVER_FILES, 'receipt.json', 'diagnostic-output.age'))
+    directory(folder)
+    fd = os.open(folder / name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+    with os.fdopen(fd, 'rb') as stream:
+        info = os.fstat(stream.fileno())
+        maximum = DRIVER_ARTIFACT_LIMIT if name == 'diagnostic-output.age' else DRIVER_FILE_LIMIT
+        need(stat.S_ISREG(info.st_mode) and info.st_uid == os.getuid() and info.st_nlink == 1)
+        need(stat.S_IMODE(info.st_mode) == 0o600 and info.st_size <= maximum)
+        raw = stream.read(maximum + 1)
+        need(len(raw) == info.st_size <= maximum)
+        return raw
+
+
+def validate_driver_inputs(files, binding):
+    outcome = decode(files['outcome-private.json'])
+    diagnostic = decode(files['diagnostic-context-private.json'])
+    allowed = {'schemaVersion', 'kind', 'executionAuthority', 'fixtureHistory', 'nativeHistoryEquivalent', 'cannotClearNativeGate', 'sourceRevision', 'collection', 'stage', 'resourceFacts', 'versions', 'settings', 'fixtureCounts', 'batches', 'plans', 'resourcesClosed', 'controlCommandFailure', 'terminationUnknown', 'shutdown'}
+    need(type(outcome) is dict and set(outcome) == allowed)
+    need(outcome['sourceRevision'] == binding['sourceRevision'] and outcome['kind'] == 'LOCAL_CHAPTER_MAP_DIAGNOSTIC' and outcome['executionAuthority'] == 'NONE')
+    need(type(diagnostic) is dict and set(diagnostic) == {'sourceRevision', 'stage', 'primaryCompleted', 'primaryException', 'cleanupException', 'publicationException', 'postFailureInspect'})
+    need(outcome['collection'] == 'UNAVAILABLE' or outcome['resourcesClosed'] is False or outcome['controlCommandFailure'] is True or diagnostic['publicationException'] is not None)
+    need(diagnostic['sourceRevision'] == binding['sourceRevision'] and type(diagnostic['primaryCompleted']) is bool)
+    for key in ('primaryException', 'cleanupException', 'publicationException'):
+        item = diagnostic[key]
+        need(item is None or type(item) is dict and set(item) == {'stage', 'errorClass', 'code', 'frames', 'truncated'})
+    need(type(diagnostic['postFailureInspect']) is dict and set(diagnostic['postFailureInspect']) == {'collection', 'rows'})
+
+
+def driver_folder(environment):
+    parent = Path(environment['RUNNER_TEMP'])
+    need(parent.is_absolute() and parent.resolve() == parent)
+    folder = parent / DRIVER_FOLDER
+    directory(folder)
+    return folder
+
+
+def validate_driver_receipt(value, binding, cipher):
+    fixed = {'schemaVersion': 1, 'kind': 'LOCAL_RPC_DIAGNOSTIC_FAILURE', 'executionAuthority': 'NONE', 'cannotClearNativeGate': True, **binding, 'recipientSha256': RECIPIENT_SHA}
+    additional = {'fileCount', 'payloadBytes', 'payloadSha256', 'cipherBytes', 'cipherSha256'}
+    need(type(value) is dict and set(value) == set(fixed) | additional)
+    for key, expected in fixed.items():need(type(value[key]) is type(expected) and value[key] == expected)
+    need(type(value['fileCount']) is int and 2 <= value['fileCount'] <= 5)
+    need(type(value['payloadBytes']) is int and 0 < value['payloadBytes'] <= DRIVER_PLAIN_LIMIT)
+    for key in ('payloadSha256', 'cipherSha256'):need(type(value[key]) is str and re.fullmatch('[a-f0-9]{64}', value[key]))
+    need(type(cipher) is bytes and cipher.startswith(b'age-encryption.org/v1\n'))
+    need(type(value['cipherBytes']) is int and value['cipherBytes'] == len(cipher) and digest(cipher) == value['cipherSha256'])
+    raw = json.dumps(value, allow_nan=False, separators=(',', ':')).encode()
+    need(len(raw) + len(cipher) <= DRIVER_ARTIFACT_LIMIT)
+    return raw
+
+
+def export_driver_failure(environment, bounded):
+    binding = context(environment)
+    folder = driver_folder(environment)
+    files = {}
+    for index, name in enumerate(DRIVER_FILES):
+        try:files[name] = read_driver_leaf(folder, name)
+        except FileNotFoundError:
+            need(index >= 2)
+    need(sum(len(raw) for raw in files.values()) <= DRIVER_PLAIN_LIMIT)
+    validate_driver_inputs(files, binding)
+    manifest = {'schemaVersion': 1, 'kind': 'LOCAL_RPC_DIAGNOSTIC_FAILURE', 'executionAuthority': 'NONE', 'cannotClearNativeGate': True, **binding, 'recipientSha256': RECIPIENT_SHA, 'fileCount': len(files)}
+    entries = [{'leaf': name, 'bytes': len(raw), 'sha256': digest(raw), 'base64': base64.b64encode(raw).decode('ascii')} for name, raw in files.items()]
+    plain = json.dumps({'manifest': manifest, 'files': entries}, allow_nan=False, separators=(',', ':')).encode()
+    need(len(plain) <= DRIVER_PLAIN_LIMIT and digest(RECIPIENT.encode()) == RECIPIENT_SHA)
+    code, cipher, _ = bounded(['/usr/bin/age', '--encrypt', '--recipient', RECIPIENT], ROOT, data=plain, timeout=30, maximum=DRIVER_ARTIFACT_LIMIT, checked=False, capture_stderr=True)
+    need(code == 0)
+    receipt = {**manifest, 'payloadBytes': len(plain), 'payloadSha256': digest(plain), 'cipherBytes': len(cipher), 'cipherSha256': digest(cipher)}
+    raw = validate_driver_receipt(receipt, binding, cipher)
+    public = folder / 'failure-public'
+    public.mkdir(mode=0o700)
+    write_once(public / 'diagnostic-output.age', cipher)
+    write_once(public / 'receipt.json', raw)
+    print(json.dumps(receipt, separators=(',', ':')))
+    return 0
+
+
+def validate_driver_failure(environment):
+    binding = context(environment)
+    public = driver_folder(environment) / 'failure-public'
+    if not public.exists():return False
+    cipher = read_driver_leaf(public, 'diagnostic-output.age')
+    raw = read_driver_leaf(public, 'receipt.json')
+    validate_driver_receipt(decode(raw), binding, cipher)
+    need(len(raw) + len(cipher) <= DRIVER_ARTIFACT_LIMIT)
+    return True
+
+
 def main():
-    if sys.argv[1:] == ['--capture']:
+    if sys.argv[1:] in (['--capture'], ['--export-driver-failure']):
         sys.path.insert(0, str(ROOT / 'scripts/concurrency'))
         spec = importlib.util.spec_from_file_location('original_native_io', ROOT / 'scripts/concurrency/linux-local-bootstrap.py')
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
+        if sys.argv[1:] == ['--export-driver-failure']:
+            return export_driver_failure(os.environ, module.bounded)
         return capture(os.environ, module.bounded, shutil.which('node'), shutil.which('pnpm'))
+    if sys.argv[1:] == ['--validate-driver-failure']:
+        allowed = validate_driver_failure(os.environ)
+        with open(os.environ['GITHUB_OUTPUT'], 'a') as stream:
+            stream.write('driver_failure_artifact=' + ('true' if allowed else 'false') + '\n')
+        return 0
     if sys.argv[1:] == ['--validate']:
         allowed = validate_artifact(os.environ)
         with open(os.environ['GITHUB_OUTPUT'], 'a') as stream:

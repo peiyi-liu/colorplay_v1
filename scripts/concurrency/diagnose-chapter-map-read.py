@@ -169,6 +169,58 @@ def graceful_close(io, original_rows, backend, roles, project, docker, cleanup):
     need('populated 0' in events.splitlines())
     return proof
 
+
+def exception_witness(error, stage):
+    frames = []
+    trace = error.__traceback__
+    for _ in range(32):
+        if trace is None:break
+        code = trace.tb_frame.f_code
+        frames.append({'file': Path(code.co_filename).name[:100], 'function': code.co_name[:80], 'line': trace.tb_lineno})
+        trace = trace.tb_next
+    names = {'ValueError', 'RuntimeError', 'OSError', 'FileNotFoundError', 'PermissionError', 'TimeoutError', 'KeyError', 'TypeError', 'AssertionError'}
+    values = {'DIAGNOSTIC_UNAVAILABLE', 'BOOTSTRAP_COMMAND_FAILED', 'BOOTSTRAP_COMMAND_TIMEOUT', 'BOOTSTRAP_OUTPUT_LIMIT', 'BOOTSTRAP_ADMISSION_INVALID'}
+    value = error.args[0] if error.args else None
+    return {'stage': stage, 'errorClass': type(error).__name__ if type(error).__name__ in names else 'UNKNOWN', 'code': value if type(value) is str and value in values else 'UNKNOWN', 'frames': frames[-8:], 'truncated': trace is not None or len(frames) > 8}
+
+
+def post_failure_inspect(original, database, roles, project, read):
+    unknown = {'collection': 'UNOBSERVED', 'rows': []}
+    if not database or type(original) is not list or len(original) != 8:return unknown
+    try:
+        expected = {}
+        for row in original:
+            role = next((role for role in roles if row['Name'] == '/supabase_' + role + '_' + project), None)
+            need(role and role not in expected and row['Config']['Labels'].get('com.supabase.cli.project') == project)
+            need(re.fullmatch('[a-f0-9]{64}', row['Id']) is not None)
+            expected[role] = row['Id']
+        need(set(expected) == roles and len(set(expected.values())) == 8 and expected['db'] == database)
+    except Exception:return unknown
+    try:
+        actual = decode_private(read([row['Id'] for row in original]))
+        need(type(actual) is list and len(actual) <= 8)
+        by_id = {row['Id']: row for row in actual}
+        need(len(by_id) == len(actual) and set(by_id) <= set(expected.values()))
+        rows = []
+        for role, identity in sorted(expected.items()):
+            row = by_id.get(identity)
+            state = row.get('State', {}) if row else {}
+            config = row.get('Config', {}) if row else {}
+            own = bool(row and row.get('Name') == '/supabase_' + role + '_' + project and config.get('Labels', {}).get('com.supabase.cli.project') == project)
+            safe = {'role': role, 'present': row is not None, 'ownerMatches': own}
+            for key in ('Running', 'Pid', 'ExitCode', 'OOMKilled'):
+                value = state.get(key)
+                safe[key] = value if type(value) is (bool if key in ('Running', 'OOMKilled') else int) else None
+            value = row.get('RestartCount') if row else None
+            safe['RestartCount'] = value if type(value) is int and value >= 0 else None
+            signal = config.get('StopSignal', '')
+            safe['StopSignal'] = signal if type(signal) is str and re.fullmatch('[A-Z0-9]{0,16}', signal) else 'UNKNOWN'
+            rows.append(safe)
+        complete = len(actual) == 8 and all(row['ownerMatches'] and all(row[key] is not None for key in ('Running', 'Pid', 'ExitCode', 'OOMKilled', 'RestartCount')) for row in rows)
+        return {'collection': 'OBSERVED' if complete else 'UNAVAILABLE', 'rows': rows}
+    except Exception:return {'collection': 'UNAVAILABLE', 'rows': []}
+
+
 def actual_experiment(environment):
     need(sys.platform == 'linux' and environment.get('GITHUB_REPOSITORY') == REPOSITORY and environment.get('GITHUB_REF') == BRANCH and environment.get('GITHUB_JOB') == 'chapter-map-diagnostic' and environment.get('GITHUB_RUN_ATTEMPT') == '1')
     need(environment.get('GITHUB_WORKFLOW_REF') == REPOSITORY + '/.github/workflows/local-chapter-map-diagnostic.yml@' + BRANCH)
@@ -245,6 +297,7 @@ def actual_experiment(environment):
     started = False
     cleaning = False
     containers = None
+    failure_context = {'sourceRevision': revision, 'primaryCompleted': False, 'primaryException': None, 'cleanupException': None, 'publicationException': None, 'postFailureInspect': {'collection': 'UNOBSERVED', 'rows': []}}
     io.run = observed_run
     try:
         facts = report['resourceFacts']
@@ -334,8 +387,10 @@ def actual_experiment(environment):
             projected['collection'] = 'OPAQUE'
             report['plans'].append({'query': label, **projected})
         report['collection'] = 'OBSERVED'
+        failure_context['primaryCompleted'] = True
         report['stage'] = 'CLEANUP'
-    except Exception:
+    except Exception as error:
+        failure_context['primaryException'] = exception_witness(error, report['stage'])
         report['collection'] = 'UNAVAILABLE'
     finally:
         if started and project:
@@ -346,18 +401,26 @@ def actual_experiment(environment):
                     docker, lambda: command([pnpm, '--config.verify-deps-before-run=false', 'exec', 'supabase', 'stop', '--workdir', str(project)], timeout=120, extra=extra))
                 report['resourcesClosed'] = True
                 if report['collection'] == 'OBSERVED':report['stage'] = 'COMPLETE'
-            except Exception:
+            except Exception as error:
+                failure_context['cleanupException'] = exception_witness(error, 'CLEANUP')
                 report['resourcesClosed'] = False
                 report['collection'] = 'UNAVAILABLE'
+                failure_context['postFailureInspect'] = post_failure_inspect(
+                    containers, database, C.ROLES, C.PROJECT,
+                    lambda ids: original_run([*B.DOCKER, 'inspect', *ids], timeout=10, maximum=LIMIT, env=path_env))
         if report['controlCommandFailure']:
             report['collection'] = 'UNAVAILABLE'
             write_control_failure(private, first_control_failure, report['resourcesClosed'])
         private_write(private / 'outcome-private.json', json.dumps(report, allow_nan=False).encode())
-        if report['resourcesClosed'] and not report['controlCommandFailure']:
+        if report['collection'] == 'OBSERVED' and report['resourcesClosed'] and not report['controlCommandFailure']:
             try:
                 private_write(private / 'safe-result.json', validate_public(report))
-            except Exception:
+            except Exception as error:
+                failure_context['publicationException'] = exception_witness(error, 'PUBLICATION')
                 report['collection'] = 'UNAVAILABLE'
+        if report['collection'] != 'OBSERVED' or not report['resourcesClosed']:
+            failure_context['stage'] = report['stage']
+            private_write(private / 'diagnostic-context-private.json', json.dumps(failure_context, allow_nan=False).encode())
     return 0 if report['collection'] == 'OBSERVED' and report['resourcesClosed'] else 1
 
 
@@ -367,6 +430,7 @@ def main():
     if sys.argv[1:] == ['--validate']:
         folder = Path(os.environ['RUNNER_TEMP']) / 'chapter-map-diagnostic'
         value = decode_private(private_read(folder / 'safe-result.json'))
+        need(value['collection'] == 'OBSERVED')
         need(value['sourceRevision'] == os.environ.get('GITHUB_SHA') and os.environ.get('GITHUB_REPOSITORY') == REPOSITORY and os.environ.get('GITHUB_REF') == BRANCH and os.environ.get('GITHUB_RUN_ATTEMPT') == '1')
         validate_public(value)
         with open(os.environ['GITHUB_OUTPUT'], 'a') as stream:
