@@ -1,4 +1,10 @@
-import { expect, test, type Locator, type Page } from '@playwright/test';
+import {
+  expect,
+  test,
+  type BrowserContext,
+  type Locator,
+  type Page,
+} from '@playwright/test';
 
 import { GENERATED_CORRECT_ANSWERS } from '../fixtures/question-answers.generated';
 import { TEST_USERS } from '../fixtures/users';
@@ -9,6 +15,7 @@ import {
 } from './helpers/auth';
 import { createClassroom, joinClassroomByCode } from './helpers/classrooms';
 import { launchLiveSessionFromTeacherHome } from './helpers/live';
+import { createLiveSmokeDiagnostics } from './helpers/live-smoke-diagnostics';
 
 // 輕量 Live 冒煙：單一學生走完 等待室 → 二十題（含一次暫停/續行）→ 頒獎台。
 // 完整驗收（團隊模式、延遲預算、截圖、報表數字）仍在
@@ -91,76 +98,103 @@ test('Live smoke: 單人場次從等待室走到頒獎台', async ({
   test.setTimeout(180_000);
   if (!baseURL) throw new Error('LIVE_SMOKE_BASE_URL_REQUIRED');
 
-  const teacherContext = await browser.newContext({ baseURL });
-  const teacherPage = await teacherContext.newPage();
-
-  // --- 班級與成員 ---
-  await signInTeacher(teacherPage, TEST_USERS.liveHostTeacher);
-  await teacherPage.goto('/teacher/classes');
-  const { classroomId, joinCode: classroomCode } = await createClassroom(
-    teacherPage,
-    CLASSROOM_NAME,
+  const diagnostic = createLiveSmokeDiagnostics(
+    baseURL,
+    process.env.SUPABASE_URL ?? '',
   );
+  let teacherContext: BrowserContext | undefined;
+  let primaryFailed = false;
+  try {
+    teacherContext = await browser.newContext({ baseURL });
+    const teacherPage = await teacherContext.newPage();
+    await diagnostic.attach('HOST', teacherPage);
+    await diagnostic.attach('STUDENT', studentPage);
 
-  // 現行產品對已有帳號的 fixture 沒有任何「加入班級」UI 入口（一次性加入碼
-  // modal 與 /join/:code 都已隨 07-27/07-30 owner 裁定移除，見
-  // helpers/classrooms.ts 檔頭說明），改由 helper 直接呼叫 join_classroom
-  // RPC；signInStudent 內建的大廳斷言已足以確認登入成功，加入是否成功則由
-  // 下面「加入課堂」一步（join_live_session RPC 會檢查班級成員身分）間接
-  // 驗證，不需要重複斷言。
-  await joinClassroomByCode(TEST_USERS.liveStudentOne, classroomCode);
-  await signInStudent(studentPage, TEST_USERS.liveStudentOne);
+    // --- 班級與成員 ---
+    await signInTeacher(teacherPage, TEST_USERS.liveHostTeacher);
+    await teacherPage.goto('/teacher/classes');
+    const { classroomId, joinCode: classroomCode } = await createClassroom(
+      teacherPage,
+      CLASSROOM_NAME,
+    );
 
-  // --- 開新場次（主持發射台：選單元→一鍵開場，直入投影模式）---
-  // 選擇器序列與 scripts/design-audit 的截圖 runner 共用，抽成
-  // tests/e2e/helpers/live.ts（見該檔開頭的重用說明）；任一已發佈小節皆為
-  // 二十題，正解由 GENERATED_CORRECT_ANSWERS 依題目 prompt 反查，與選哪節無關。
-  const { presenter, joinCode } = await launchLiveSessionFromTeacherHome(
-    teacherPage,
-    classroomId,
-  );
+    // 現行產品對已有帳號的 fixture 沒有任何「加入班級」UI 入口（一次性加入碼
+    // modal 與 /join/:code 都已隨 07-27/07-30 owner 裁定移除，見
+    // helpers/classrooms.ts 檔頭說明），改由 helper 直接呼叫 join_classroom
+    // RPC；signInStudent 內建的大廳斷言已足以確認登入成功，加入是否成功則由
+    // 下面「加入課堂」一步（join_live_session RPC 會檢查班級成員身分）間接
+    // 驗證，不需要重複斷言。
+    await joinClassroomByCode(TEST_USERS.liveStudentOne, classroomCode);
+    await signInStudent(studentPage, TEST_USERS.liveStudentOne);
 
-  await studentPage.goto('/app/live/join');
-  await studentPage.getByLabel('輸入 6 位加入代碼').fill(joinCode);
-  await studentPage.getByRole('button', { name: '加入課堂' }).click();
-  await expect(studentPage.getByText('等待主持人開始…')).toBeVisible();
+    // --- 開新場次（主持發射台：選單元→一鍵開場，直入投影模式）---
+    // 選擇器序列與 scripts/design-audit 的截圖 runner 共用，抽成
+    // tests/e2e/helpers/live.ts（見該檔開頭的重用說明）；任一已發佈小節皆為
+    // 二十題，正解由 GENERATED_CORRECT_ANSWERS 依題目 prompt 反查，與選哪節無關。
+    diagnostic.mark('LAUNCH');
+    const { presenter, joinCode } = await launchLiveSessionFromTeacherHome(
+      teacherPage,
+      classroomId,
+    );
 
-  // --- 第 1 題：作答即自動關題 ---
-  await expect(
-    presenter.getByLabel('Live 課堂狀態').getByText('已加入 1 人'),
-  ).toBeVisible();
-  await presenter.getByRole('button', { name: '開始遊戲' }).click();
-  const startDialog = presenter.getByRole('alertdialog', { name: '立即開始' });
-  await expect(startDialog).toBeVisible();
-  await startDialog.getByRole('button', { name: '開始', exact: true }).click();
-  await answerCurrentCorrectly(presenter, studentPage, 1);
-  await showRankingAndContinue(presenter, '下一題');
+    diagnostic.mark('JOIN');
+    await studentPage.goto('/app/live/join');
+    await studentPage.getByLabel('輸入 6 位加入代碼').fill(joinCode);
+    await studentPage.getByRole('button', { name: '加入課堂' }).click();
+    await expect(studentPage.getByText('等待主持人開始…')).toBeVisible();
 
-  // --- 第 2 題：開題中暫停/續行一次 ---
-  await expect(
-    studentPage.getByRole('group', { name: '答案選項' }),
-  ).toBeVisible();
-  await presenter.getByRole('button', { name: '暫停' }).click();
-  await expect(presenter.getByText('已暫停')).toBeVisible();
-  await expect(studentPage.getByText('暫停中')).toBeVisible();
-  await presenter.getByRole('button', { name: '繼續作答' }).click();
-  await answerCurrentCorrectly(presenter, studentPage, 2);
-  await showRankingAndContinue(presenter, '下一題');
+    diagnostic.mark('WAITING_VISIBLE');
 
-  // --- 第 3 題起走完全場 ---
-  for (let position = 3; position <= QUESTION_COUNT; position += 1) {
-    await answerCurrentCorrectly(presenter, studentPage, position);
-    if (position < QUESTION_COUNT) {
-      await showRankingAndContinue(presenter, '下一題');
+    // --- 第 1 題：作答即自動關題 ---
+    diagnostic.mark('ROSTER_ASSERT');
+    await expect(
+      presenter.getByLabel('Live 課堂狀態').getByText('已加入 1 人'),
+    ).toBeVisible();
+    diagnostic.stopAdmission();
+    await presenter.getByRole('button', { name: '開始遊戲' }).click();
+    const startDialog = presenter.getByRole('alertdialog', {
+      name: '立即開始',
+    });
+    await expect(startDialog).toBeVisible();
+    await startDialog
+      .getByRole('button', { name: '開始', exact: true })
+      .click();
+    await answerCurrentCorrectly(presenter, studentPage, 1);
+    await showRankingAndContinue(presenter, '下一題');
+
+    // --- 第 2 題：開題中暫停/續行一次 ---
+    await expect(
+      studentPage.getByRole('group', { name: '答案選項' }),
+    ).toBeVisible();
+    await presenter.getByRole('button', { name: '暫停' }).click();
+    await expect(presenter.getByText('已暫停')).toBeVisible();
+    await expect(studentPage.getByText('暫停中')).toBeVisible();
+    await presenter.getByRole('button', { name: '繼續作答' }).click();
+    await answerCurrentCorrectly(presenter, studentPage, 2);
+    await showRankingAndContinue(presenter, '下一題');
+
+    // --- 第 3 題起走完全場 ---
+    for (let position = 3; position <= QUESTION_COUNT; position += 1) {
+      await answerCurrentCorrectly(presenter, studentPage, position);
+      if (position < QUESTION_COUNT) {
+        await showRankingAndContinue(presenter, '下一題');
+      }
     }
+
+    // --- 結算與頒獎台 ---
+    await showRankingAndContinue(presenter, '結算成績');
+    await expect(
+      presenter.getByRole('heading', { name: '最終頒獎台' }),
+    ).toBeVisible();
+    await expect(studentPage.getByText('挑戰結束！')).toBeVisible();
+  } catch (error) {
+    primaryFailed = true;
+    diagnostic.captureFailure();
+    throw error;
+  } finally {
+    await diagnostic.finish(
+      () => teacherContext?.close() ?? Promise.resolve(),
+      primaryFailed,
+    );
   }
-
-  // --- 結算與頒獎台 ---
-  await showRankingAndContinue(presenter, '結算成績');
-  await expect(
-    presenter.getByRole('heading', { name: '最終頒獎台' }),
-  ).toBeVisible();
-  await expect(studentPage.getByText('挑戰結束！')).toBeVisible();
-
-  await teacherContext.close();
 });
