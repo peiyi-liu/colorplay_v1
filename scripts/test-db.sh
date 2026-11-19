@@ -38,7 +38,7 @@ rm -f \
 
 # Supabase start emits local credentials in its normal success summary. Suppress
 # that summary while retaining its exit code and built-in container health gate.
-pnpm exec supabase start >/dev/null 2>&1
+python3 -B scripts/supabase/start-local-with-evidence.py
 pnpm exec supabase db reset --local
 
 load_local_supabase_environment \

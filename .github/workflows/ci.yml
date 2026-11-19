@@ -144,8 +144,21 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
       - name: Install locked dependencies
         run: pnpm install --frozen-lockfile
+      - name: Install age for encrypted Local start evidence
+        run: sudo apt-get update && sudo apt-get install --yes age
       - name: Test clean seeded Local Supabase
+        id: local-start
+        env:
+          LOCAL_START_SOURCE_HEAD: ${{ github.event.pull_request.head.sha }}
         run: pnpm test:db
+      - name: Upload encrypted Local start failure
+        if: ${{ failure() && steps.local-start.outputs.local_start_cipher == 'true' && hashFiles('artifacts/ci-local-start/start-failure.age') != '' }}
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        with:
+          name: local-start-failure-local-database
+          path: artifacts/ci-local-start/start-failure.age
+          if-no-files-found: error
+          retention-days: 1
 
   chromium-e2e:
     name: chromium-e2e
@@ -168,11 +181,16 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Install Chromium and operating-system dependencies
         run: pnpm exec playwright install --with-deps chromium
+      - name: Install age for encrypted Local start evidence
+        run: sudo apt-get update && sudo apt-get install --yes age
       - name: Reset and seed an isolated Local Supabase stack
+        id: local-start
+        env:
+          LOCAL_START_SOURCE_HEAD: ${{ github.event.pull_request.head.sha }}
         shell: bash
         run: |
           set -euo pipefail
-          pnpm exec supabase start >/dev/null 2>&1
+          python3 -B scripts/supabase/start-local-with-evidence.py
           pnpm exec supabase db reset --local
           source scripts/supabase/load-local-environment.sh
           load_local_supabase_environment \
@@ -205,6 +223,14 @@ jobs:
           done
           curl --fail --silent http://127.0.0.1:4173/ >/dev/null
           pnpm test:e2e --project=chromium
+      - name: Upload encrypted Local start failure
+        if: ${{ failure() && steps.local-start.outputs.local_start_cipher == 'true' && hashFiles('artifacts/ci-local-start/start-failure.age') != '' }}
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        with:
+          name: local-start-failure-chromium-e2e
+          path: artifacts/ci-local-start/start-failure.age
+          if-no-files-found: error
+          retention-days: 1
 
   credential-scan:
     name: credential-scan
