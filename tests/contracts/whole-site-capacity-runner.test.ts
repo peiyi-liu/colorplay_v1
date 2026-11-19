@@ -8,6 +8,7 @@ import { createCapacityManifest } from '../../scripts/concurrency/capacity-manif
 import { runOneCapacityLeg } from '../../scripts/concurrency/capacity-runner';
 import type { CapacityRuntime } from '../../scripts/concurrency/capacity-runtime';
 import { capacityCandidateSchema } from '../../scripts/concurrency/capacity-publication';
+import { capacityRunDiagnosticsSchema } from '../../scripts/concurrency/capacity-run-diagnostics';
 const required = <T>(value: T | null | undefined): T => {
   if (value === null || value === undefined)
     throw new Error('SYNTHETIC_FIXTURE_MISSING');
@@ -89,6 +90,47 @@ const fixture = async () => {
   return { runtime, work, writes };
 };
 afterEach(() => vi.useRealTimers());
+it.each([undefined, 'UNKNOWN', 'COLLECTOR_INVALID'] as const)(
+  'preserves the explicitly supplied shared stop source %s',
+  async (source) => {
+    const f = await fixture();
+    const result = await runOneCapacityLeg(
+      f.runtime,
+      new AbortController().signal,
+      {
+        createJourneys: (_runtime, _signal, invalidate, diagnostics) => {
+          f.work.run.mockImplementation(async () => {
+            await Promise.resolve();
+            if (source === 'COLLECTOR_INVALID')
+              diagnostics?.collectorInvalid({
+                ...f.work.health(),
+                validity: 'UNKNOWN',
+                reasons: ['host_stale'],
+                lastHostAgeMs: 3001,
+              });
+            invalidate(source);
+            throw new Error('SYNTHETIC_BUSINESS_FAILURE');
+          });
+          return f.work;
+        },
+      },
+    );
+    const diagnostic = capacityRunDiagnosticsSchema.parse(
+      f.writes.get('capacity-run-diagnostics'),
+    );
+    expect(diagnostic.firstAbortRequest?.source).toBe(
+      source ?? 'COLLECTOR_INVALID',
+    );
+    if (source === 'COLLECTOR_INVALID')
+      expect(diagnostic.firstCollectorInvalid).toMatchObject({
+        status: 'UNKNOWN',
+      });
+    else expect(diagnostic.firstCollectorInvalid).toBeNull();
+    expect(result.result).not.toBe('PASS');
+    expect(result.timedOut).toBe(false);
+    expect(f.work.stop).toHaveBeenCalledTimes(1);
+  },
+);
 describe('one leg absolute budget and external publication', () => {
   it('only produces a strict pending candidate; final verdict is stdout data for root', async () => {
     const f = await fixture();

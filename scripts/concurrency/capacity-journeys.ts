@@ -64,7 +64,7 @@ const requireValue = <T>(value: T | null | undefined): T =>
 export const createCapacityJourneys = (
   runtime: CapacityRuntime,
   signal: AbortSignal,
-  onInvalid: () => void,
+  onInvalid: (source?: 'COLLECTOR_INVALID' | 'UNKNOWN') => void,
   diagnostics?: CapacityRunDiagnostics,
 ) => {
   const { scope, manifest, leg } = runtime;
@@ -171,7 +171,9 @@ export const createCapacityJourneys = (
           backend: runtime.backend,
         }
       : { vm: runtime.vm }),
-    onInvalid,
+    onInvalid: () => {
+      onInvalid('COLLECTOR_INVALID');
+    },
     ...(generator
       ? { passiveLoop: generator.interval, passiveHealth: generator.health }
       : {}),
@@ -522,7 +524,12 @@ export const createCapacityJourneys = (
           onActive: (delta) => {
             business += delta;
           },
-          stop: onInvalid,
+          stop: () => {
+            onInvalid('UNKNOWN');
+          },
+          ...(leg.scenario === 'backend_game' && leg.mode === 'NODE_PROTOCOL'
+            ? { continueProtocolReads: true as const }
+            : {}),
           diagnostics: gameDiagnostics.observe,
         });
         check();

@@ -13,6 +13,9 @@ import {
 } from './capacity-game';
 import type { CapacityGameActor } from './capacity-live-game';
 import type { PrivateJournal } from './private-journal';
+import { performance } from 'node:perf_hooks';
+import { createLearningRepository } from '../../src/features/learning/api/learning-repository';
+import { createEconomyRepository } from '../../src/features/rewards/api/economy-repository';
 export interface CapacityGameLoadOptions {
   scope: CapacityScope;
   actors: readonly CapacityGameActor[];
@@ -23,6 +26,7 @@ export interface CapacityGameLoadOptions {
   onActive: (delta: 1 | -1) => void;
   stop: () => void;
   diagnostics?: GameObserver;
+  continueProtocolReads?: true;
 }
 export const runCapacityGameLoad = async (
   options: CapacityGameLoadOptions,
@@ -43,11 +47,126 @@ export const runCapacityGameLoad = async (
     signal.aborted
   )
     return capacityFailure();
+  if (
+    options.continueProtocolReads &&
+    actors.some((actor) => actor.page !== undefined || !actor.observePhysical)
+  )
+    return capacityFailure();
   const controller = new AbortController(),
     owned = AbortSignal.any([signal, controller.signal]);
   let active = 0,
     completed = 0,
     observed = 0;
+  let teacherDone = false;
+  const doneTeaching = () => teacherDone;
+  type ReadStop =
+    | 'NOT_ENTERED'
+    | 'TEACHER_DONE'
+    | 'HARD_CAP'
+    | 'ABORTED'
+    | 'READ_FAILURE'
+    | 'PHYSICAL_INVALID'
+    | 'STATE_CHANGED'
+    | 'MISSING_ORIGINAL_WINDOW'
+    | 'CORE_FAILURE';
+  const summary = () => ({
+    schemaVersion: 1,
+    authority: 'NON_AUTHORITY' as const,
+    coreComplete: false,
+    roundsStarted: 0,
+    pairsConfirmed: 0,
+    progressInvocations: 0,
+    progressReturns: 0,
+    economyInvocations: 0,
+    economyReturns: 0,
+    physicalRequests: 0,
+    startedAtNodeMs: null as number | null,
+    endedAtNodeMs: null as number | null,
+    hardCapPairs: 8192,
+    stopReason: 'NOT_ENTERED' as ReadStop,
+    aborted: false,
+  });
+  const continueReads = async (
+    actor: CapacityGameActor,
+    state: ReturnType<typeof summary>,
+  ) => {
+    if (doneTeaching()) {
+      state.stopReason = 'TEACHER_DONE';
+      return;
+    }
+    const learning = createLearningRepository(actor.client);
+    const economy = createEconomyRepository(actor.client);
+    let baseline: string | undefined,
+      requestOpen = false,
+      unexpected = false;
+    const hasUnexpected = () => unexpected;
+    const fail = (reason: ReadStop): never => {
+      state.stopReason = reason;
+      return capacityFailure();
+    };
+    const check = () => {
+      if (owned.aborted) fail('ABORTED');
+    };
+    state.startedAtNodeMs = performance.now();
+    const unobserve = actor.observePhysical?.(() => {
+      state.physicalRequests++;
+      if (!requestOpen) unexpected = true;
+    });
+    if (!unobserve) return fail('PHYSICAL_INVALID');
+    try {
+      while (!doneTeaching()) {
+        check();
+        if (state.roundsStarted >= 8192) fail('HARD_CAP');
+        state.roundsStarted++;
+        const before = state.physicalRequests;
+        requestOpen = true;
+        state.progressInvocations++;
+        const progress = await learning.listReviewProgress();
+        state.progressReturns++;
+        requestOpen = false;
+        check();
+        if (hasUnexpected() || state.physicalRequests !== before + 1)
+          fail('PHYSICAL_INVALID');
+        const cards = progress
+          .map((p) => `${p.reviewCardId}:${String(p.cardVersion)}`)
+          .sort();
+        if (!cards.length || new Set(cards).size !== cards.length)
+          fail('STATE_CHANGED');
+        requestOpen = true;
+        state.economyInvocations++;
+        const value = await economy.getSummary();
+        state.economyReturns++;
+        requestOpen = false;
+        check();
+        if (hasUnexpected() || state.physicalRequests !== before + 2)
+          fail('PHYSICAL_INVALID');
+        if (
+          ![value.totalXp, value.tokenBalance].every(
+            (n) => Number.isSafeInteger(n) && n >= 0,
+          )
+        )
+          fail('STATE_CHANGED');
+        const current = JSON.stringify([
+          cards,
+          value.totalXp,
+          value.tokenBalance,
+        ]);
+        if (baseline !== undefined && current !== baseline)
+          fail('STATE_CHANGED');
+        baseline = current;
+        state.pairsConfirmed++;
+      }
+      if (hasUnexpected()) fail('PHYSICAL_INVALID');
+      state.stopReason = 'TEACHER_DONE';
+    } catch (error) {
+      if (state.stopReason === 'NOT_ENTERED')
+        state.stopReason = owned.aborted ? 'ABORTED' : 'READ_FAILURE';
+      throw error;
+    } finally {
+      requestOpen = false;
+      unobserve();
+    }
+  };
   const note: GameObserver = (row) => {
     gameObserve(options.diagnostics, { ...row, active, completed, observed });
   };
@@ -86,6 +205,7 @@ export const runCapacityGameLoad = async (
   const students = actors.slice(1).map((actor, index) => {
     const identity = identities[index + 1];
     const lifecycle = { started: false, done: false };
+    const continuation = options.continueProtocolReads ? summary() : undefined;
     const mark = () => {
       if (lifecycle.started || lifecycle.done || owned.aborted) return;
       lifecycle.started = true;
@@ -143,6 +263,14 @@ export const runCapacityGameLoad = async (
           journal,
           owned,
         );
+        if (continuation) {
+          continuation.coreComplete = true;
+          if (!lifecycle.started) {
+            continuation.stopReason = 'MISSING_ORIGINAL_WINDOW';
+            return capacityFailure();
+          }
+          await continueReads(actor, continuation);
+        }
         note({
           kind: 'STUDENT',
           state: 'RETURNED',
@@ -151,6 +279,8 @@ export const runCapacityGameLoad = async (
         });
         return result;
       } catch (error) {
+        if (continuation && !continuation.coreComplete)
+          continuation.stopReason = 'CORE_FAILURE';
         note({
           kind: 'STUDENT',
           state: 'FAILED',
@@ -176,13 +306,26 @@ export const runCapacityGameLoad = async (
         }
         if (completed === actors.length - 1 && observed === 0)
           stop('NO_PHYSICAL_WINDOW');
+        if (continuation) {
+          continuation.endedAtNodeMs = performance.now();
+          continuation.aborted = owned.aborted;
+          try {
+            await journal.write(
+              `actor-${String(actor.actorIndex)}-protocol-read-continuation`,
+              continuation,
+            );
+          } catch {
+            /* Passive summary never replaces the business failure. */
+          }
+        }
       }
     })();
   });
   const teacher = (async () => {
     await first;
     if (owned.aborted || active === 0) return capacityFailure();
-    return ports.teacher(host, classroomId, () => active > 0, owned, note);
+    await ports.teacher(host, classroomId, () => active > 0, owned, note);
+    teacherDone = true;
   })();
   try {
     let failure: {

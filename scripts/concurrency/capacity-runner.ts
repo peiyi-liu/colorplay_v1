@@ -70,8 +70,8 @@ export const runOneCapacityLeg = async (
   const work = (ports.createJourneys ?? createCapacityJourneys)(
     runtime,
     signal,
-    () => {
-      stop('COLLECTOR_INVALID');
+    (source = 'COLLECTOR_INVALID') => {
+      stop(source);
     },
     diagnostics,
   );
