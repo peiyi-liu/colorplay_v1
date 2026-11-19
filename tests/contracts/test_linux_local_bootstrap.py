@@ -78,7 +78,7 @@ class Fixture:
         (self.package / 'README.md').write_text('Public fixture only\n')
         package_raw = encoded(manifest)
         (self.package / 'package-manifest.json').write_bytes(package_raw)
-        self.tracked = ['supabase/migrations/%014d.sql' % x for x in range(121)]
+        self.tracked = ['supabase/migrations/%014d.sql' % x for x in range(122)]
         self.tracked += ['supabase/config.toml', 'supabase/templates/email-otp.html', 'supabase/functions/auth-login/index.ts'] + ['supabase/' + p for p in B.SEEDS]
         for name in self.tracked:
             path = self.source / name
@@ -182,7 +182,7 @@ class Fixture:
             query = options['data']
             assert query.startswith(b'begin read only;') and query.endswith(b'rollback;')
             assert b'PGPASSWORD' not in query and options['env']['PGPASSWORD'] == 'synthetic-password'
-            return encoded({'systemIdentifier': '123456789', 'migrations': 120 if self.bad_baseline else 121,
+            return encoded({'systemIdentifier': '123456789', 'migrations': 120 if self.bad_baseline else 122,
                 'publicTables': 71, 'publicWithoutRls': 0, 'auth': 0, 'profiles': 0, 'classrooms': 0,
                 'xp': 0, 'wallet': 0, 'mediaRuns': 0, 'mediaAssets': 0,
                 'questions': 259, 'publishedQuestions': 258, 'reviewCards': 9, 'hints': 17,

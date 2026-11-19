@@ -61,8 +61,25 @@ describe('functional Local scope', () => {
   });
 });
 
-describe('exact new migration121 baseline', () => {
-  it.each([120, 122])(
+describe('exact new migration122 baseline', () => {
+  it('accepts the fixed122 baseline in both actual guards', async () => {
+    const current = syntheticScope();
+    await expect(
+      preflightFunctional(
+        current,
+        syntheticSecrets,
+        new AbortController().signal,
+        preflightPorts(),
+      ),
+    ).resolves.toStrictEqual(current);
+    expect(
+      freshFunctionalPreflightSchema.safeParse({
+        baseline: syntheticBaseline(),
+        databaseIdentity: 'synthetic',
+      }).success,
+    ).toBe(true);
+  });
+  it.each([120, 121, 123])(
     'rejects migration%i in both active guards',
     async (migrations) => {
       const baseline = { ...syntheticBaseline(), migrations };

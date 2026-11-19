@@ -29,7 +29,7 @@ export const syntheticScope = () =>
     confirmation: 'LOCAL_WHOLE_SITE_FUNCTIONAL',
   });
 export const syntheticBaseline = () => ({
-  migrations: 121,
+  migrations: 122,
   publicTables: 71,
   publicWithoutRls: 0,
   auth: 0,

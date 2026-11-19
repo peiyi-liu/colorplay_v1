@@ -149,7 +149,7 @@ def snapshot(scope):
     sql = "begin read only;set local statement_timeout='10s';select json_build_object(" + ','.join(fields) + ');rollback;'
     result = query(sql)
     identity = PROJECT + ':' + result['systemIdentifier'] + ':postgres'
-    assert sha(identity.encode()) == scope['databaseIdentitySha256'] and result['migrations'] == 121 and result['publicTables'] == 71 and result['publicWithoutRls'] == 0, 'DATABASE_IDENTITY_INVALID'
+    assert sha(identity.encode()) == scope['databaseIdentitySha256'] and result['migrations'] == 122 and result['publicTables'] == 71 and result['publicWithoutRls'] == 0, 'DATABASE_IDENTITY_INVALID'
     utc(result['checkedAtDatabaseUtc'])
     result['querySha256'] = sha(sql.encode())
     return result
