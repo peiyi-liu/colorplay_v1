@@ -1,3 +1,4 @@
+import { createCapacityColdNetworkObserver } from './capacity-cold-network-observer';
 import { createCapacityLiveQuestionObservation } from './capacity-live-question-observation';
 import { captureCapacityOperationLifecycle } from './capacity-operation-diagnostics';
 import {
@@ -93,6 +94,16 @@ export const createCapacityJourneys = (
     scope,
     signal,
   );
+  const coldNetwork =
+    leg.mode === 'NATIVE_BROWSER' && leg.scenario !== 'anonymous_entry_prepare'
+      ? createCapacityColdNetworkObserver(scope)
+      : null;
+  const activity = <T>(
+    actorIndex: number,
+    kind: Parameters<NonNullable<typeof coldNetwork>['activity']>[1],
+    action: () => Promise<T>,
+  ) =>
+    coldNetwork ? coldNetwork.activity(actorIndex, kind, action) : action();
   let stopping = false,
     business = 0,
     id = 0;
@@ -188,6 +199,7 @@ export const createCapacityJourneys = (
       if (!native) return capacityFailure();
       const actor = await native.createActor(index);
       check();
+      coldNetwork?.attach(actor);
       errors.track(actor);
       liveQuestionObservation.register(actor);
       const observer = await generatorOperation(
@@ -228,21 +240,32 @@ export const createCapacityJourneys = (
   const fromPage = async (
     actor: NativeCapacityActor,
     identity: CapacityPrivateActor,
-  ) => {
-    const client = createClient(identity, actor.actorIndex),
-      tokens = await sessionTokensFromPage(actor.page, scope.supabaseUrl);
-    check();
-    if ((await client.client.auth.setSession(tokens)).error)
-      return capacityFailure();
-    const user = await client.client.auth.getUser();
-    if (
-      user.error ||
-      !user.data.user.id ||
-      (identity.userId !== null && identity.userId !== user.data.user.id)
-    )
-      return capacityFailure();
-    return client;
-  };
+  ) =>
+    activity(actor.actorIndex, 'FROM_PAGE', async () => {
+      const client = createClient(identity, actor.actorIndex),
+        tokens = await activity(actor.actorIndex, 'SESSION_TOKENS', () =>
+          sessionTokensFromPage(actor.page, scope.supabaseUrl),
+        );
+      check();
+      if (
+        (
+          await activity(actor.actorIndex, 'AUTH_SET_SESSION', () =>
+            client.client.auth.setSession(tokens),
+          )
+        ).error
+      )
+        return capacityFailure();
+      const user = await activity(actor.actorIndex, 'AUTH_GET_USER', () =>
+        client.client.auth.getUser(),
+      );
+      if (
+        user.error ||
+        !user.data.user.id ||
+        (identity.userId !== null && identity.userId !== user.data.user.id)
+      )
+        return capacityFailure();
+      return client;
+    });
   const subjects = async (aliases: readonly string[]) =>
     resolveCapacitySubjects(
       runtime.privatePlan,
@@ -250,6 +273,7 @@ export const createCapacityJourneys = (
       (await runtime.subjects(aliases)).subjects,
     );
   const initialDone = async () => {
+    coldNetwork?.stopAdmission();
     for (const read of initialReads.values()) read.finish();
     const result = await Promise.allSettled(
       [...initialReads.values()].map((read) => read.task),
@@ -351,7 +375,11 @@ export const createCapacityJourneys = (
             const identity = identities[actor.actorIndex];
             if (!identity) return capacityFailure();
             const client = await fromPage(actor, identity);
-            const result = await client.client.auth.getUser();
+            const result = await activity(
+              actor.actorIndex,
+              'AUTH_GET_USER',
+              () => client.client.auth.getUser(),
+            );
             if (result.error) return capacityFailure();
             return result.data.user.id;
           },
@@ -398,9 +426,9 @@ export const createCapacityJourneys = (
               const identity = identities[actor.actorIndex];
               if (!identity || !expected) return capacityFailure();
               const protocol = await fromPage(actor, identity),
-                profile = await createProfileRepository(
-                  protocol.client,
-                ).getMyProfile();
+                profile = await activity(actor.actorIndex, 'PROFILE', () =>
+                  createProfileRepository(protocol.client).getMyProfile(),
+                );
               if (
                 profile.id !== identity.userId ||
                 profile.displayName !== identity.displayName ||
@@ -409,9 +437,11 @@ export const createCapacityJourneys = (
               )
                 return capacityFailure();
               if (identity.role === 'student') {
-                const membership = await createClassroomRepository(
-                  protocol.client,
-                ).listMine();
+                const membership = await activity(
+                  actor.actorIndex,
+                  'MEMBERSHIP',
+                  () => createClassroomRepository(protocol.client).listMine(),
+                );
                 if (
                   membership.length !== 1 ||
                   membership[0]?.classroomId !== classRecord.classroomId
@@ -430,8 +460,11 @@ export const createCapacityJourneys = (
                 account: identity.account,
                 bootstrapComplete: true,
                 anonymousNoAuthOrMail: false,
-                proofSha256: (await runtime.subjects([identity.alias]))
-                  .readOnlyProofSha256,
+                proofSha256: (
+                  await activity(actor.actorIndex, 'SUBJECT_PROOF', () =>
+                    runtime.subjects([identity.alias]),
+                  )
+                ).readOnlyProofSha256,
               };
             },
           });
@@ -520,6 +553,7 @@ export const createCapacityJourneys = (
       generatorEmit(generator?.observe, 'STOP', 'ENTERED');
       try {
         stopping = true;
+        coldNetwork?.stopAdmission('EARLY_STOP');
         liveQuestionObservation.stopAccepting();
         for (const read of initialReads.values()) read.finish();
         const pending = [...initialReads.values()].map((r) => r.task);
@@ -565,6 +599,7 @@ export const createCapacityJourneys = (
         originalFailed = false;
         return health;
       } finally {
+        await coldNetwork?.finish(runtime.journal);
         await liveQuestionObservation.finish();
         await sendDiagnostics?.finish(runtime.journal);
         if (generator) {

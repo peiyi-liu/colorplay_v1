@@ -367,6 +367,169 @@ it.each([
       write.mock.calls.filter(([name]) => name === 'capacity-live-diagnostics'),
     ).toHaveLength(1);
     expect(owner.pending()).toBe(0);
+    expect(
+      write.mock.calls.filter(
+        ([name]) => name === 'cold-entry-network-diagnostics',
+      ),
+    ).toHaveLength(1);
     vi.restoreAllMocks();
   },
 );
+
+it('actual native journey early stop seals one passive cold journal even when its writer fails', async () => {
+  const f = await fixture();
+  vi.spyOn(nativeBrowser, 'createNativeCapacityBrowser').mockReturnValue({
+    close: () => Promise.resolve(),
+    snapshot: () => ({ resourcesClosed: true }),
+  } as unknown as ReturnType<typeof nativeBrowser.createNativeCapacityBrowser>);
+  f.runtime.leg = required(
+    f.runtime.manifest.legs.find(
+      (l) => l.legId === 'existing_login_game-native_browser-3',
+    ),
+  );
+  const write = vi.fn(async (name: string) => {
+    await Promise.resolve();
+    if (name === 'cold-entry-network-diagnostics')
+      throw Error('PRIVATE_PASSIVE_WRITER');
+  });
+  f.runtime.journal.write = write;
+  f.signal.abort();
+  const journey = createCapacityJourneys(
+    f.runtime,
+    f.signal.signal,
+    () => undefined,
+  );
+  await expect(journey.run()).rejects.toThrow('CAPACITY_EVIDENCE_INVALID');
+  await expect(journey.stop()).resolves.toMatchObject({
+    mode: 'NATIVE_BROWSER',
+  });
+  expect(
+    write.mock.calls.filter(
+      ([name]) => name === 'cold-entry-network-diagnostics',
+    ),
+  ).toHaveLength(1);
+});
+
+import * as entryBarrier from '../../scripts/concurrency/capacity-browser-entry';
+import * as operationObserver from '../../scripts/concurrency/capacity-operation-observer';
+import * as classroomRecords from '../../scripts/concurrency/capacity-classrooms';
+it('actual caller attaches before physical entry and closes cohort admission only after readback returns', async () => {
+  const f = await fixture();
+  f.runtime.leg = required(
+    f.runtime.manifest.legs.find(
+      (l) => l.legId === 'existing_login_game-native_browser-3',
+    ),
+  );
+  const actors = f.runtime.privatePlan.actors;
+  actors.push({
+    ...required(actors[1]),
+    alias: 'R1',
+    account: 'outsider',
+    userId: randomUUID(),
+  });
+  f.runtime.subjects = vi.fn(() =>
+    Promise.resolve({
+      databaseIdentitySha256: f.runtime.scope.databaseIdentitySha256,
+      readOnlyProofSha256: '0'.repeat(64),
+      subjects: actors.map((a) => ({
+        alias: a.alias,
+        userId: required(a.userId),
+        role: a.role,
+        loginAccount: a.account,
+        classroomId: null,
+      })),
+    }),
+  );
+  vi.spyOn(classroomRecords, 'readCapacityPlanRecord').mockResolvedValue({
+    classroomId: randomUUID(),
+    ownerId: randomUUID(),
+    cohortSize: 60,
+    joinCode: 'ABCD-EFGH',
+  });
+  const page = new EventEmitter(),
+    late = {
+      url: () => f.runtime.scope.supabaseUrl + '/auth/v1/user',
+      method: () => 'GET',
+      redirectedFrom: () => null,
+    };
+  const actor = {
+    actorIndex: 1,
+    page,
+  } as unknown as nativeBrowser.NativeCapacityActor;
+  const trace: string[] = [];
+  vi.spyOn(nativeBrowser, 'createNativeCapacityBrowser').mockReturnValue({
+    createActor: () => Promise.resolve(actor),
+    close: () => {
+      trace.push('close');
+      return Promise.resolve();
+    },
+    snapshot: () => ({ resourcesClosed: true }),
+  } as unknown as ReturnType<typeof nativeBrowser.createNativeCapacityBrowser>);
+  vi.spyOn(
+    operationObserver,
+    'createCapacityOperationObserver',
+  ).mockResolvedValue({
+    run: (_op: unknown, _cache: unknown, action: () => Promise<unknown>) =>
+      action(),
+    dispose: () => Promise.resolve(),
+    samples: () => [],
+    snapshot: () => ({ physicalRequests: 0, unattributedRequests: 0 }),
+  } as unknown as Awaited<
+    ReturnType<typeof operationObserver.createCapacityOperationObserver>
+  >);
+  vi.spyOn(entryBarrier, 'runCapacityEntryBarrier').mockImplementation(
+    async (options) => {
+      await options.runtime.createActor(1);
+      expect(page.listenerCount('request')).toBeGreaterThan(0);
+      const map = {
+        ...late,
+        url: () =>
+          f.runtime.scope.supabaseUrl + '/rest/v1/rpc/get_student_chapter_map',
+      };
+      page.emit('request', map);
+      page.emit('response', { request: () => map, status: () => 200 });
+      page.emit('requestfinished', map);
+      page.emit('request', late);
+      trace.push('readback-complete');
+      return { report: { result: 'FAIL' } } as Awaited<
+        ReturnType<typeof entryBarrier.runCapacityEntryBarrier>
+      >;
+    },
+  );
+  let coldValue: unknown;
+  const write = vi.fn(async (name: string, value: unknown) => {
+    await Promise.resolve();
+    if (name === 'entry-observations') {
+      page.emit('request', { ...late });
+      page.emit('response', { request: () => late, status: () => 200 });
+      page.emit('requestfinished', late);
+    }
+    if (name === 'cold-entry-network-diagnostics') {
+      trace.push('cold-write');
+      coldValue = value;
+    }
+  });
+  f.runtime.journal.write = write;
+  const journey = createCapacityJourneys(
+    f.runtime,
+    f.signal.signal,
+    () => undefined,
+  );
+  await expect(journey.run()).rejects.toThrow('CAPACITY_EVIDENCE_INVALID');
+  await journey.stop();
+  expect(trace).toEqual(['readback-complete', 'close', 'cold-write']);
+  expect(coldValue).toMatchObject({
+    admissionClosed: true,
+    pendingAtSeal: 0,
+    pageRecords: [
+      { endpoint: 'CHAPTER_MAP' },
+      { endpoint: 'AUTH', censored: true },
+    ],
+  });
+  expect(page.listenerCount('request')).toBe(0);
+  expect(
+    write.mock.calls.filter(
+      ([name]) => name === 'cold-entry-network-diagnostics',
+    ),
+  ).toHaveLength(1);
+});
