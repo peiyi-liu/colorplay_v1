@@ -382,5 +382,110 @@ class ActualPermissionBranchR1Tests(unittest.TestCase):
             self.assertTrue(all(query.startswith('SYNTHETIC_AUTHENTICATED_CONTEXT;') for query in calls))
 
 
+class FixedCommandStreamTests(unittest.TestCase):
+    def boundary(self, private, result):
+        import ast
+        from types import SimpleNamespace
+        tree = ast.parse(Path(D.__file__).read_bytes())
+        actual = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == 'actual_experiment')
+        start = next(i for i, n in enumerate(actual.body) if isinstance(n, ast.Assign) and any(isinstance(t, ast.Name) and t.id == 'original_run' for t in n.targets))
+        end = next(i for i, n in enumerate(actual.body) if isinstance(n, ast.Assign) and any(isinstance(t, ast.Attribute) and t.attr == 'run' for t in n.targets))
+        calls = []
+        def old_run(*args, **options):
+            calls.append('OLD_RUN');io.command_diagnostic = {'operation': 'UNKNOWN', 'exitCode': 1, 'stderrBytes': 0}
+            raise ValueError('SYNTHETIC_OLD_FAILURE')
+        def bounded(*args, **options):
+            calls.append((args, options))
+            if isinstance(result, Exception):raise result
+            return result
+        io = SimpleNamespace(run=old_run, command_diagnostic=None)
+        scope = dict(vars(D), io=io, module=SimpleNamespace(bounded=bounded), B=SimpleNamespace(EXCLUDED='FIXED_EXCLUSIONS'), private=private, project=None, cleaning=False, report={'stage': 'PREFLIGHT', 'controlCommandFailure': False, 'terminationUnknown': False}, shutil=SimpleNamespace(which=lambda name: '/fixed/' + name))
+        body = actual.body[start:end + 1] + ast.parse('return observed_run, lambda: first_control_failure').body
+        wrapper = ast.FunctionDef(name='make_boundary', args=ast.arguments(posonlyargs=[], args=[], kwonlyargs=[], kw_defaults=[], defaults=[]), body=body, decorator_list=[])
+        exec(compile(ast.fix_missing_locations(ast.Module(body=[wrapper], type_ignores=[])), '<actual-command-boundary>', 'exec'), scope)
+        run, first = scope['make_boundary']()
+        return run, first, calls, io
+
+    def test_actual_stdout_only_failure_keeps_named_operation_and_metadata(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as folder:
+            run, first, calls, io = self.boundary(Path(folder), (1, b'ERR_PNPM_UNEXPECTED_STORE SYNTHETIC_SECRET', b''))
+            with self.assertRaises(ValueError):run(['/fixed/pnpm', 'exec', 'supabase', '--version'], timeout=60, maximum=4 * D.LIMIT, env={'PATH': '/fixed:/usr/bin:/bin'})
+            self.assertEqual(first()['operation'], 'SUPABASE_VERSION')
+            self.assertEqual(first()['stdoutBytes'], 42)
+            self.assertNotIn('SYNTHETIC_SECRET', str(first()))
+            self.assertEqual(len(calls), 1)
+
+    def test_exact_five_commands_reject_extra_foreign_or_unready_targets(self):
+        base = ['/fixed/pnpm', 'exec', 'supabase']; project = Path('/fixed/project')
+        tails = [('SUPABASE_VERSION', ['--version']), ('SUPABASE_START', ['start', '--workdir', str(project), '--exclude', 'FIXED']), ('SUPABASE_DB_RESET', ['db', 'reset', '--local', '--workdir', str(project)]), ('SUPABASE_STATUS', ['status', '--workdir', str(project), '-o', 'json']), ('SUPABASE_STOP', ['stop', '--workdir', str(project)])]
+        for operation, tail in tails:
+            self.assertEqual(D.fixed_pnpm_operation(base + tail, base[0], project, 'FIXED'), operation)
+            for args in (base + tail + ['--debug'], ['/foreign/pnpm', *base[1:], *tail]):
+                self.assertEqual(D.fixed_pnpm_operation(args, base[0], project, 'FIXED'), 'UNKNOWN')
+        self.assertEqual(D.fixed_pnpm_operation(base + tails[1][1], base[0], None, 'FIXED'), 'UNKNOWN')
+
+    def test_success_keeps_original_bounds_and_never_saves_status_raw(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as folder:
+            private = Path(folder);run, first, calls, io = self.boundary(private, (0, b'SYNTHETIC_SECRET_STATUS', b''))
+            env = {'PATH': '/fixed:/usr/bin:/bin'}
+            self.assertEqual(run(['/fixed/pnpm', 'exec', 'supabase', '--version'], timeout=60, maximum=4 * D.LIMIT, env=env), b'SYNTHETIC_SECRET_STATUS')
+            self.assertIsNone(first());self.assertIsNone(io.command_diagnostic)
+            self.assertEqual(list(private.iterdir()), [])
+            self.assertEqual(calls[0][1], {'timeout': 60, 'maximum': 4 * D.LIMIT, 'env': env, 'checked': False, 'capture_stderr': True})
+
+    def test_first_error_stays_latched_and_raw_is_private_no_overwrite(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as folder:
+            private = Path(folder);run, first, calls, io = self.boundary(private, (1, b'SYNTHETIC_SECRET', b'ERR_PNPM_UNEXPECTED_STORE'))
+            args = ['/fixed/pnpm', 'exec', 'supabase', '--version']
+            with self.assertRaises(ValueError):run(args)
+            original = dict(first());run.__globals__['cleaning'] = True
+            with self.assertRaises(ValueError):run(args)
+            self.assertEqual(first(), original);self.assertEqual(len(calls), 2)
+            for name, raw in [('stdout', b'SYNTHETIC_SECRET'), ('stderr', b'ERR_PNPM_UNEXPECTED_STORE')]:
+                target = private / ('first-command-' + name + '-private.bin')
+                self.assertEqual(target.read_bytes(), raw);self.assertEqual(target.stat().st_mode & 0o777, 0o600)
+                with self.assertRaises(FileExistsError):D.private_write(target, b'NEW')
+            self.assertNotIn('SYNTHETIC_SECRET', str(first()));self.assertEqual(first()['classification'], 'STORE')
+
+    def test_control_exception_keeps_identity_and_unknown_stream_completeness(self):
+        import tempfile
+        for reason in ('BOOTSTRAP_COMMAND_TIMEOUT', 'BOOTSTRAP_OUTPUT_LIMIT'):
+            with tempfile.TemporaryDirectory() as folder:
+                error = ValueError(reason);run, first, calls, io = self.boundary(Path(folder), error)
+                with self.assertRaises(ValueError) as seen:run(['/fixed/pnpm', 'exec', 'supabase', '--version'])
+                self.assertIs(seen.exception, error)
+                for key in ('exitCode', 'stdoutBytes', 'stdoutSha256', 'stderrBytes', 'stderrSha256'):self.assertIsNone(first()[key])
+                self.assertEqual(first()['classification'], 'UNKNOWN');self.assertEqual(first()['operation'], 'SUPABASE_VERSION')
+                self.assertEqual(list(Path(folder).iterdir()), [])
+
+    def test_both_stream_classification_is_closed_and_unknown_codes_stay_unknown(self):
+        markers = [('ERR_PNPM_UNEXPECTED_STORE', 'STORE'), ('ERR_PNPM_OUTDATED_LOCKFILE', 'DEP_VERSION'), ('ERR_PNPM_UNSUPPORTED_ENGINE', 'RUNTIME_VERSION'), ('$HOME is not defined', 'HOME'), ('ERR_PNPM_EXEC_COMMAND_NOT_FOUND', 'BINARY'), ('permission denied', 'PERMISSION'), ('ERR_PNPM_SECRET_TOKEN', 'UNKNOWN')]
+        for marker, expected in markers:
+            for stdout, stderr in ((marker.encode(), b''), (b'', marker.encode())):
+                value = D.safe_control_failure('PREFLIGHT', D.command_stream_diagnostic('SUPABASE_VERSION', 1, stdout, stderr), False)
+                self.assertEqual(value['classification'], expected)
+                self.assertNotIn('SECRET_TOKEN', str(value))
+        value = D.safe_control_failure('PREFLIGHT', {'operation': 'SECRET', 'errorCode': 'SECRET', 'stdoutBytes': float('nan'), 'stdoutSha256': 'SECRET'}, False)
+        self.assertEqual(value['errorCode'], 'UNKNOWN');self.assertIsNone(value['stdoutBytes']);self.assertIsNone(value['stdoutSha256'])
+
+    def test_only_five_full_fixed_argv_match_and_run(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as folder:
+            private = Path(folder);run, first, calls, io = self.boundary(private, (0, b'ok', b''))
+            run.__globals__['project'] = private
+            excluded = run.__globals__['B'].EXCLUDED
+            cases = [('SUPABASE_VERSION', ['--version']), ('SUPABASE_START', ['start', '--workdir', str(private), '--exclude', excluded]), ('SUPABASE_DB_RESET', ['db', 'reset', '--local', '--workdir', str(private)]), ('SUPABASE_STATUS', ['status', '--workdir', str(private), '-o', 'json']), ('SUPABASE_STOP', ['stop', '--workdir', str(private)])]
+            for operation, tail in cases:
+                args = ['/fixed/pnpm', 'exec', 'supabase', *tail]
+                self.assertEqual(D.fixed_pnpm_operation(args, '/fixed/pnpm', private, excluded), operation)
+                self.assertEqual(run(args), b'ok')
+            self.assertEqual(len(calls), 5)
+            for args in (['/other/pnpm', 'exec', 'supabase', '--version'], ['/fixed/pnpm', 'exec', 'supabase', '--version', '--debug'], ['/fixed/pnpm', 'exec', 'supabase', 'stop', '--workdir', '/foreign']):
+                self.assertEqual(D.fixed_pnpm_operation(args, '/fixed/pnpm', private, excluded), 'UNKNOWN')
+
+
 if __name__ == '__main__':
     unittest.main()

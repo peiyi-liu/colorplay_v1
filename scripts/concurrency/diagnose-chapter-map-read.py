@@ -18,7 +18,7 @@ from urllib.parse import urlsplit
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'scripts/concurrency'))
-from chapter_map_diagnostic_contracts import (GIB, LIMIT, WAITS, NODES, PLAN_KEYS, denied_helper_plan, stop_signal_class, stopped_services, safe_control_failure, need, decode_private, number, local_api, project_plan, summarize_http, validate_public)
+from chapter_map_diagnostic_contracts import (GIB, LIMIT, WAITS, NODES, PLAN_KEYS, denied_helper_plan, stop_signal_class, stopped_services, safe_control_failure, fixed_pnpm_operation, command_stream_diagnostic, need, decode_private, number, local_api, project_plan, summarize_http, validate_public)
 BRANCH = 'refs/heads/codex/local-chapter-map-diagnostic-20261119'
 REPOSITORY = 'peiyi-liu/colorplay_v1'
 
@@ -196,10 +196,7 @@ def actual_experiment(environment):
         if args[0] == node:
             return args[1:] in (['--version'], ['-e', B.NODE_JWK], ['--import', 'tsx', str(ROOT / 'scripts/concurrency/diagnose-chapter-map-fixtures.ts')])
         if args[0] == pnpm:
-            if args[1:] == ['exec', 'supabase', '--version']:return True
-            if project is None:return False
-            commands = [['start', '--workdir', str(project), '--exclude', B.EXCLUDED], ['db', 'reset', '--local', '--workdir', str(project)], ['status', '--workdir', str(project), '-o', 'json'], ['stop', '--workdir', str(project)]]
-            return args[1:3] == ['exec', 'supabase'] and args[3:] in commands
+            return fixed_pnpm_operation(args, pnpm, project, B.EXCLUDED) != 'UNKNOWN'
         if args[:3] == B.DOCKER:
             tail = args[3:]
             if tail in (['ps', '-aq', '--no-trunc'], ['ps', '-q'], ['ps', '-q', '--no-trunc'], ['volume', 'ls', '-q']):return True
@@ -213,6 +210,24 @@ def actual_experiment(environment):
         nonlocal first_control_failure
         try:
             need(allowed(args) and options.get('cwd', ROOT) == ROOT)
+            if args[0] == pnpm:
+                operation = fixed_pnpm_operation(args, pnpm, project, B.EXCLUDED)
+                io.command_diagnostic = None
+                options.pop('checked', None)
+                options.pop('capture_stderr', None)
+                try:
+                    code, raw, error = module.bounded(args, options.pop('cwd', ROOT), checked=False, capture_stderr=True, **options)
+                except BaseException:
+                    io.command_diagnostic = command_stream_diagnostic(operation, None, None, None)
+                    raise
+                if code != 0:
+                    io.command_diagnostic = command_stream_diagnostic(operation, code, raw, error)
+                    if first_control_failure is None:
+                        first_control_failure = safe_control_failure('CLEANUP' if cleaning else report['stage'], io.command_diagnostic, False)
+                        private_write(private / 'first-command-stdout-private.bin', raw)
+                        private_write(private / 'first-command-stderr-private.bin', error)
+                need(code == 0)
+                return raw
             return original_run(args, **options)
         except BaseException:
             if first_control_failure is None:

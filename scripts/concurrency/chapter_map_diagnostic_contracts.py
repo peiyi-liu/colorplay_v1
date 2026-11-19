@@ -1,5 +1,6 @@
 """Pure closed diagnostic projection; no IO or execution authority."""
 import json
+import hashlib
 import math
 import re
 from urllib.parse import urlsplit
@@ -193,11 +194,65 @@ def validate_public(value):
     return raw
 
 
+def fixed_pnpm_operation(args, pnpm, project, excluded):
+    if args == [pnpm, 'exec', 'supabase', '--version']:return 'SUPABASE_VERSION'
+    if project is not None:
+        for operation, tail in (
+            ('SUPABASE_START', ['start', '--workdir', str(project), '--exclude', excluded]),
+            ('SUPABASE_DB_RESET', ['db', 'reset', '--local', '--workdir', str(project)]),
+            ('SUPABASE_STATUS', ['status', '--workdir', str(project), '-o', 'json']),
+            ('SUPABASE_STOP', ['stop', '--workdir', str(project)]),
+        ):
+            if args == [pnpm, 'exec', 'supabase', *tail]:return operation
+    return 'UNKNOWN'
+
+
+COMMAND_ERRORS = {
+    'ERR_PNPM_UNEXPECTED_STORE': ('STORE', 'STORE_MISMATCH'),
+    'ERR_PNPM_OUTDATED_LOCKFILE': ('DEP_VERSION', 'LOCKFILE_MISMATCH'),
+    'ERR_PNPM_BAD_PM_VERSION': ('DEP_VERSION', 'PACKAGE_MANAGER_VERSION'),
+    'ERR_PNPM_UNSUPPORTED_ENGINE': ('RUNTIME_VERSION', 'UNSUPPORTED_ENGINE'),
+    'Could not find the homedir': ('HOME', 'HOME_UNAVAILABLE'),
+    '$HOME is not defined': ('HOME', 'HOME_UNAVAILABLE'),
+    'ERR_PNPM_EXEC_COMMAND_NOT_FOUND': ('BINARY', 'COMMAND_NOT_FOUND'),
+}
+
+
+def command_stream_diagnostic(operation, code, stdout, stderr):
+    complete = type(stdout) is bytes and type(stderr) is bytes
+    result = {'operation': operation, 'exitCode': code, 'classification': 'UNKNOWN', 'errorCode': 'UNKNOWN'}
+    for name, raw in (('stdout', stdout), ('stderr', stderr)):
+        result[name + 'Bytes'] = len(raw) if complete else None
+        result[name + 'Sha256'] = hashlib.sha256(raw).hexdigest() if complete else None
+    if complete:
+        text = (stdout[:16384] + b'\n' + stderr[:16384]).decode('utf-8', errors='replace')
+        for marker, values in COMMAND_ERRORS.items():
+            if re.search(r'(?<![A-Za-z0-9_])' + re.escape(marker) + r'(?![A-Za-z0-9_])', text):
+                result['classification'], result['errorCode'] = values
+                break
+        if result['classification'] == 'UNKNOWN':
+            patterns = (
+                ('UNKNOWN_FLAG', r'unknown flag|unknown shorthand flag|unrecognized (?:option|flag)'),
+                ('CONFIG_PARSE', r'(?:failed|unable) to (?:parse|decode|load) config|invalid configuration|toml.*(?:error|invalid)|invalid character.*(?:json|config)'),
+                ('PERMISSION', r'permission denied|operation not permitted|a password is required|not in the sudoers'),
+                ('HEALTH', r'unhealthy|health.?check.*(?:fail|timeout)|failed.*health.?check'),
+                ('IMAGE_PULL', r'pull access denied|manifest unknown|no matching manifest|failed to pull|error pulling'),
+                ('PORT', r'address already in use|port is already allocated|bind.*port.*failed'),
+                ('CONNECTION', r'connection refused|cannot connect to the docker daemon|failed to connect'),
+            )
+            result['classification'] = next((name for name, pattern in patterns if re.search(pattern, text.lower())), 'UNKNOWN')
+    return result
+
+
 def safe_control_failure(stage, diagnostic, resources_closed):
     stages = {'PREFLIGHT', 'ISOLATION', 'BACKEND', 'FIXTURE', 'HTTP_1', 'HTTP_39', 'HTTP_59', 'PLANS', 'CLEANUP', 'COMPLETE'}
     operations = {'DOCKER_LIST_CONTAINERS', 'DOCKER_LIST_VOLUMES', 'DOCKER_INSPECT_VOLUMES', 'DOCKER_INSPECT_CONTAINERS', 'DOCKER_INFO', 'DOCKER_IMAGE_PULL', 'DOCKER_IMAGE_INSPECT', 'DOCKER_IMAGE_TAG', 'DOCKER_EXEC_READONLY', 'SYSTEM_READ', 'SYSTEM_WRITE', 'SYSTEMD_RELOAD', 'SYSTEMD_START', 'CGROUP_MKDIR', 'CGROUP_CHOWN', 'DOCKER_CONFIG_VALIDATE', 'SYSTEMD_DOCKER_RESTART', 'GIT_HEAD', 'GIT_STATUS', 'GIT_TRACKED_FILES', 'NODE_VERSION', 'NODE_TOKEN_SIGNATURE_VERIFY', 'NODE_KEY_GENERATION', 'SUPABASE_START_HELP', 'SUPABASE_VERSION', 'SUPABASE_START', 'SUPABASE_STATUS', 'SUPABASE_GO_VERSION', 'UNKNOWN'}
-    classes = {'UNKNOWN_FLAG', 'CONFIG_PARSE', 'PERMISSION', 'HEALTH', 'IMAGE_PULL', 'PORT', 'CONNECTION', 'UNKNOWN'}
+    operations.update({'SUPABASE_DB_RESET', 'SUPABASE_STOP'})
+    classes = {'UNKNOWN_FLAG', 'CONFIG_PARSE', 'PERMISSION', 'HEALTH', 'IMAGE_PULL', 'PORT', 'CONNECTION', 'BINARY', 'HOME', 'STORE', 'DEP_VERSION', 'RUNTIME_VERSION', 'UNKNOWN'}
     value = diagnostic if type(diagnostic) is dict else {}
     operation, classification = value.get('operation'), value.get('classification')
     code, size, digest = value.get('exitCode'), value.get('stderrBytes'), value.get('stderrSha256')
-    return {'kind': 'FIRST_CONTROL_FAILURE', 'stage': stage if type(stage) is str and stage in stages else 'UNKNOWN', 'operation': operation if type(operation) is str and operation in operations else 'UNKNOWN', 'exitCode': code if type(code) is int and -255 <= code <= 255 else None, 'stderrBytes': size if type(size) is int and 0 <= size <= 4 * LIMIT else None, 'stderrSha256': digest if type(digest) is str and len(digest) == 64 and all(c in '0123456789abcdef' for c in digest) else None, 'classification': classification if type(classification) is str and classification in classes else 'UNKNOWN', 'resourcesClosed': resources_closed is True, 'controlFailure': True, 'terminationUnknown': True}
+    result = {'kind': 'FIRST_CONTROL_FAILURE', 'stage': stage if type(stage) is str and stage in stages else 'UNKNOWN', 'operation': operation if type(operation) is str and operation in operations else 'UNKNOWN', 'exitCode': code if type(code) is int and -255 <= code <= 255 else None, 'stderrBytes': size if type(size) is int and 0 <= size <= 4 * LIMIT else None, 'stderrSha256': digest if type(digest) is str and len(digest) == 64 and all(c in '0123456789abcdef' for c in digest) else None, 'classification': classification if type(classification) is str and classification in classes else 'UNKNOWN', 'resourcesClosed': resources_closed is True, 'controlFailure': True, 'terminationUnknown': True}
+    size, digest, error = value.get('stdoutBytes'), value.get('stdoutSha256'), value.get('errorCode')
+    result.update(stdoutBytes=size if type(size) is int and 0 <= size <= 4 * LIMIT else None, stdoutSha256=digest if type(digest) is str and re.fullmatch('[a-f0-9]{64}', digest) else None, errorCode=error if type(error) is str and error in {item[1] for item in COMMAND_ERRORS.values()} else 'UNKNOWN')
+    return result
