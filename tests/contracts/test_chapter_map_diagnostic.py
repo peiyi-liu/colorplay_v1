@@ -410,14 +410,14 @@ class FixedCommandStreamTests(unittest.TestCase):
         import tempfile
         with tempfile.TemporaryDirectory() as folder:
             run, first, calls, io = self.boundary(Path(folder), (1, b'ERR_PNPM_UNEXPECTED_STORE SYNTHETIC_SECRET', b''))
-            with self.assertRaises(ValueError):run(['/fixed/pnpm', 'exec', 'supabase', '--version'], timeout=60, maximum=4 * D.LIMIT, env={'PATH': '/fixed:/usr/bin:/bin'})
+            with self.assertRaises(ValueError):run(['/fixed/pnpm', '--config.verify-deps-before-run=false', 'exec', 'supabase', '--version'], timeout=60, maximum=4 * D.LIMIT, env={'PATH': '/fixed:/usr/bin:/bin'})
             self.assertEqual(first()['operation'], 'SUPABASE_VERSION')
             self.assertEqual(first()['stdoutBytes'], 42)
             self.assertNotIn('SYNTHETIC_SECRET', str(first()))
             self.assertEqual(len(calls), 1)
 
     def test_exact_five_commands_reject_extra_foreign_or_unready_targets(self):
-        base = ['/fixed/pnpm', 'exec', 'supabase']; project = Path('/fixed/project')
+        base = ['/fixed/pnpm', '--config.verify-deps-before-run=false', 'exec', 'supabase']; project = Path('/fixed/project')
         tails = [('SUPABASE_VERSION', ['--version']), ('SUPABASE_START', ['start', '--workdir', str(project), '--exclude', 'FIXED']), ('SUPABASE_DB_RESET', ['db', 'reset', '--local', '--workdir', str(project)]), ('SUPABASE_STATUS', ['status', '--workdir', str(project), '-o', 'json']), ('SUPABASE_STOP', ['stop', '--workdir', str(project)])]
         for operation, tail in tails:
             self.assertEqual(D.fixed_pnpm_operation(base + tail, base[0], project, 'FIXED'), operation)
@@ -430,7 +430,7 @@ class FixedCommandStreamTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as folder:
             private = Path(folder);run, first, calls, io = self.boundary(private, (0, b'SYNTHETIC_SECRET_STATUS', b''))
             env = {'PATH': '/fixed:/usr/bin:/bin'}
-            self.assertEqual(run(['/fixed/pnpm', 'exec', 'supabase', '--version'], timeout=60, maximum=4 * D.LIMIT, env=env), b'SYNTHETIC_SECRET_STATUS')
+            self.assertEqual(run(['/fixed/pnpm', '--config.verify-deps-before-run=false', 'exec', 'supabase', '--version'], timeout=60, maximum=4 * D.LIMIT, env=env), b'SYNTHETIC_SECRET_STATUS')
             self.assertIsNone(first());self.assertIsNone(io.command_diagnostic)
             self.assertEqual(list(private.iterdir()), [])
             self.assertEqual(calls[0][1], {'timeout': 60, 'maximum': 4 * D.LIMIT, 'env': env, 'checked': False, 'capture_stderr': True})
@@ -439,7 +439,7 @@ class FixedCommandStreamTests(unittest.TestCase):
         import tempfile
         with tempfile.TemporaryDirectory() as folder:
             private = Path(folder);run, first, calls, io = self.boundary(private, (1, b'SYNTHETIC_SECRET', b'ERR_PNPM_UNEXPECTED_STORE'))
-            args = ['/fixed/pnpm', 'exec', 'supabase', '--version']
+            args = ['/fixed/pnpm', '--config.verify-deps-before-run=false', 'exec', 'supabase', '--version']
             with self.assertRaises(ValueError):run(args)
             original = dict(first());run.__globals__['cleaning'] = True
             with self.assertRaises(ValueError):run(args)
@@ -455,7 +455,7 @@ class FixedCommandStreamTests(unittest.TestCase):
         for reason in ('BOOTSTRAP_COMMAND_TIMEOUT', 'BOOTSTRAP_OUTPUT_LIMIT'):
             with tempfile.TemporaryDirectory() as folder:
                 error = ValueError(reason);run, first, calls, io = self.boundary(Path(folder), error)
-                with self.assertRaises(ValueError) as seen:run(['/fixed/pnpm', 'exec', 'supabase', '--version'])
+                with self.assertRaises(ValueError) as seen:run(['/fixed/pnpm', '--config.verify-deps-before-run=false', 'exec', 'supabase', '--version'])
                 self.assertIs(seen.exception, error)
                 for key in ('exitCode', 'stdoutBytes', 'stdoutSha256', 'stderrBytes', 'stderrSha256'):self.assertIsNone(first()[key])
                 self.assertEqual(first()['classification'], 'UNKNOWN');self.assertEqual(first()['operation'], 'SUPABASE_VERSION')
@@ -479,11 +479,11 @@ class FixedCommandStreamTests(unittest.TestCase):
             excluded = run.__globals__['B'].EXCLUDED
             cases = [('SUPABASE_VERSION', ['--version']), ('SUPABASE_START', ['start', '--workdir', str(private), '--exclude', excluded]), ('SUPABASE_DB_RESET', ['db', 'reset', '--local', '--workdir', str(private)]), ('SUPABASE_STATUS', ['status', '--workdir', str(private), '-o', 'json']), ('SUPABASE_STOP', ['stop', '--workdir', str(private)])]
             for operation, tail in cases:
-                args = ['/fixed/pnpm', 'exec', 'supabase', *tail]
+                args = ['/fixed/pnpm', '--config.verify-deps-before-run=false', 'exec', 'supabase', *tail]
                 self.assertEqual(D.fixed_pnpm_operation(args, '/fixed/pnpm', private, excluded), operation)
                 self.assertEqual(run(args), b'ok')
             self.assertEqual(len(calls), 5)
-            for args in (['/other/pnpm', 'exec', 'supabase', '--version'], ['/fixed/pnpm', 'exec', 'supabase', '--version', '--debug'], ['/fixed/pnpm', 'exec', 'supabase', 'stop', '--workdir', '/foreign']):
+            for args in (['/other/pnpm', 'exec', 'supabase', '--version'], ['/fixed/pnpm', '--config.verify-deps-before-run=false', 'exec', 'supabase', '--version', '--debug'], ['/fixed/pnpm', '--config.verify-deps-before-run=false', 'exec', 'supabase', 'stop', '--workdir', '/foreign']):
                 self.assertEqual(D.fixed_pnpm_operation(args, '/fixed/pnpm', private, excluded), 'UNKNOWN')
 
 

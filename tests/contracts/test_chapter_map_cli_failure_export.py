@@ -188,16 +188,16 @@ class ExportTests(unittest.TestCase):
         (folder / 'command-output.age').write_bytes(b'age-encryption.org/v1\nTAMPERED')
         with self.assertRaises(ValueError):D.validate_artifact(env)
 
-    def test_workflow_cli_only_fixed_upload_paths_and_failure_stays_failure(self):
+    def test_workflow_full_local_fixed_upload_paths_and_failure_stays_failure(self):
         workflow = (ROOT / '.github/workflows/local-chapter-map-diagnostic.yml').read_text()
-        self.assertIn('sudo apt-get update && sudo apt-get install --yes age', workflow)
-        self.assertIn('export_chapter_map_cli_failure.py --capture', workflow)
-        self.assertIn('export_chapter_map_cli_failure.py --validate', workflow)
-        for value in ('diagnose-chapter-map-read.py --run', 'safe-result.json', 'continue-on-error:', 'secrets.', 'workflow_dispatch:'):
+        self.assertIn('diagnose-chapter-map-read.py --run', workflow)
+        self.assertIn('diagnose-chapter-map-read.py --validate', workflow)
+        self.assertIn('safe-result.json', workflow)
+        for value in ('export_chapter_map_cli_failure.py --capture', 'export_chapter_map_cli_failure.py --validate', 'sudo apt-get', 'continue-on-error:', 'secrets.', 'workflow_dispatch:'):
             self.assertNotIn(value, workflow)
-        self.assertIn('steps.failure.outputs.failure_artifact', workflow)
-        self.assertIn('chapter-map-cli-failure/public/command-output.age', workflow)
-        self.assertIn('chapter-map-cli-failure/public/receipt.json', workflow)
+        self.assertIn('steps.projection.outputs.safe_artifact', workflow)
+        self.assertIn('chapter-map-diagnostic/safe-result.json', workflow)
+        self.assertNotIn('command-output.age', workflow);self.assertNotIn('failure_artifact', workflow)
         self.assertIn('retention-days: 1', workflow);self.assertIn('overwrite: false', workflow)
 
 

@@ -256,7 +256,7 @@ def actual_experiment(environment):
         need(Path('/sys/fs/cgroup/cgroup.controllers').is_file() and os.geteuid() != 0)
         need(command(['/usr/bin/git', 'rev-parse', 'HEAD']).decode().strip() == revision and not command(['/usr/bin/git', 'status', '--porcelain']).strip())
         need(command([node, '--version']).strip() == b'v24.13.1')
-        need(command([pnpm, 'exec', 'supabase', '--version']).strip() == b'2.109.1')
+        need(command([pnpm, '--config.verify-deps-before-run=false', 'exec', 'supabase', '--version']).strip() == b'2.109.1')
         report['versions'].update(node='v24.13.1', supabase='2.109.1')
         need(not docker('ps', '-aq', '--no-trunc').strip() and not docker('volume', 'ls', '-q').strip())
         info = decode_private(docker('info', '--format', '{"driver":{{json .CgroupDriver}},"version":{{json .CgroupVersion}},"engine":{{json .ServerVersion}}}'))
@@ -277,9 +277,9 @@ def actual_experiment(environment):
         report['stage'] = 'BACKEND'
         started = True
         report['resourcesClosed'] = False
-        command([pnpm, 'exec', 'supabase', 'start', '--workdir', str(project), '--exclude', B.EXCLUDED], timeout=600, extra=extra)
-        command([pnpm, 'exec', 'supabase', 'db', 'reset', '--local', '--workdir', str(project)], timeout=300, extra=extra)
-        state = decode_private(command([pnpm, 'exec', 'supabase', 'status', '--workdir', str(project), '-o', 'json'], extra=extra))
+        command([pnpm, '--config.verify-deps-before-run=false', 'exec', 'supabase', 'start', '--workdir', str(project), '--exclude', B.EXCLUDED], timeout=600, extra=extra)
+        command([pnpm, '--config.verify-deps-before-run=false', 'exec', 'supabase', 'db', 'reset', '--local', '--workdir', str(project)], timeout=300, extra=extra)
+        state = decode_private(command([pnpm, '--config.verify-deps-before-run=false', 'exec', 'supabase', 'status', '--workdir', str(project), '-o', 'json'], extra=extra))
         api = local_api(state['API_URL'])
         need(api == 'http://127.0.0.1:58321')
         ids = docker('ps', '-q', '--no-trunc').decode().split()
@@ -343,7 +343,7 @@ def actual_experiment(environment):
             try:
                 report['shutdown'] = graceful_close(
                     io, containers, isolation['backend'], C.ROLES, C.PROJECT,
-                    docker, lambda: command([pnpm, 'exec', 'supabase', 'stop', '--workdir', str(project)], timeout=120, extra=extra))
+                    docker, lambda: command([pnpm, '--config.verify-deps-before-run=false', 'exec', 'supabase', 'stop', '--workdir', str(project)], timeout=120, extra=extra))
                 report['resourcesClosed'] = True
                 if report['collection'] == 'OBSERVED':report['stage'] = 'COMPLETE'
             except Exception:

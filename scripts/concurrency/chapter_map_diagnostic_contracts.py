@@ -195,7 +195,7 @@ def validate_public(value):
 
 
 def fixed_pnpm_operation(args, pnpm, project, excluded):
-    if args == [pnpm, 'exec', 'supabase', '--version']:return 'SUPABASE_VERSION'
+    if args == [pnpm, '--config.verify-deps-before-run=false', 'exec', 'supabase', '--version']:return 'SUPABASE_VERSION'
     if project is not None:
         for operation, tail in (
             ('SUPABASE_START', ['start', '--workdir', str(project), '--exclude', excluded]),
@@ -203,7 +203,7 @@ def fixed_pnpm_operation(args, pnpm, project, excluded):
             ('SUPABASE_STATUS', ['status', '--workdir', str(project), '-o', 'json']),
             ('SUPABASE_STOP', ['stop', '--workdir', str(project)]),
         ):
-            if args == [pnpm, 'exec', 'supabase', *tail]:return operation
+            if args == [pnpm, '--config.verify-deps-before-run=false', 'exec', 'supabase', *tail]:return operation
     return 'UNKNOWN'
 
 

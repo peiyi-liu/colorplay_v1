@@ -41,23 +41,18 @@ jobs:
           cache-dependency-path: colorplay-live-recovery/pnpm-lock.yaml
       - name: Install locked dependencies
         run: pnpm install --frozen-lockfile
-      - name: Install standard age for failure encryption
-        run: sudo apt-get update && sudo apt-get install --yes age
-      - name: Capture one CLI-only preflight
-        id: capture
-        run: python3 -B scripts/concurrency/export_chapter_map_cli_failure.py --capture
-      - name: Validate only the encrypted CLI failure channel
-        id: failure
+      - name: Run fixed ephemeral Local experiment
+        run: python3 -B scripts/concurrency/diagnose-chapter-map-read.py --run
+      - name: Validate only the closed public numeric projection
+        id: projection
         if: ${{ always() && !cancelled() }}
-        run: python3 -B scripts/concurrency/export_chapter_map_cli_failure.py --validate
-      - name: Upload only encrypted CLI failure evidence
-        if: ${{ always() && !cancelled() && steps.failure.outputs.failure_artifact == 'true' }}
+        run: python3 -B scripts/concurrency/diagnose-chapter-map-read.py --validate
+      - name: Upload only validated safe diagnostic
+        if: ${{ always() && !cancelled() && steps.projection.outputs.safe_artifact == 'true' }}
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
-          name: encrypted-cli-preflight-${{ github.run_id }}-${{ github.run_attempt }}
-          path: |
-            ${{ runner.temp }}/chapter-map-cli-failure/public/command-output.age
-            ${{ runner.temp }}/chapter-map-cli-failure/public/receipt.json
+          name: local-chapter-map-diagnostic-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/chapter-map-diagnostic/safe-result.json
           if-no-files-found: error
           retention-days: 1
           compression-level: 0
