@@ -1,8 +1,16 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 
 import type { ReviewSubtopicContent } from '../../fixtures/review-manifest.generated';
+import {
+  createReviewTrace,
+  type ReviewObserver,
+} from '../../../scripts/concurrency/capacity-student-review-diagnostics';
 
-type ReviewCardVisitor = (card: Locator, cardTitle: string) => Promise<void>;
+type ReviewCardVisitor = (
+  card: Locator,
+  cardTitle: string,
+  observe?: ReviewObserver,
+) => Promise<void>;
 
 // aria-label="章節進度" reports chapter-level review progress (summed across
 // every subtopic in the chapter), even when a walk only completes one
@@ -33,33 +41,66 @@ const SECTION_KEY_PATTERN = /^\d+-\d+$/u;
 export async function selectReviewSubtopic(
   page: Page,
   sectionKey: string,
+  observe?: ReviewObserver,
 ): Promise<void> {
-  if (!SECTION_KEY_PATTERN.test(sectionKey)) {
-    throw new Error('LEARNING_EXPERIENCE_SECTION_KEY_INVALID');
-  }
-  const button = page
-    .getByRole('navigation', { name: '第三章小節' })
-    .getByRole('button', { name: new RegExp(`^${sectionKey}\\s`, 'u') });
-  // A retrying assertion (not a one-shot count()) so a target that mounts
-  // slightly late still resolves; zero, duplicate, and timeout all collapse
-  // into the same fixed sentinel with no locator/DOM detail attached.
+  const trace = createReviewTrace(observe);
   try {
-    await expect(button).toHaveCount(1);
-  } catch {
-    throw new Error('LEARNING_EXPERIENCE_SUBTOPIC_BUTTON_NOT_UNIQUE');
+    trace.enter('SECTION_KEY');
+    if (!SECTION_KEY_PATTERN.test(sectionKey)) {
+      throw new Error('LEARNING_EXPERIENCE_SECTION_KEY_INVALID');
+    }
+    trace.returned();
+    const button = page
+      .getByRole('navigation', { name: '第三章小節' })
+      .getByRole('button', { name: new RegExp(`^${sectionKey}\\s`, 'u') });
+    // A retrying assertion (not a one-shot count()) so a target that mounts
+    // slightly late still resolves; zero, duplicate, and timeout all collapse
+    // into the same fixed sentinel with no locator/DOM detail attached.
+    try {
+      trace.enter('SECTION_COUNT');
+      await expect(button).toHaveCount(1);
+      trace.returned();
+    } catch (error) {
+      trace.failed(error);
+      // eslint-disable-next-line preserve-caught-error -- Keep the original fixed sentinel without a raw locator cause.
+      throw new Error('LEARNING_EXPERIENCE_SUBTOPIC_BUTTON_NOT_UNIQUE');
+    }
+    trace.enter('SECTION_SELECT');
+    await button.click();
+    trace.returned();
+    trace.enter('SECTION_SELECTED');
+    await expect(button).toHaveAttribute('aria-current', 'true');
+    trace.returned();
+  } catch (error) {
+    trace.failed(error);
+    throw error;
   }
-  await button.click();
-  await expect(button).toHaveAttribute('aria-current', 'true');
 }
 
-export async function completeReviewCard(card: Locator) {
-  const completionStatus = card
-    .getByRole('status')
-    .filter({ hasText: /^已完成複習$/u });
-  if (!(await completionStatus.isVisible())) {
-    await card.getByRole('button', { exact: true, name: '完成複習' }).click();
+export async function completeReviewCard(
+  card: Locator,
+  observe?: ReviewObserver,
+) {
+  const trace = createReviewTrace(observe);
+  try {
+    const completionStatus = card
+      .getByRole('status')
+      .filter({ hasText: /^已完成複習$/u });
+    trace.enter('COMPLETION_STATUS');
+    const completed = await completionStatus.isVisible();
+    trace.returned({ matched: completed });
+    if (!completed) {
+      trace.enter('COMPLETION_CLICK');
+      await card.getByRole('button', { exact: true, name: '完成複習' }).click();
+      trace.returned();
+    }
+    trace.enter('COMPLETION_CONFIRMED');
+    await expect(completionStatus).toHaveText('已完成複習');
+    trace.returned();
+  } catch (error) {
+    trace.failed(error);
+    throw error;
   }
-  await expect(completionStatus).toHaveText('已完成複習');
 }
 
 const REVIEW_CARD_NAVIGATION_MISMATCH_PREFIX =
@@ -154,56 +195,90 @@ export async function walkReviewCards(
   cardTitles: readonly string[],
   visitCard: ReviewCardVisitor,
   onBeforeReselect?: (cardIndex: number) => Promise<void>,
+  observe?: ReviewObserver,
 ) {
   for (const [cardIndex, cardTitle] of cardTitles.entries()) {
-    await onBeforeReselect?.(cardIndex);
-    // Returning to the library after a card can remount it and re-derive
-    // the default subtopic from currentCardId, so re-select every card
-    // rather than trusting a single selection made before the whole walk.
-    await selectReviewSubtopic(page, sectionKey);
-
-    const firstPageChoices = page.getByRole('button', {
-      name: /^選擇複習卡：/u,
-    });
-    await expect(firstPageChoices.first()).toBeVisible();
-    const cardsPerPage = await firstPageChoices.count();
-    const targetPageIndex = Math.floor(cardIndex / cardsPerPage);
-    for (let pageIndex = 0; pageIndex < targetPageIndex; pageIndex += 1) {
-      const nextPage = page.getByRole('button', {
-        exact: true,
-        name: '下一頁',
-      });
-      await expect(nextPage).toBeEnabled();
-      await nextPage.click();
-    }
-
-    const choiceIndexOnPage = cardIndex % cardsPerPage;
-    const choice = page
-      .getByRole('button', { name: /^選擇複習卡：/u })
-      .nth(choiceIndexOnPage);
-    await expect(choice).toBeVisible();
-    await choice.click();
-    await page.getByRole('button', { name: /^進入複習/u }).click();
-
-    const card = page.getByRole('article', {
-      exact: true,
-      name: cardTitle,
-    });
+    const cardObserve: ReviewObserver = (row) => {
+      observe?.({ ...row, cardOrdinal: cardIndex });
+    };
+    const trace = createReviewTrace(cardObserve);
     try {
-      await expect(card).toBeVisible();
-    } catch {
-      throw new Error(
-        await describeReviewCardNavigationMismatch(page, cardTitles, {
-          cardIndex,
-          cardsPerPage,
-          choiceIndexOnPage,
-          targetPageIndex,
-        }),
-      );
+      trace.enter('BEFORE_RESELECT');
+      await onBeforeReselect?.(cardIndex);
+      trace.returned();
+      // Returning to the library after a card can remount it and re-derive
+      // the default subtopic from currentCardId, so re-select every card
+      // rather than trusting a single selection made before the whole walk.
+      await selectReviewSubtopic(page, sectionKey, cardObserve);
+
+      const firstPageChoices = page.getByRole('button', {
+        name: /^選擇複習卡：/u,
+      });
+      trace.enter('CHOICES_READY');
+      await expect(firstPageChoices.first()).toBeVisible();
+      trace.returned();
+      trace.enter('CHOICES_COUNT');
+      const cardsPerPage = await firstPageChoices.count();
+      trace.returned({ count: cardsPerPage });
+      const targetPageIndex = Math.floor(cardIndex / cardsPerPage);
+      for (let pageIndex = 0; pageIndex < targetPageIndex; pageIndex += 1) {
+        const nextPage = page.getByRole('button', {
+          exact: true,
+          name: '下一頁',
+        });
+        trace.enter('PAGE_READY', { pageOrdinal: pageIndex });
+        await expect(nextPage).toBeEnabled();
+        trace.returned();
+        trace.enter('PAGE_NEXT', { pageOrdinal: pageIndex });
+        await nextPage.click();
+        trace.returned();
+      }
+
+      const choiceIndexOnPage = cardIndex % cardsPerPage;
+      const choice = page
+        .getByRole('button', { name: /^選擇複習卡：/u })
+        .nth(choiceIndexOnPage);
+      trace.enter('CHOICE_READY', { pageOrdinal: targetPageIndex });
+      await expect(choice).toBeVisible();
+      trace.returned();
+      trace.enter('CHOICE_SELECT', { pageOrdinal: targetPageIndex });
+      await choice.click();
+      trace.returned();
+      trace.enter('ENTER');
+      await page.getByRole('button', { name: /^進入複習/u }).click();
+      trace.returned();
+
+      const card = page.getByRole('article', {
+        exact: true,
+        name: cardTitle,
+      });
+      try {
+        trace.enter('ARTICLE');
+        await expect(card).toBeVisible();
+        trace.returned();
+      } catch (error) {
+        trace.failed(error);
+        // eslint-disable-next-line preserve-caught-error -- Keep the original bounded mismatch error shape without a raw locator cause.
+        throw new Error(
+          await describeReviewCardNavigationMismatch(page, cardTitles, {
+            cardIndex,
+            cardsPerPage,
+            choiceIndexOnPage,
+            targetPageIndex,
+          }),
+        );
+      }
+      trace.enter('VISITOR');
+      await visitCard(card, cardTitle, cardObserve);
+      trace.returned();
+      trace.enter('BACK');
+      await page
+        .getByRole('button', { exact: true, name: '返回複習卡選擇' })
+        .click();
+      trace.returned();
+    } catch (error) {
+      trace.failed(error);
+      throw error;
     }
-    await visitCard(card, cardTitle);
-    await page
-      .getByRole('button', { exact: true, name: '返回複習卡選擇' })
-      .click();
   }
 }

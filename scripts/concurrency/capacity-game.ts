@@ -1,3 +1,7 @@
+import {
+  createReviewTrace,
+  type ReviewObserver,
+} from './capacity-student-review-diagnostics';
 import { waitForCapacityTeacherOverview } from './capacity-teacher-read';
 import {
   gameObserve,
@@ -50,18 +54,40 @@ export const runCapacityStudentGame = async (
   expectedMembers: number,
   journal: PrivateJournal,
   signal: AbortSignal,
+  reviewObserver?: ReviewObserver,
 ) => {
   const { client, page } = actor,
     own = capacityActorJournal(journal, actor.actorIndex),
     check = () => {
       if (signal.aborted) return capacityFailure();
     };
-  const learning = createLearningRepository(client),
-    chapter = await functionalChapter(client);
-  check();
-  await own.write('student-review-intent', { chapterId: chapter.chapterId });
-  if (page) await reviewFunctionalCards(page, client);
-  else {
+  const review = createReviewTrace(page ? reviewObserver : undefined);
+  const learning = createLearningRepository(client);
+  let chapter: Awaited<ReturnType<typeof functionalChapter>>;
+  try {
+    chapter = await functionalChapter(
+      client,
+      page ? reviewObserver : undefined,
+      'PRELOOKUP',
+    );
+    check();
+    review.enter('INTENT_WRITE');
+    await own.write('student-review-intent', { chapterId: chapter.chapterId });
+    review.returned();
+  } catch (error) {
+    review.failed(error);
+    throw error;
+  }
+  if (page) {
+    try {
+      review.enter('REVIEW');
+      await reviewFunctionalCards(page, client, reviewObserver);
+      review.returned();
+    } catch (error) {
+      review.failed(error);
+      throw error;
+    }
+  } else {
     const sections = await learning.listChapterReview(chapter.chapterId),
       cards = sections.flatMap((s) => s.subtopics.flatMap((t) => t.cards));
     if (!cards.length) return capacityFailure();
@@ -90,7 +116,14 @@ export const runCapacityStudentGame = async (
     )
       return capacityFailure();
   }
-  await own.write('student-review-confirmed', { completed: true });
+  try {
+    review.enter('CONFIRMED_WRITE');
+    await own.write('student-review-confirmed', { completed: true });
+    review.returned();
+  } catch (error) {
+    review.failed(error);
+    throw error;
+  }
   check();
   const quiz = createQuizRepository(client),
     economy = createEconomyRepository(client),

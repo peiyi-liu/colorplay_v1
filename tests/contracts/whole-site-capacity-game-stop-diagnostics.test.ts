@@ -381,3 +381,107 @@ it('actual load preserves student failure stop order and drains peers even when 
   }
   expect(results[1]).toEqual(results[0]);
 });
+
+import { EventEmitter } from 'node:events';
+it.each(['SUCCESS', 'STUDENT_FAILURE', 'TEACHER_FAILURE'] as const)(
+  'actual load owns one sealed native terminal summary through %s and ignores diagnostic writer failure',
+  async (mode) => {
+    const fixture = await capacityFixture();
+    const scope = parseCapacityScope(fixture.input, fixture.proof);
+    const pages = [new EventEmitter(), new EventEmitter()];
+    const written: { name: string; value: unknown }[] = [];
+    const signalStates: boolean[] = [];
+    let release = () => {
+      /* assigned below */
+    };
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const actors: CapacityGameActor[] = [0, 1, 2].map((actorIndex) => ({
+      actorIndex,
+      client: {} as SupabaseClient<Database>,
+      ...(actorIndex
+        ? {
+            page: pages[actorIndex - 1] as unknown as NonNullable<
+              CapacityGameActor['page']
+            >,
+          }
+        : {}),
+      measure: () => Promise.resolve(undefined as never),
+    }));
+    const task = runCapacityGameLoad(
+      {
+        scope,
+        actors,
+        identities: actors.map(() => ({ userId: 'synthetic' })),
+        classroomId: 'synthetic',
+        signal: new AbortController().signal,
+        onActive: () => undefined,
+        stop: () => undefined,
+        journal: {
+          directory: 'synthetic',
+          write: async (name, value) => {
+            await Promise.resolve();
+            written.push({ name, value });
+            throw new Error('DIAGNOSTIC_DISK_FAILURE');
+          },
+        },
+      },
+      {
+        student: async (...args) => {
+          pages[args[0].actorIndex - 1]?.emit('request', {
+            method: () => 'GET',
+            isNavigationRequest: () => true,
+            url: () =>
+              scope.appUrl +
+              '/app/chapters/00000000-0000-4000-8000-000000000000',
+          });
+          args[6]?.({ phase: 'GOTO', state: 'ENTERED' });
+          await gate;
+          if (mode === 'STUDENT_FAILURE' && args[0].actorIndex === 1) {
+            args[6]?.({
+              phase: 'GOTO',
+              state: 'FAILED',
+              errorClass: 'TYPE_ERROR',
+            });
+            signalStates.push(args[5].aborted);
+            throw new TypeError('ORIGINAL_STUDENT_FAILURE');
+          }
+          args[6]?.({ phase: 'GOTO', state: 'RETURNED' });
+          return {
+            quizQuestions: 1,
+            mastery: true,
+            economy: true,
+            ledgerReconciled: true,
+          };
+        },
+        teacher: async () => {
+          await Promise.resolve();
+          release();
+          if (mode === 'TEACHER_FAILURE')
+            throw new TypeError('ORIGINAL_TEACHER_FAILURE');
+        },
+      },
+    );
+    if (mode === 'SUCCESS') await expect(task).resolves.toHaveLength(3);
+    else await expect(task).rejects.toThrow('CAPACITY_EVIDENCE_INVALID');
+    expect(written.map((row) => row.name).sort()).toEqual([
+      'actor-1-student-review-diagnostics',
+      'actor-2-student-review-diagnostics',
+    ]);
+    expect(
+      written.every((row) => (row.value as { sealed: boolean }).sealed),
+    ).toBe(true);
+    if (mode === 'STUDENT_FAILURE') {
+      expect(signalStates).toEqual([false]);
+      expect(
+        written.find((row) => row.name.startsWith('actor-1-'))?.value,
+      ).toMatchObject({
+        firstFailure: { phase: 'GOTO', errorClass: 'TYPE_ERROR' },
+      });
+    }
+    expect(pages.every((page) => page.listenerCount('request') === 0)).toBe(
+      true,
+    );
+  },
+);

@@ -1,3 +1,4 @@
+import { createStudentReviewDiagnostics } from './capacity-student-review-diagnostics';
 import {
   gameObserve,
   gameErrorClass,
@@ -206,6 +207,9 @@ export const runCapacityGameLoad = async (
     const identity = identities[index + 1];
     const lifecycle = { started: false, done: false };
     const continuation = options.continueProtocolReads ? summary() : undefined;
+    const review = actor.page
+      ? createStudentReviewDiagnostics(actor.actorIndex)
+      : undefined;
     const mark = () => {
       if (lifecycle.started || lifecycle.done || owned.aborted) return;
       lifecycle.started = true;
@@ -262,6 +266,7 @@ export const runCapacityGameLoad = async (
           60,
           journal,
           owned,
+          review?.observe,
         );
         if (continuation) {
           continuation.coreComplete = true;
@@ -306,6 +311,17 @@ export const runCapacityGameLoad = async (
         }
         if (completed === actors.length - 1 && observed === 0)
           stop('NO_PHYSICAL_WINDOW');
+        if (review) {
+          try {
+            const snapshot = review.seal();
+            await journal.write(
+              `actor-${String(actor.actorIndex)}-student-review-diagnostics`,
+              snapshot,
+            );
+          } catch {
+            /* Diagnostic writer cannot replace the original outcome. */
+          }
+        }
         if (continuation) {
           continuation.endedAtNodeMs = performance.now();
           continuation.aborted = owned.aborted;

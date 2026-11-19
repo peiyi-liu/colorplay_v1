@@ -14,77 +14,127 @@ import {
 import { fail, safely, type FunctionalScope } from './config';
 import type { PrivateJournal } from './private-journal';
 import { finishFunctionalQuiz, quizSessionIdFromPage } from './student-quiz';
+import {
+  createReviewTrace,
+  type ReviewObserver,
+} from './capacity-student-review-diagnostics';
 
-export const functionalChapter = async (client: SupabaseClient<Database>) =>
+export const functionalChapter = async (
+  client: SupabaseClient<Database>,
+  observe?: ReviewObserver,
+  phase: 'PRELOOKUP' | 'LOOKUP' = 'LOOKUP',
+) =>
   safely(async () => {
-    const map = await fetchStudentChapterMap(client);
-    const chapter = map.chapters.find(
-      (row) =>
-        row.stableCode === 'chapter-3' &&
-        row.templateId &&
-        row.templateQuestionCount &&
-        ['available', 'completed'].includes(row.accessState),
-    );
-    if (!chapter?.templateId) return fail('FUNCTIONAL_STUDENT_FAILED');
-    return { ...chapter, templateId: chapter.templateId };
+    const trace = createReviewTrace(observe);
+    try {
+      trace.enter(phase);
+      const map = await fetchStudentChapterMap(client);
+      const chapter = map.chapters.find(
+        (row) =>
+          row.stableCode === 'chapter-3' &&
+          row.templateId &&
+          row.templateQuestionCount &&
+          ['available', 'completed'].includes(row.accessState),
+      );
+      if (!chapter?.templateId) return fail('FUNCTIONAL_STUDENT_FAILED');
+      trace.returned();
+      return { ...chapter, templateId: chapter.templateId };
+    } catch (error) {
+      trace.failed(error);
+      throw error;
+    }
   }, 'FUNCTIONAL_STUDENT_FAILED');
 export const reviewFunctionalCards = async (
   page: Page,
   client: SupabaseClient<Database>,
+  observe?: ReviewObserver,
 ) =>
   safely(async () => {
-    const chapter = await functionalChapter(client);
-    const repository = createLearningRepository(client);
-    const sections = await repository.listChapterReview(chapter.chapterId);
-    const cards = sections.flatMap((section) =>
-      section.subtopics.flatMap((subtopic) => subtopic.cards),
-    );
-    if (!cards.length) return fail('FUNCTIONAL_STUDENT_FAILED');
-    await page.goto(`/app/chapters/${chapter.chapterId}`);
-    for (const target of REVIEW_MANIFEST.filter(
-      (row) => row.chapterCode === chapter.stableCode,
-    )) {
+    const trace = createReviewTrace(observe);
+    try {
+      const chapter = await functionalChapter(client, observe);
+      const repository = createLearningRepository(client);
+      trace.enter('SECTIONS');
+      const sections = await repository.listChapterReview(chapter.chapterId);
+      trace.returned({ count: sections.length });
+      trace.enter('CARDS');
+      const cards = sections.flatMap((section) =>
+        section.subtopics.flatMap((subtopic) => subtopic.cards),
+      );
+      if (!cards.length) return fail('FUNCTIONAL_STUDENT_FAILED');
+      trace.returned({ count: cards.length });
+      trace.enter('GOTO');
+      await page.goto(`/app/chapters/${chapter.chapterId}`);
+      trace.returned();
+      let sectionOrdinal = 0;
+      for (const target of REVIEW_MANIFEST.filter(
+        (row) => row.chapterCode === chapter.stableCode,
+      )) {
+        trace.enter('MANIFEST', { sectionOrdinal });
+        if (
+          !sections.some((section) =>
+            section.subtopics.some(
+              (subtopic) => subtopic.subtopicId === target.subtopicId,
+            ),
+          )
+        )
+          return fail('FUNCTIONAL_STUDENT_FAILED');
+        trace.returned();
+        const section = sectionOrdinal;
+        const sectionObserve: ReviewObserver = (row) => {
+          observe?.({ ...row, sectionOrdinal: section });
+        };
+        trace.enter('WALK', { sectionOrdinal });
+        await walkReviewCards(
+          page,
+          target.sectionKey,
+          target.cardTitles,
+          async (card, _title, cardObserve) => {
+            await completeReviewCard(card, cardObserve);
+          },
+          undefined,
+          sectionObserve,
+        );
+        trace.returned();
+        sectionOrdinal++;
+      }
+      trace.enter('REVIEW_PROGRESS');
+      const completed = await repository.listReviewProgress();
+      trace.returned({ count: completed.length });
+      trace.enter('CARD_VERSIONS');
       if (
-        !sections.some((section) =>
-          section.subtopics.some(
-            (subtopic) => subtopic.subtopicId === target.subtopicId,
-          ),
+        cards.some(
+          (card) =>
+            !completed.some(
+              (row) =>
+                row.reviewCardId === card.cardId &&
+                row.cardVersion === card.version,
+            ),
         )
       )
         return fail('FUNCTIONAL_STUDENT_FAILED');
-      await walkReviewCards(
-        page,
-        target.sectionKey,
-        target.cardTitles,
-        async (card) => {
-          await completeReviewCard(card);
-        },
-      );
+      trace.returned();
+      trace.enter('LEARNING_PROGRESS');
+      const progress = await repository.getLearningProgress(chapter.chapterId);
+      trace.returned({ count: progress.length });
+      trace.enter('CHAPTER_PROGRESS');
+      if (
+        !progress.some(
+          (row) =>
+            row.scope === 'chapter' && row.reviewCompleted >= cards.length,
+        )
+      )
+        return fail('FUNCTIONAL_STUDENT_FAILED');
+      trace.returned();
+      return {
+        completedCards: cards.length,
+        progressConfirmed: true,
+        mediaDoesNotBlockCompletion: true,
+      };
+    } catch (error) {
+      trace.failed(error);
+      throw error;
     }
-    const completed = await repository.listReviewProgress();
-    if (
-      cards.some(
-        (card) =>
-          !completed.some(
-            (row) =>
-              row.reviewCardId === card.cardId &&
-              row.cardVersion === card.version,
-          ),
-      )
-    )
-      return fail('FUNCTIONAL_STUDENT_FAILED');
-    const progress = await repository.getLearningProgress(chapter.chapterId);
-    if (
-      !progress.some(
-        (row) => row.scope === 'chapter' && row.reviewCompleted >= cards.length,
-      )
-    )
-      return fail('FUNCTIONAL_STUDENT_FAILED');
-    return {
-      completedCards: cards.length,
-      progressConfirmed: true,
-      mediaDoesNotBlockCompletion: true,
-    };
   }, 'FUNCTIONAL_STUDENT_FAILED');
 export const remediationFunctional = async (
   page: Page,
