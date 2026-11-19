@@ -1,3 +1,4 @@
+import { createCapacityRootCallAdmission } from './capacity-root-call-admission';
 import {
   createRootHelperDiagnostics,
   type RootHelperObserver,
@@ -327,6 +328,9 @@ export const loadCapacityRuntime = async (
       callCompletedAtNodeMs: number;
     }[] = [];
     const helperDiagnostics = createRootHelperDiagnostics();
+    const profileRuntime =
+      'profileRuntime' in config ? config.profileRuntime : undefined;
+    const admission = profileRuntime ? createCapacityRootCallAdmission() : null;
     const call = async (
       helper: Helper,
       input: unknown,
@@ -334,80 +338,95 @@ export const loadCapacityRuntime = async (
     ) => {
       if (ownedSignal.aborted) return capacityFailure();
       const callStartedAtNodeMs = performance.now();
-      const profileRuntime =
-        'profileRuntime' in config ? config.profileRuntime : undefined;
       const diagnostic = helperDiagnostics.begin(helper, callStartedAtNodeMs);
-      diagnostic.phase('PRE_VERIFY', 'ENTERED');
+      const isAborted = () => ownedSignal.aborted;
+      let release: (() => void) | undefined;
       try {
-        await profileRuntime?.verify(diagnostic.phase.bind(diagnostic));
-        diagnostic.phase('PRE_VERIFY', 'COMPLETED');
-      } catch (error) {
-        diagnostic.phase('PRE_VERIFY', 'FAILED');
-        diagnostic.finish();
-        throw error;
-      }
-      const started = performance.now();
-      let outcome: 'ok' | 'unknown' = 'unknown';
-      diagnostic.phase('EXECUTE', 'ENTERED');
-      try {
-        const helperArgs =
-          helper === 'host-sample.py' ||
-          helper === 'vm-sample.py' ||
-          helper === 'linux-host-sample.py' ||
-          helper === 'backend-cgroup-sample.py'
-            ? []
-            : args;
-        const value = profileRuntime
-          ? await io.execute(
-              helper,
-              helperArgs,
-              input,
-              ownedSignal,
-              profileRuntime.closure,
-              diagnostic.observe,
-            )
-          : await io.execute(
-              helper,
-              helperArgs,
-              input,
-              ownedSignal,
-              undefined,
-              diagnostic.observe,
-            );
-        outcome = 'ok';
-        diagnostic.phase('EXECUTE', 'COMPLETED');
-        return value;
-      } catch (error) {
-        diagnostic.phase('EXECUTE', 'FAILED');
-        throw error;
-      } finally {
-        const executeClosedAtNodeMs = performance.now();
-        diagnostic.phase('POST_VERIFY', 'ENTERED');
-        try {
-          await profileRuntime?.verify(diagnostic.phase.bind(diagnostic)).then(
-            () => {
-              diagnostic.phase('POST_VERIFY', 'COMPLETED');
-            },
-            (error: unknown) => {
-              diagnostic.phase('POST_VERIFY', 'FAILED');
-              throw error;
-            },
-          );
-          if (!profileRuntime) diagnostic.phase('POST_VERIFY', 'COMPLETED');
-        } finally {
-          diagnostic.finish();
+        if (
+          admission &&
+          helper !== 'linux-host-sample.py' &&
+          helper !== 'backend-cgroup-sample.py'
+        ) {
+          release = await admission.acquire(ownedSignal);
+          if (isAborted()) return capacityFailure();
         }
-        const callCompletedAtNodeMs = performance.now();
-        if (accounting.length < 10000)
-          accounting.push({
-            helper,
-            elapsedMs: Math.max(0, callCompletedAtNodeMs - started),
-            outcome,
-            callStartedAtNodeMs,
-            executeStartedAtNodeMs: started,
-            executeClosedAtNodeMs,
-            callCompletedAtNodeMs,
-          });
+        diagnostic.phase('PRE_VERIFY', 'ENTERED');
+        try {
+          await profileRuntime?.verify(diagnostic.phase.bind(diagnostic));
+          diagnostic.phase('PRE_VERIFY', 'COMPLETED');
+        } catch (error) {
+          diagnostic.phase('PRE_VERIFY', 'FAILED');
+          diagnostic.finish();
+          throw error;
+        }
+        const started = performance.now();
+        let outcome: 'ok' | 'unknown' = 'unknown';
+        diagnostic.phase('EXECUTE', 'ENTERED');
+        try {
+          const helperArgs =
+            helper === 'host-sample.py' ||
+            helper === 'vm-sample.py' ||
+            helper === 'linux-host-sample.py' ||
+            helper === 'backend-cgroup-sample.py'
+              ? []
+              : args;
+          const value = profileRuntime
+            ? await io.execute(
+                helper,
+                helperArgs,
+                input,
+                ownedSignal,
+                profileRuntime.closure,
+                diagnostic.observe,
+              )
+            : await io.execute(
+                helper,
+                helperArgs,
+                input,
+                ownedSignal,
+                undefined,
+                diagnostic.observe,
+              );
+          outcome = 'ok';
+          diagnostic.phase('EXECUTE', 'COMPLETED');
+          return value;
+        } catch (error) {
+          diagnostic.phase('EXECUTE', 'FAILED');
+          throw error;
+        } finally {
+          const executeClosedAtNodeMs = performance.now();
+          diagnostic.phase('POST_VERIFY', 'ENTERED');
+          try {
+            await profileRuntime
+              ?.verify(diagnostic.phase.bind(diagnostic))
+              .then(
+                () => {
+                  diagnostic.phase('POST_VERIFY', 'COMPLETED');
+                },
+                (error: unknown) => {
+                  diagnostic.phase('POST_VERIFY', 'FAILED');
+                  throw error;
+                },
+              );
+            if (!profileRuntime) diagnostic.phase('POST_VERIFY', 'COMPLETED');
+          } finally {
+            diagnostic.finish();
+          }
+          const callCompletedAtNodeMs = performance.now();
+          if (accounting.length < 10000)
+            accounting.push({
+              helper,
+              elapsedMs: Math.max(0, callCompletedAtNodeMs - started),
+              outcome,
+              callStartedAtNodeMs,
+              executeStartedAtNodeMs: started,
+              executeClosedAtNodeMs,
+              callCompletedAtNodeMs,
+            });
+        }
+      } finally {
+        diagnostic.finish();
+        release?.();
       }
     };
     const verify = <

@@ -541,6 +541,50 @@ it.each(['before', 'after'])(
   },
 );
 
+const loadAdmissionRuntime = (
+  f: Awaited<ReturnType<typeof fixture>>,
+  signal = new AbortController().signal,
+) =>
+  loadCapacityRuntime(
+    f.path,
+    signal,
+    f.io,
+    sha256(required(f.files.get(f.path))),
+  );
+
+it('admits only four complete Linux nonhealth calls before PRE_VERIFY', async () => {
+  const f = await fixture(true);
+  const runtime = await loadAdmissionRuntime(f);
+  const originalRead = f.io.read;
+  const gate = Promise.withResolvers<undefined>();
+  let metadataEntered = 0;
+  f.io.read = async (path) => {
+    if (path === join(CAPACITY_RUNTIME_ROOT, 'execution-profile.json')) {
+      metadataEntered++;
+      await gate.promise;
+    }
+    return originalRead(path);
+  };
+  f.io.execute.mockClear();
+  const tasks = Array.from({ length: 6 }, () => runtime.preflight());
+  try {
+    await vi.waitFor(() => {
+      expect(metadataEntered).toBeGreaterThanOrEqual(4);
+    });
+    expect(metadataEntered).toBe(4);
+    expect(f.io.execute).not.toHaveBeenCalled();
+    const diagnostics = runtime.rootDiagnostics();
+    expect(diagnostics.calls).toHaveLength(6);
+    expect(diagnostics.calls.filter((c) => c.events.length === 0)).toHaveLength(
+      2,
+    );
+  } finally {
+    gate.resolve(undefined);
+    await Promise.allSettled(tasks);
+  }
+  expect(f.io.execute).toHaveBeenCalledTimes(6);
+});
+
 it('actual runtime retains an execute failure diagnostic while original error still rejects', async () => {
   const f = await fixture(true),
     runtime = await loadCapacityRuntime(
@@ -559,4 +603,170 @@ it('actual runtime retains an execute failure diagnostic while original error st
     executorWitness: 'UNOBSERVED',
     firstFailure: { event: 'EXECUTE', state: 'FAILED' },
   });
+});
+
+it('keeps health fully verified and accessible while non-health post-verifies hold slots', async () => {
+  const f = await fixture(true);
+  const runtime = await loadAdmissionRuntime(f);
+  const read = f.io.read;
+  const gate = Promise.withResolvers<undefined>();
+  let metadata = 0;
+  f.io.read = async (path) => {
+    if (path === join(CAPACITY_RUNTIME_ROOT, 'execution-profile.json')) {
+      metadata++;
+      if (metadata > 4 && metadata <= 8) await gate.promise;
+    }
+    return read(path);
+  };
+  const work = Array.from({ length: 4 }, () => runtime.preflight());
+  try {
+    await vi.waitFor(() => {
+      expect(metadata).toBe(8);
+    });
+    work.push(runtime.preflight());
+    await Promise.all([
+      runtime.host({}, new AbortController().signal),
+      runtime.backend(new AbortController().signal),
+    ]);
+    expect(metadata).toBe(12);
+    expect(runtime.rootDiagnostics().calls[4]?.events).toEqual([]);
+  } finally {
+    gate.resolve(undefined);
+    await Promise.allSettled(work);
+  }
+  expect(runtime.rootAccounting()).toHaveLength(7);
+  expect(runtime.rootDiagnostics().calls.every((call) => call.finished)).toBe(
+    true,
+  );
+});
+
+it.each(['pre', 'execute', 'post', 'execute+post'])(
+  'preserves %s failure identity and releases its whole-call slot',
+  async (phase) => {
+    const f = await fixture(true);
+    const runtime = await loadAdmissionRuntime(f);
+    const original = new Error('SYNTHETIC_ORIGINAL');
+    const post = new Error('SYNTHETIC_POST');
+    const read = f.io.read;
+    let executed = false;
+    f.io.read = (path) => {
+      if (
+        path === join(CAPACITY_RUNTIME_ROOT, 'execution-profile.json') &&
+        (phase === 'pre' || (executed && phase.includes('post')))
+      )
+        return Promise.reject(phase === 'execute+post' ? post : original);
+      return read(path);
+    };
+    const execute = required(f.io.execute.getMockImplementation());
+    f.io.execute.mockImplementationOnce(async (...args) => {
+      executed = true;
+      if (phase.includes('execute')) throw original;
+      return execute(...args);
+    });
+    await expect(runtime.preflight()).rejects.toBe(
+      phase === 'execute+post' ? post : original,
+    );
+    f.io.read = read;
+    const gate = Promise.withResolvers<undefined>();
+    let entered = 0;
+    f.io.execute.mockReset();
+    f.io.execute.mockImplementation(async (...args) => {
+      entered++;
+      await gate.promise;
+      return execute(...args);
+    });
+    const work = Array.from({ length: 4 }, () => runtime.preflight());
+    try {
+      await vi.waitFor(() => {
+        expect(entered).toBe(4);
+      });
+    } finally {
+      gate.resolve(undefined);
+      await Promise.allSettled(work);
+    }
+  },
+);
+
+it('seals a queued abort without starting verification or releasing inflight work', async () => {
+  const f = await fixture(true);
+  const controller = new AbortController();
+  const runtime = await loadAdmissionRuntime(f, controller.signal);
+  f.io.execute.mockClear();
+  const gate = Promise.withResolvers<undefined>();
+  const execute = required(f.io.execute.getMockImplementation());
+  f.io.execute.mockImplementation(async (...args) => {
+    await gate.promise;
+    return execute(...args);
+  });
+  const work = Array.from({ length: 5 }, () => runtime.preflight());
+  const settled = Promise.allSettled(work);
+  try {
+    await vi.waitFor(() => {
+      expect(f.io.execute).toHaveBeenCalledTimes(4);
+    });
+    controller.abort();
+    await expect(work[4]).rejects.toThrow('CAPACITY_EVIDENCE_INVALID');
+    expect(f.io.execute).toHaveBeenCalledTimes(4);
+    expect(runtime.rootDiagnostics().calls[4]).toMatchObject({
+      finished: true,
+      events: [],
+      executorWitness: 'UNOBSERVED',
+    });
+    expect(runtime.rootDiagnostics().calls[0]?.finished).toBe(false);
+  } finally {
+    gate.resolve(undefined);
+    await settled;
+  }
+  expect(runtime.rootDiagnostics().calls.every((call) => call.finished)).toBe(
+    true,
+  );
+});
+
+it('rechecks abort after grant before any verification or execute', async () => {
+  const f = await fixture(true);
+  const runtime = await loadAdmissionRuntime(f);
+  f.io.execute.mockClear();
+  const controller = new AbortController();
+  const task = runtime.retention(
+    {
+      checkpoint: 'before',
+      sequence: 0,
+      previousProofSha256: null,
+      completedRegistrationCohorts: [],
+    },
+    controller.signal,
+  );
+  controller.abort();
+  await expect(task).rejects.toThrow('CAPACITY_EVIDENCE_INVALID');
+  expect(f.io.execute).not.toHaveBeenCalled();
+  expect(runtime.rootDiagnostics().calls[0]).toMatchObject({
+    finished: true,
+    events: [],
+  });
+});
+
+it('keeps unprofiled legacy calls outside the Linux admission pool', async () => {
+  const f = await fixture();
+  const runtime = await loadCapacityRuntime(
+    f.path,
+    new AbortController().signal,
+    f.io,
+  );
+  const execute = required(f.io.execute.getMockImplementation());
+  const gate = Promise.withResolvers<undefined>();
+  let entered = 0;
+  f.io.execute.mockImplementation(async (...args) => {
+    entered++;
+    await gate.promise;
+    return execute(...args);
+  });
+  const tasks = Array.from({ length: 6 }, () => runtime.preflight());
+  try {
+    await vi.waitFor(() => {
+      expect(entered).toBe(6);
+    });
+  } finally {
+    gate.resolve(undefined);
+    await Promise.allSettled(tasks);
+  }
 });
