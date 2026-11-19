@@ -1,7 +1,9 @@
+import { emitLiveTrace, type LiveTrace } from './live-reconcile-diagnostics';
 import type { LiveSessionState } from '../types';
 
 type Read = () => Promise<LiveSessionState>;
 interface Slot {
+  trace: LiveTrace | undefined;
   read: Read;
   promise: Promise<LiveSessionState>;
   resolve: (state: LiveSessionState) => void;
@@ -13,7 +15,7 @@ interface Entry {
   idle: Set<() => void>;
 }
 const owners = new WeakMap<object, Map<string, Entry>>();
-const slot = (read: Read): Slot => {
+const slot = (read: Read, trace?: LiveTrace): Slot => {
   // Promise executors assign these synchronously before the slot is returned.
   let resolve!: Slot['resolve'];
   let reject!: Slot['reject'];
@@ -21,7 +23,7 @@ const slot = (read: Read): Slot => {
     resolve = done;
     reject = failed;
   });
-  return { read, promise, resolve, reject };
+  return { read, promise, resolve, reject, trace };
 };
 const start = (
   entries: Map<string, Entry>,
@@ -30,6 +32,7 @@ const start = (
   next: Slot,
 ) => {
   entry.active = next;
+  emitLiveTrace(next.trace, 'READ_START');
   const settled = () => {
     const queued = entry.queued;
     entry.queued = null;
@@ -43,8 +46,18 @@ const start = (
   };
   void next.promise.then(settled, settled);
   try {
-    void next.read().then(next.resolve, next.reject);
+    void next.read().then(
+      (value) => {
+        emitLiveTrace(next.trace, 'READ_RETURN', value);
+        next.resolve(value);
+      },
+      (error: unknown) => {
+        emitLiveTrace(next.trace, 'READ_FAIL');
+        next.reject(error);
+      },
+    );
   } catch (error) {
+    emitLiveTrace(next.trace, 'READ_THROW');
     next.reject(error);
   }
 };
@@ -55,6 +68,7 @@ export const readLiveState = (
   owner: object,
   key: string,
   read: Read,
+  trace?: LiveTrace,
 ): Promise<LiveSessionState> => {
   let entries = owners.get(owner);
   if (!entries) {
@@ -67,11 +81,14 @@ export const readLiveState = (
     entries.set(key, entry);
   }
   if (entry.active) {
-    entry.queued ??= slot(read);
+    emitLiveTrace(trace, 'COORD_ACTIVE');
+    emitLiveTrace(trace, entry.queued ? 'COORD_COALESCE' : 'COORD_QUEUE');
+    entry.queued ??= slot(read, trace);
+    entry.queued.trace = trace;
     entry.queued.read = read;
     return entry.queued.promise;
   }
-  const next = slot(read);
+  const next = slot(read, trace);
   start(entries, key, entry, next);
   return next.promise;
 };

@@ -5,12 +5,16 @@ import {
   CancelledError,
   type UseQueryResult,
 } from '@tanstack/react-query';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import type { Database } from '../../../types/database';
 import { parsePublicEnv } from '../../../lib/config/public-env';
 import { getBrowserSupabaseClient } from '../../../lib/supabase/browser-client';
 import { createLiveRepository } from '../api/live-repository';
+import {
+  createLiveReconcileDiagnostics,
+  emitLiveTrace,
+} from '../lib/live-reconcile-diagnostics';
 import { createLiveReconcileScheduler } from '../lib/live-reconcile-scheduler';
 import {
   pendingLiveStateReads,
@@ -57,6 +61,11 @@ export function useLiveSession(
     getBrowserSupabaseClient(parsePublicEnv(import.meta.env));
   const repository = dependencies?.repository ?? createLiveRepository(client);
   const queryClient = useQueryClient();
+  const trace = useMemo(
+    () => createLiveReconcileDiagnostics(),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Restart document trace generation for the exact query owner/key.
+    [queryClient, sessionId],
+  );
   const lifecycleRef = useRef<ReturnType<
     typeof createLiveSubscriptionLifecycle
   > | null>(null);
@@ -79,10 +88,15 @@ export function useLiveSession(
 
   const query = useQuery<LiveSessionState, LiveRepositoryError>({
     enabled: sessionId.length > 0,
-    queryFn: () =>
-      readLiveState(queryClient, sessionId, () =>
-        repository.getState(sessionId),
-      ),
+    queryFn: () => {
+      emitLiveTrace(trace, 'QUERY_REQUEST');
+      return readLiveState(
+        queryClient,
+        sessionId,
+        () => repository.getState(sessionId),
+        trace,
+      );
+    },
     queryKey: liveKeys.session(sessionId),
     retry: (failureCount, error) =>
       error.code === 'UNAVAILABLE' && failureCount < 2,
@@ -92,22 +106,59 @@ export function useLiveSession(
     if (sessionId.length === 0) return;
     const key = liveKeys.session(sessionId);
     let disposed = false;
+    const unobserve = trace
+      ? queryClient.getQueryCache().subscribe((event) => {
+          try {
+            const observedKey: unknown = event.query.queryKey;
+            if (
+              !Array.isArray(observedKey) ||
+              observedKey.length !== key.length ||
+              !observedKey.every(
+                (part: unknown, index: number) => part === key[index],
+              )
+            )
+              return;
+            if (event.type === 'updated')
+              emitLiveTrace(
+                trace,
+                event.action.type === 'success'
+                  ? 'CACHE_UPDATE'
+                  : 'CACHE_OTHER',
+                event.query.state.data,
+              );
+            else if (event.type === 'removed')
+              emitLiveTrace(trace, 'CACHE_REMOVED');
+          } catch {
+            emitLiveTrace(trace, 'TRACE_UNAVAILABLE');
+          }
+        })
+      : undefined;
     const scheduler = createLiveReconcileScheduler({
+      trace,
       reconcile: async () => {
         const current = queryClient
           .getQueryCache()
           .find({ queryKey: key, exact: true });
         // Joining an initial/in-flight read is not a fresh reconciliation.
         try {
-          if (current && current.state.fetchStatus !== 'idle')
+          if (current && current.state.fetchStatus !== 'idle') {
+            emitLiveTrace(trace, 'WAIT_QUERY');
             await current.promise;
+          }
         } catch (error) {
           if (!(error instanceof CancelledError)) throw error;
         } finally {
           const physical = pendingLiveStateReads(queryClient, sessionId);
-          if (physical) await physical;
+          if (physical) {
+            emitLiveTrace(trace, 'WAIT_PHYSICAL');
+            await physical;
+          }
         }
-        if (disposed) return;
+        if (disposed) {
+          emitLiveTrace(trace, 'RECONCILE_DISPOSED');
+          return;
+        }
+        emitLiveTrace(trace, 'REFETCH');
         const refetch = queryClient.refetchQueries(
           { queryKey: key, exact: true, type: 'active' },
           { cancelRefetch: false, throwOnError: true },
@@ -121,12 +172,19 @@ export function useLiveSession(
           ]);
         } finally {
           const physical = pendingLiveStateReads(queryClient, sessionId);
-          if (physical) await physical;
+          if (physical) {
+            emitLiveTrace(trace, 'WAIT_PHYSICAL');
+            await physical;
+          }
         }
+        emitLiveTrace(trace, 'RECONCILE_RETURN');
       },
     });
     const handleBroadcast = (message: { payload: unknown }) => {
-      if (disposed) return;
+      if (disposed) {
+        emitLiveTrace(trace, 'HANDLER_INACTIVE');
+        return;
+      }
       // Realtime is transport only. Messages below the cached version are
       // echoes we already reconciled; an equal-version message carries live
       // progress within the same state (answered or participant counts) and
@@ -140,11 +198,16 @@ export function useLiveSession(
       };
       const cached = queryClient.getQueryData<LiveSessionState>(key);
       if (typeof payload.state_version === 'number' && cached) {
-        if (payload.state_version < cached.stateVersion) return;
+        if (payload.state_version < cached.stateVersion) {
+          emitLiveTrace(trace, 'HANDLER_OLDER', payload);
+          return;
+        }
         if (payload.state_version === cached.stateVersion) {
+          emitLiveTrace(trace, 'HANDLER_EQUAL', payload);
           if (typeof payload.joined_display_name === 'string') {
             // A join changes the lobby roster, so take the authoritative
             // fetch instead of a count-only patch.
+            emitLiveTrace(trace, 'HANDLER_ROSTER', payload);
             scheduler.request('roster');
             return;
           }
@@ -169,6 +232,7 @@ export function useLiveSession(
           return;
         }
       }
+      emitLiveTrace(trace, 'HANDLER_AUTHORITATIVE', payload);
       scheduler.request('authoritative');
     };
     const lifecycle = createLiveSubscriptionLifecycle({
@@ -178,8 +242,18 @@ export function useLiveSession(
         }),
       attach: (channel, broadcast, status) => {
         channel
-          .on('broadcast', { event: 'live_state' }, broadcast)
-          .subscribe(status);
+          .on(
+            'broadcast',
+            { event: 'live_state' },
+            (message: { payload: unknown }) => {
+              emitLiveTrace(trace, 'SDK_CALLBACK', message);
+              broadcast(message);
+            },
+          )
+          .subscribe((value, error) => {
+            emitLiveTrace(trace, 'SDK_STATUS');
+            status(value, error);
+          });
       },
       removeChannel: (channel) => client.removeChannel(channel),
       onChange: (state) => {
@@ -192,12 +266,14 @@ export function useLiveSession(
     });
     lifecycleRef.current = lifecycle;
     return () => {
+      emitLiveTrace(trace, 'GENERATION_CLOSE');
+      unobserve?.();
       disposed = true;
       scheduler.dispose();
       lifecycle.dispose();
       if (lifecycleRef.current === lifecycle) lifecycleRef.current = null;
     };
-  }, [client, queryClient, sessionId]);
+  }, [client, queryClient, sessionId, trace]);
 
   return {
     ...query,

@@ -4005,3 +4005,67 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Root review cdfeb39462edc21452e16d2421be2a3eb93e6aa4f088c525900cd3f7c5fe836b，packet 3dafd6a0f4f556cf6ee84aa95ca5c5fc56cbd124db9fa7c2667f14d346a6e1d4／140 records56 checks，freeze-v3 66ecf84f40792a1e2bbce1e5c8105cb96832975125112b28cf1bbbab9a78d9ba；67files1216tests、type/lint/owned-format/import/AST/static/inverse/diff PASS。唯一一輪 R1 body 停止期間 tracking/drain、R2 prototype getter 兩項清除，有效 RED→GREEN；Root actual exported getter control0/rows0/UNAVAILABLE。
 - 六Source四tests範圍；Root直接重算全部140記錄、14978保護輸入與Original9/prefix後，才做雙根brief單一空白行格式修正11d43→8380b，原bytes與證據保留；此為Root文件差異，不是假報所有保護現值仍一樣。新helper495/directtest500行。原兩wait/20s/locator/error/answer及產品Source未改。
 - Native22第5題根因仍UNKNOWN，診斷task不是capacityPASS。下一保存新exactSource／normalFF專用Local分支，再freshVM23原full15。VM23 k23b51/europe-west6-b draft/startupd7cfd004...，12CPU32G/3h正常STOP/noSA/Ops/Workload/新100GBretain，尚未Create；全22舊VM STOPPED/repo0，未rerun/restart/delete。基本預留44.0208/next3/planned47.0208非invoice/US150/noPaid，磁碟持續費與刪除pending；通過後Staging，Production禁。
+
+### 2026-11-19 — M80 新 exact Source／VM23 已建立
+
+- 已保存 exact Source 9eb3bf3020c3bc5edd6fb950f0870d51f8577b42/treed00b440ff64f106f569fb285d6dc2eb29ede2d27/parentb146，10 Source/test＋4 Rootdocs 正常FF Local專用分支；newrun44430482237/job135246284885/attempt1 queued。初次 sandbox ls-remote 網路受限，授權網路後 normalFF 成功，沒有舊run重試。
+- Fresh VM23 k23b51/europe-west6-b 已按Create一次，Google顯示建立／更新中；startupd7cfd004... 25885chars從實際textbox重算吻合。12CPU32G/IceLake/Ubuntu24.04/new100GBbalancedretain/noSA/Ops/Workload/HTTP/HTTPS/LB/display/snapshot，3h正常STOP+1min/noRestart。Create前全22strictSTOPPED，repo0。基本配置預留47.0208非invoice／US150/noPaid；Stock與真kernel及Source admission待實際開機驗證後才註冊單次runner。
+- Root13份唯讀／service helpers已離線template outer+embeddedcompile與inverse exact；IP/boot/runnerID待Google真值，kernel及Source admission已離線準備43Source+5kernel。Root一個runner census檔名未替換，O_EXCL拒覆舊證據，v2全新檔名實際repo0；原FAIL保留。Protected Original9與prefix不變；Hosted0/Production禁。
+
+### 2026-11-19 — VM23 真環境 admission／完整 Local 測試啟動
+
+- VM23 6562612926397807456/k23b51/europe-west6-b/34.65.162.26，created2026-11-19T00:40:48Z/normalAutoStop2026-11-19T03:39:53Z，actual12CPU33645502464B/IceLake/free98844790784B。Google序列埠兩份一致收據＋獨立hostblockfpSHA256:oLk6e9/kPKApd/CM7EHaADJppaybhDYCDZ9erzWhqTI，boot92cbc3396f80c9f11a182f6b4e5b4d4c8f4c8310631b995afb8d19fe90f8e59e；strictSSH preflight吻合，未沿用舊key。
+- fresh4realKernel PASS、8cgroupsremoved、resultf8ec970d9d6c8c7b3b0a77188cee6ef90143265abbc28d65909558349f224cdf；Root43Source+5kernel Gitshow核對/actual46manifest48dir35installed通過，才註冊runner43。officialsvc已start/MainPID3652/cp-capacity/Restartno/APT0a138/Docker29.1.3 classicempty；newexact9eb3bf3/run44430482237/attempt1原full15，尚無本輪capacityPASS。
+- Root12readonlyhelpers outer/embeddedcompile+模板inverseexact，service額外依actualrunner43/Googleboot與IP編譯。全部舊22STOPPED，沒有rerun/restart/delete；基本配置預留47.0208非invoice/US150/noPaid、磁碟持續費與永久清理pending。Root下一追蹤全矩陣、真age/coldcustody與唯一Nativereview，通過後Staging；Hosted0/Production禁。
+
+### 2026-11-19 — M80 診斷讀值時序資格補註（唯讀）
+
+- Root 主動確認 actual failure-only UI evaluate 若在stopAccepting之後成功，callback的valid(page)會因acceptingfalse/ownedclear而丟棄，promise仍drain；原測試正向僅stop之前，cleanup成功不等於UI採集成功。相同worker只讀確認，未開第二review／未改Source或packet。
+- 不能據此宣稱VM23全部UI都遺失：actual runner先await partial_failure retention後才finally stop，存在合法採集窗口但無保證。Root將核真VM23 ui.collection再決定是否需有界補強，不臆測第5題根因，也不改已執行exactSource或重跑舊run。
+- GCP試用最新顯示89days/credit$9427.82，幣別仍UNKNOWN；Billing費用$237/抵免$237/應付$0為目前畫面而非美元或最終invoice。預留US47.0208與US150上限保，沒有付費升級或帳務寫入。
+
+### 2026-11-19 — Native23 再現q5 COUNTER／真age與cold已核，等待原hold後STOP
+
+- exact9eb3bf3020c3bc5edd6fb950f0870d51f8577b42/run44430482237/job135246284885/attempt1，functional15PASS（wsb-261119-71373d8b9e80）；capacity8/15PASS，planwsc-261119-46eadaaec798/106identities/profile2272ca0dc7d69d3ccf43d586d8a3966fa55f86f806d61fe6b1f57c55273f3ca7。fresh40/60 trueSLOPASS，existing3/10/20全20題；40wcr-261119-d633d4309e2f INCONCLUSIVE、後6級未試，非full60通過。
+- 新M80實證：39/39 failedWait COUNTER/UI OBSERVED/closedtrue/pending0；Nodeq5open/v11，browser最後既有accepted HTTP公開狀態仍q4feedback/v10，實際DOMfeedbackVISIBLE、counter/hint/error/waiting/loadingHIDDEN。前4題confirmed；firstactor9/ordinal3665/156025.935928ms/signalfalse且早於finally/signal。沒有Querycache直接讀取或唯一rootcause證明。同worker只讀追privatebroadcast→coordinator→UI，先不改檔；M80 poststop失值資格本輪未發生，不擴scope猜修。
+- 40entry66.017/login39.386ms<250，80physicalHTTP200/readback40/cohort40closed/pending0。healthVALID/noReasons/PSS7383403520<12GiB/Node1051897856/backend4CPU6GiB/PSI-swap-OOM0/eventloopP95max235.799ms但guardduration0；4operationinvalid0/10parentscomplete/noCause/residue0/stderr0。
+- artifact14487623898 ZIP49390035B/42362f15a65b8cca7922ac173889b1ec691d7f049f0ed6956f1e289f8d27f8bd；cipher49389897B/64d9b193e0dfb06286da1e1680525a0f027bc97e2445fdef9695cb5eada80942，真age4740files238034364B/outer83670bffe8376f1f6afe3b6fa853a5dd4b2aca99da1f06e42ee6146bddd245e2。cold4667/d78b41a75112174d3529d87867293daf49206715177d1e9bbb29e853887757e8，8servicesstop/2DB127tables31roles/3volhashportablemetadata全符，未restore。Root實際重算43Source5kernel/Original9prefix/4entry4LiveSSH-ageparity，custody6c7ee7d54cf39f664feca907fe8056132dcae1d12403e6e4dcfed2843fb98126；bootstrap25files31092B另保存。
+- 原suite01:08:12failure/upload01:08:15success，原hold01:08:15→01:18:15（尚未結束）；需等自然hold＋jobterminal/repo0後normalSTOP一次，fresh全23strictSTOPPED、IP釋放才寫Root final/雙根review。尚未Stop/不重跑、不restart/delete，US47.0208基本預留非invoice/US150/noPaid。CUA vm21ConsoleTab仍VM23serial；vm22ConsoleTab目前Google Billing付款設定唯讀頁，尚未回inventory；browser5，不能誤當舊inventory快照。
+- Staging預檢完整430files4936tests：427files4931testsPASS、3files5FAIL，確定browser executable1255缺少；未改Source/斷言，鎖定官方Chromium僅安裝sibling live-recovery-runtime/staging-preflight-browsers，3focusedfiles重驗PASS（11s），初FAIL保留。完整coverage-v2以同門檻2workers/isolatedbrowser正在session43735，不是GitHub requiredcheck；環境修正後才一次完整預檢。未執行全Phase8 pnpmacceptance（evidence-manifest單元內syntheticwrapper不算正式驗收）。
+- freshStaging唯讀d92be82/remote120local121/pending僅20261116000100/remote-only0/10FunctionsACTIVE；privatePRdraft-v2未發佈且需等最終Localfull15重寫。Hosted寫入0/Production禁；M81正式brief待Root完整Nativereview與真cause分析，不在中途以最終回覆停止。
+
+### 2026-11-19 — 完整單元預檢430files4936tests PASS／Native23正常STOP進行中
+
+- 缺少locked Chromium的環境修復後，3focusedfiles PASS；一次完整coverage-v2 430files4936tests PASS，statements83.91/branches76.96/functions81.92/lines86.22%，原門檻全通；result logSHA d81c270d424c8116abc8de1fc209def5f6ff20f0542d0ba0e6971f27d04a5431。原3files5FAIL完整保留，未改產品Source/斷言，不是GitHub requiredcheck或Phase8全驗收。
+- 原Native23hold自然01:08:15→01:18:16success，job01:18:19failure，repo runners0。RootUI對確切k23b51/6562612926397807456正常STOP僅一次，skipGracefalse；latestfresh inventory23rows，22STOPPED＋VM23STOPPING，尚未strictSTOPPED／IP仍顯示，不能先報全部停止。需freshreload等完成後保存strict-stopped/screenshot、CUA completion、Root唯一Nativefinal/雙根review。不要再按Stop，不作後續SSH或重跑／restart/delete。
+- Source只讀查明沒有固定4次讀取上限；parenthook位於LiveSessionPage頂層不因feedback childearlyreturn卸載；v11若進active handler/cachev10必requestauthoritative，staleTime30s不阻擋，coordinator1active+1queued完成刪entry。實際v11未到browser／未到callback／pending read阻擋三者尚不能分。
+- DB來源每答1aggregate broadcast，最後一答另feedback，advance另open；39答×40subscriber＋2phase×40=1640理論fanout/題，這不是實測quota計費或頻率。repo未設Realtime event/bytes/join限額；真cold container-inventory映像 public.ecr.aws/supabase/realtime:v2.112.6，選定非secret Env限額allowlist沒有值，effective tenant overrides/closed quota-drop-error counts UNKNOWN。不讀全Env/任意rawlog，不以猜測調高限制或新增高頻poll。Root尚未發M81，worker只讀收束上下游方案；本機無pg_restore，不為解dump安裝或啟動DB。
+
+### 2026-11-19 — Native23 Root唯一審查完成／全23正常STOP
+
+- Root final3da3f7e200e726307a5e80483ce83ebb2fc12764be01a934d3146b481c129caa，雙根reviewdocs/reviews/2026-11-19-gcp-vm23-question-counter-observed-inconclusive.md；8/15容量PASS、functional15PASS、q5COUNTER39/UIOBSERVED39，未達full60，不進Staging。真age/cold/43Source5kernel/Original9prefix/4entry4Liveparity與收尾核對已完成，詳前段與review。
+- 原hold自然完成01:18:16、job01:18:19failure/repo0；正常STOP一次/skipGracefalse，fresh Google全23strictSTOPPED/IPreleased，screenshot .git/m80-vm23-startup/stopped-20261119.png 已嵌入Codex。沒有後續SSH、重試、restart或delete。2300GB保留磁碟持續費、清理pending；基本預留47.0208非invoice/US150/noPaid。
+- 完整coverage430files4936tests PASS，初missingChromium 5FAIL保。下一先讀固定Realtime tag v2.112.6/commitb19bbb54ed400387072e389f4410624abd36a9fc 的有效限額來源與閉集錯誤名；現有quota/drop證據UNKNOWN，無pg_restore且不安裝/啟DB，不猜修或用高頻poll。Worker只讀分析完成，未開M81；Root將合併完整鏈診斷有界brief後同worker實作、Root唯一review，新Source才fresh原full15。通過後Staging，Production禁，不中途結束總任務。
+
+### 2026-11-19 — M81前完整上游來源核對／VM24離線準備（未Create）
+
+- 固定Realtime v2.112.6/commitb19bbb54ed400387072e389f4410624abd36a9fc：10份公開來源；固定CLI v2.109.1/tagcommit6d4c19870ed213ba7f682f117d0345c8a40bfa94 的 apps/cli-go/internal/start/start.go，合計11個Gitblob SHA1全核；.git/m81-realtime-upstream-readonly/manifest-v2.json。初GitHubCLI舊internal/start路徑404保為只讀失敗，實際recursive tree找到monorepo新路徑；沒有跟錯版本。初完整tree寫Node超64k被工具拒，改只保存有界selected-index，11Source分16k資料塊保存成功，無需額外批准。
+- 官方code facts：runtime defaults events100/bytes100000/channels100/users200/joins100；Tenant.changeset在DB欄位未設時才補default。Tenants.events_per_second_rate tick5s/maxbucket12/measurementavg（60s滑動平均），logger MessagePerSecondRateLimitReached。replication_connection.ex:410–465/501–504 triggered→too_many_requests→UnableToBroadcastChanges並不發該broadcast。MessageDispatcher每subscriber送update_rate_counter。這可形成與前4題後卡住相容的假設，但不是實際effective tenant或超限實證，兩者仍UNKNOWN。CLIstart僅SEED_SELF_HOSTtrue等、不覆寫quota；真coldEnv DB_NAMEpostgres/DB_AFTER_CONNECT_QUERYSETsearch_path_realtime/SEED_SELF_HOSTtrue，有限quotaEnv欄位空。
+- 離線dump工具預檢未能執行：本機無pg_restore，Docker context實為colima/socket/.colima/default/docker.sock且daemon停。先前imageinspect return非0曾記cachedImageExistsfalse，補獨立qualification明確UNKNOWN_DAEMON_UNAVAILABLE，不能稱沒image。沒有拉映像、啟容器/DB/daemon、讀秘密或執行restore；停止這條離線工具假設，不動原G8。M81將把server有效tenant安全欄位與原Live窗口closederror/drop計數納fresh隔離VM，Root自管只讀helper，不延hold不重啟舊機。
+- 同worker只讀提出完整鏈最窄Source/test方案中，尚未允許改Source。期望版本收到→SDKcallbackbranch→scheduler enqueue/start/finish→coordinator active/queued/start/settle→cache adopt/discard，M80既有Node/browser/UI與同一writer沿用，全部有界NON_AUTHORITY、無題文/答案/session/auth、無新request/poll/retry/timeout、無UI或新架構；Root待精確ownership才寫M81 formalbrief/baseline。
+- Root已離線VM24 cp-capacity-20261118-l24c62，新startup d64cb6809e66cd37138fc953bc190b227f784e27b75e9adf31a5d139ab9e0a49；.git/gcp-vm24-prepare-offline.py與m81-vm24-startup/offline-plan-final.json，name-onlyinverse/outerembeddedcompile/8bootstrap+4courierfake PASS。Zone尚未選、未Create/未建立新存取，需M81 Rootreview/newexactSource後freshConsolequota與價格再建。基本預留仍47.0208、next3/planned50.0208非invoice/US150/noPaid；全23strictSTOPPED/repo0，2300GBretain/永久清理pending。Hosted0/Production禁。
+
+### 2026-11-19 — M81產品鏈診斷與Root唯讀server工具／唯一review進行中
+
+- 正式M81 brief docs/superpowers/plans/2026-11-19-live-reconcile-chain-m81-brief.md SHA38d56138e037b9308197e1de8ee8238cb7af02e444040cd16436e37de6b1f99d；Root基線20018inputs（19996FILE＋22SYMLINK）、Original9與當前handoff prefix保護。只有同worker六Source/五tests；Root唯一一輪review已發R1：SDK_CALLBACK安全保留actual payload公開版本且SDK_STATUS不得覆寫最後收件。修後才finalfreeze/一次受影響checks與Root清案；未Create/無新Native。
+- 自查callback第二error參數漏傳造成原有兩permission拒絕測試FAIL，已修原參數轉送且舊test未改；保原FAIL。最終metadata fixture type與版本alias/dispose pending診斷修正歷史均保，最後97files受影響union需以R1後同版為準，先前PASS不能冒稱最後Source。三層舊資料上限/原20s等待/RPC/排程/門檻不改。
+- Root私有server helper .git/m81-root-realtime-readonly/offline-prepared.json：固定owned Local DB七個tenant numeric fields、固定原窗口閉集quota/drop/replication錯誤名/count/second bins。22parser/remote＋7transport離線case PASS；transport test-harness兩次失敗原檔/結果保，非遠端執行。StrictSSH/實際boot/source/container pins與installed原唯讀psql byte比對，拒任意query/path/target，無rawlog/secret輸出；不是M57/M65/M69權限或容量PASS。尚未建VM24/SSH/readDB。
+- 更正上段『60s滑動平均』的精確條件：固定upstream rate_counter實際avg=sum(bucket)/目前bucket_len/(tick/1000)，tick5s/maxbucket12，因此最大60s窗口、初期不足12bucket；不能固定除12。14個固定Gitblobs已核（13Realtime＋1CLI）；defaults不是effective tenant或本次超限實證。
+- 全23舊VM strictSTOPPED/repo runners0，2300GBretain/刪除未授權；基本預留US47.0208、VM24未Create/planned50.0208非invoice，US150/noPaid。通過原full15/60人後整合Staging，Production禁止；不在中途結束總任務。
+
+### 2026-11-19 — M81唯一review ACCEPTED／準備新exact Source與Native24
+
+- Root同一輪R1已清，review9e3d6ef99045a52391d6158025f6da1f807e70d539ef2607534df3747a3a1adf；packet0c153d74a8c35b89ed0bd31a9a9d7288c5dfebf5acf262cbcff5a8f98d7d155e/freeze94aaa0d73832a14b354b631e47a50f1c3956bbfd09730d57f5bce9722e2cca1a。Root讀六Source/五tests/唯一finding修正，重算212records/77checks/11hash/20018保護inputs/Original9prefix/8byte逆向；final97files1449PASS/focused6files68PASS/type/lint/format/import/diff/AST/static/inverse全綠。
+- R1 actual SDK v11安全保留且status不覆last；原callback/error轉送與原RPC/retry/timer/20s/門檻不改。歷史subscribe漏error兩回歸與原live-pages fixture競態FAIL保，原test未改；最終同版完整受影響組PASS，不能把歷史FAIL抹去。六Source/五tests之外沒有worker變更；Root server固定唯讀29offlinecasesPASS、尚未遠端執行。詳雙根docs/reviews/2026-11-19-live-reconcile-chain-m81-review.md。
+- 下一保存11owned＋Root四docs的精確Source，僅正常FF推Local測試branch（Vercel部署disabled），freshqueued原full15/attempt1，再freshConsolequota/價格/CreateVM24。新Source需要fresh四kernelcontrol/source46＋kernel5 admission與單次ephemeralrunner；不重跑舊失敗run。
+- freshGoogle全23strictSTOPPED/repo0，2300GB磁碟retain/清理仍pending。VM24未Create/Source尚未推；基本預留47.0208、planned50.0208非invoice/US150/noPaid。Native23 cause/quotaUNKNOWN，未達full60；全通後Staging，Production禁，總任務繼續。

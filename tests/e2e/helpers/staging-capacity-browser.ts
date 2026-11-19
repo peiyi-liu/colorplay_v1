@@ -326,6 +326,7 @@ export const attachDiagnostics = async (
   });
   await page.addInitScript(() => {
     const state = {
+      liveTrace: { v: 1 },
       disconnects: 0,
       last: '',
       seenConnected: false,

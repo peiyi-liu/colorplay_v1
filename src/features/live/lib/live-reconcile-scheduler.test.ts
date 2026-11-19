@@ -131,3 +131,50 @@ it('supports an explicit merge delay without modifying authoritative timing', as
   expect(reconcile).toHaveBeenCalledOnce();
   scheduler.dispose();
 });
+
+it('observes pending/trailing/failure without changing the original timer or throwing observation failures', async () => {
+  const events: string[] = [];
+  const probe = deferredReads();
+  const scheduler = createLiveReconcileScheduler({
+    ...probe,
+    trace: {
+      event: (kind) => {
+        events.push(kind);
+      },
+    },
+  });
+  scheduler.request('roster');
+  expect(vi.getTimerCount()).toBe(1);
+  scheduler.request('authoritative');
+  scheduler.request('authoritative');
+  expect(events).toEqual([
+    'SCHED_ROSTER',
+    'SCHED_AUTH',
+    'SCHED_COALESCE',
+    'SCHED_START',
+    'SCHED_AUTH',
+    'SCHED_COALESCE',
+  ]);
+  probe.reads[0]?.reject(new Error('PRIVATE'));
+  await vi.advanceTimersByTimeAsync(0);
+  expect(events).toContain('SCHED_FAIL');
+  expect(probe.reconcile).toHaveBeenCalledTimes(2);
+  probe.reads[1]?.resolve();
+  await vi.advanceTimersByTimeAsync(0);
+  scheduler.dispose();
+  expect(events.at(-1)).toBe('SCHED_DISPOSE');
+  expect(vi.getTimerCount()).toBe(0);
+  const once = vi.fn(() => Promise.resolve());
+  const faulty = createLiveReconcileScheduler({
+    reconcile: once,
+    trace: {
+      event: () => {
+        throw Error('PRIVATE');
+      },
+    },
+  });
+  faulty.request('authoritative');
+  await vi.advanceTimersByTimeAsync(0);
+  faulty.dispose();
+  expect(once).toHaveBeenCalledOnce();
+});

@@ -2,6 +2,10 @@ import { performance } from 'node:perf_hooks';
 import { types } from 'node:util';
 import { z } from 'zod';
 import type { Frame, Page, Request } from '@playwright/test';
+import {
+  captureLiveReconcileProjection as captureTrace,
+  liveReconcileProjectionSchema,
+} from '../../src/features/live/lib/live-reconcile-diagnostics';
 import type { LiveSessionState } from '../../src/features/live/types';
 import {
   getNativeCapacitySendBinding,
@@ -30,6 +34,7 @@ const stateView = z.strictObject({
 });
 const visible = z.enum(['VISIBLE', 'HIDDEN', 'UNOBSERVED', 'UNAVAILABLE']);
 const uiView = z.strictObject({
+  reconcile: liveReconcileProjectionSchema.optional(),
   counter: z.strictObject({
     collection,
     position: count.nullable(),
@@ -133,6 +138,28 @@ const project = (raw: unknown, wire = false) => {
 // One fixed readonly callback. It returns no arbitrary text, question/options, URL, IDs, inputs or browser storage.
 export const readCapacityLiveQuestionUi = () => {
   const read = {
+    trace(): number[] | string {
+      try {
+        const root: unknown = Object.getOwnPropertyDescriptor(
+          window,
+          '__colorplayCapacityRealtime',
+        )?.value;
+        const slot: unknown = Object.getOwnPropertyDescriptor(
+          root ?? {},
+          'liveTrace',
+        )?.value;
+        const value: unknown = Object.getOwnPropertyDescriptor(
+          slot ?? {},
+          'q',
+        )?.value;
+        if (value === undefined) return [1, 0];
+        return typeof value === 'string' && value.length <= 768
+          ? value
+          : [1, 3];
+      } catch {
+        return [1, 3];
+      }
+    },
     visible(selector: string) {
       const element = document.querySelector<HTMLElement>(selector);
       return element?.checkVisibility({
@@ -165,6 +192,7 @@ export const readCapacityLiveQuestionUi = () => {
     )
     ?.getAttribute('data-state');
   return {
+    reconcile: read.trace(),
     counter: {
       collection: match ? 'OBSERVED' : 'UNOBSERVED',
       position: match ? Number(match[1]) : null,
@@ -417,6 +445,8 @@ export const createCapacityLiveQuestionObservation = (
               return;
             const view = data(value);
             view.counter = data(view.counter);
+            if (view.reconcile !== undefined)
+              view.reconcile = captureTrace(view.reconcile, types.isProxy);
             target.ui = {
               collection: 'OBSERVED',
               beforeNodeMs: before,

@@ -385,3 +385,116 @@ it('does not add a fresh retry cycle when an initial read fails while reconcilia
   expect(probe.getState).toHaveBeenCalledOnce();
   expect(probe.result.current.error?.code).toBe('AUTH_REQUIRED');
 });
+
+it('captures the actual v11 callback through physical read and adopted cache without adding reads', async () => {
+  const trace = {
+    v: 1,
+    g: 0,
+    o: 0,
+    c: Array(32).fill(0),
+    l: [] as number[][],
+    p: [],
+    h: [],
+    t: [],
+    x: false,
+  };
+  Object.defineProperty(window, '__colorplayCapacityRealtime', {
+    configurable: true,
+    value: { liveTrace: trace },
+  });
+  try {
+    const probe = mount();
+    await ready(probe);
+    probe.broadcast({ state_version: 11 });
+    expect(probe.getState).toHaveBeenCalledTimes(3);
+    probe.reads[2]?.resolve({ ...lobby, stateVersion: 11 });
+    await flush();
+    expect(probe.result.current.data?.stateVersion).toBe(11);
+    expect(trace.o).toBeGreaterThan(0);
+    expect(trace.c[0]).toBe(1);
+    for (const index of [5, 6, 9, 16, 17, 20])
+      expect(trace.c[index]).toBeGreaterThan(0);
+    probe.status('CHANNEL_ERROR');
+    expect(trace.l[0]?.[2]).toBe(11);
+    expect(trace.l.flat()).toContain(11);
+    const cache = probe.queryClient.getQueryCache();
+    const query = cache.find({
+      queryKey: liveKeys.session(session),
+      exact: true,
+    });
+    if (!query) throw Error('QUERY_NOT_FOUND');
+    const queryKey = query.queryKey;
+    Object.defineProperty(query, 'queryKey', {
+      configurable: true,
+      get: () => {
+        throw Error('PRIVATE');
+      },
+    });
+    try {
+      expect(() => {
+        cache.notify({
+          type: 'updated',
+          query,
+          action: { type: 'fetch' },
+        });
+      }).not.toThrow();
+      expect(trace).toHaveProperty('q', '[1,3]');
+    } finally {
+      Object.defineProperty(query, 'queryKey', {
+        configurable: true,
+        value: queryKey,
+      });
+    }
+  } finally {
+    Reflect.deleteProperty(window, '__colorplayCapacityRealtime');
+  }
+});
+
+it('records twenty real version waves and ignores unrelated cache updates without changing RPC counts', async () => {
+  const trace = { v: 1, c: [] as number[], l: [] as number[][], q: '' };
+  Object.defineProperty(window, '__colorplayCapacityRealtime', {
+    configurable: true,
+    value: { liveTrace: trace },
+  });
+  try {
+    const probe = mount();
+    await ready(probe);
+    for (let position = 1; position <= 20; position += 1) {
+      const version = position + 2;
+      probe.broadcast({ state_version: version });
+      probe.reads.at(-1)?.resolve({
+        ...lobby,
+        stateVersion: version,
+        currentPosition: position,
+      });
+      await flush();
+      expect(probe.result.current.data?.stateVersion).toBe(version);
+    }
+    expect(probe.getState).toHaveBeenCalledTimes(22);
+    expect(trace.c[0]).toBe(20);
+    const before = trace.q;
+    probe.queryClient.setQueryData(['foreign', session], {
+      stateVersion: 999,
+      secret: 'PRIVATE',
+    });
+    expect(trace.q).toBe(before);
+    probe.broadcast({ state_version: 1 });
+    probe.broadcast({ state_version: 22, answered_count: 1 });
+    probe.broadcast({ state_version: 22, joined_display_name: 'PRIVATE' });
+    await flush(200);
+    probe.reads.at(-1)?.resolve({ ...lobby, stateVersion: 22 });
+    await flush();
+    expect(probe.getState).toHaveBeenCalledTimes(23);
+    for (const index of [2, 3, 4]) expect(trace.c[index]).toBeGreaterThan(0);
+    probe.unmount();
+    const closed = trace.q;
+    probe.queryClient.setQueryData(liveKeys.session(session), {
+      ...lobby,
+      stateVersion: 99,
+    });
+    expect(trace.q).toBe(closed);
+    expect(trace.q).not.toContain('PRIVATE');
+  } finally {
+    Reflect.deleteProperty(window, '__colorplayCapacityRealtime');
+  }
+});

@@ -133,3 +133,48 @@ it('settles a synchronous reader failure and releases its tracking entry', async
     readLiveState(owner, 'a', () => Promise.resolve(state)),
   ).resolves.toEqual(state);
 });
+
+it('preserves shared queued promise and original errors while observing the actual physical reader', async () => {
+  const events: string[] = [];
+  const trace = {
+    event: (kind: string) => {
+      events.push(kind);
+    },
+  };
+  const owner = {},
+    first = deferred(),
+    error = new Error('PRIVATE');
+  const active = readLiveState(owner, 'a', () => first.promise, trace);
+  const next = readLiveState(owner, 'a', () => Promise.resolve(state), trace);
+  const same = readLiveState(
+    owner,
+    'a',
+    () => {
+      throw error;
+    },
+    trace,
+  );
+  expect(next).toBe(same);
+  const rejected = expect(next).rejects.toBe(error);
+  first.resolve(state);
+  await expect(active).resolves.toBe(state);
+  await rejected;
+  expect(events).toEqual([
+    'READ_START',
+    'COORD_ACTIVE',
+    'COORD_QUEUE',
+    'COORD_ACTIVE',
+    'COORD_COALESCE',
+    'READ_RETURN',
+    'READ_START',
+    'READ_THROW',
+  ]);
+  expect(pendingLiveStateReads(owner, 'a')).toBeUndefined();
+  await expect(
+    readLiveState(owner, 'a', () => Promise.reject(error), {
+      event: () => {
+        throw Error();
+      },
+    }),
+  ).rejects.toBe(error);
+});
