@@ -41,7 +41,7 @@ select public.join_live_session(current_setting('test.created')::jsonb->>'join_c
 select pg_temp.as_user(4);
 select public.join_live_session(current_setting('test.created')::jsonb->>'join_code','13300000-0000-0000-0000-000000000004');
 select pg_temp.as_user(1);
-select public.open_live_question(current_setting('test.sid')::uuid,(current_setting('test.started')::jsonb->>'state_version')::integer);
+select set_config('test.opened',public.open_live_question(current_setting('test.sid')::uuid,(current_setting('test.started')::jsonb->>'state_version')::integer)::text,true);
 reset role;
 select set_config('test.qid',id::text,true),set_config('test.option',public_options->0->>'id',true)
 from public.live_session_questions where session_id=current_setting('test.sid')::uuid and position=1;
@@ -70,7 +70,10 @@ reset role;
 select is((select count(*)::int from realtime.messages where topic=current_setting('test.progress')),3,'last timeout still emits one progress');
 select is((select count(*)::int from realtime.messages where topic=current_setting('test.shared') and payload->>'state'='question_feedback'),1,'automatic close still emits exactly one shared feedback');
 select ok((select bool_and(private and extension='broadcast') from realtime.messages where topic=current_setting('test.progress')),'all Host progress is private broadcast');
-select ok((select bool_and((select array_agg(k order by k) from jsonb_object_keys(payload) k)=array['answered_count','session_id','state','state_version']) from realtime.messages where topic=current_setting('test.progress')),'progress has exactly the original four safe fields');
+select ok((select bool_and((select array_agg(k order by k) from jsonb_object_keys(payload) k)=array['answered_count','id','session_id','state','state_version']) from realtime.messages where topic=current_setting('test.progress')),'progress has exactly four business fields plus generated transport id');
+select ok((select bool_and(jsonb_typeof(payload->'id')='string' and length(payload->>'id')=36 and (payload->>'id') ~ '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$' and payload->>'id'=id::text) from realtime.messages where topic=current_setting('test.progress')),'every generated transport UUID matches its message row id');
+select ok((select bool_and(payload->>'session_id'=current_setting('test.sid') and payload->>'state'='question_open' and (payload->>'state_version')::int=(current_setting('test.opened')::jsonb->>'state_version')::int and jsonb_typeof(payload->'answered_count')='number') from realtime.messages where topic=current_setting('test.progress')),'normal and timeout progress preserve all business bindings');
+select is((select array_agg((payload->>'answered_count')::int order by (payload->>'answered_count')::int) from realtime.messages where topic=current_setting('test.progress')),array[1,2,3],'normal and timeout answered counts advance exactly once per original answer');
 select ok(not has_function_privilege('authenticated','live_private.broadcast_answer_progress(uuid,jsonb)','execute'),'authenticated cannot call private sender');
 select ok(not has_function_privilege('anon','live_private.broadcast_answer_progress(uuid,jsonb)','execute'),'anon cannot call private sender');
 set local role authenticated;

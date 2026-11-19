@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 import {
   createLiveSubscriptionLifecycle,
   type LiveSubscriptionState,
@@ -37,11 +39,19 @@ const data = (value: unknown): Record<string, unknown> => {
   }
   return result;
 };
+const transportId = z.uuid();
 const progress = (message: Message, sessionId: string) => {
   try {
     const value = data(data(message).payload);
+    const keyCount = Object.keys(value).length;
+    const wireShape = Object.hasOwn(value, 'id')
+      ? keyCount === 5 &&
+        typeof value.id === 'string' &&
+        value.id.length === 36 &&
+        transportId.safeParse(value.id).success
+      : keyCount === 4;
     return (
-      Object.keys(value).length === 4 &&
+      wireShape &&
       value.session_id === sessionId &&
       value.state === 'question_open' &&
       typeof value.state_version === 'number' &&

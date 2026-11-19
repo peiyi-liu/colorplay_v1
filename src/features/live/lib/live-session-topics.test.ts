@@ -372,3 +372,77 @@ it.each(['create', 'attach'] as const)(
     await x.controller.dispose();
   },
 );
+
+it.each([false, true])(
+  'accepts twenty original progress messages with optional generated UUID id=%s',
+  async (wire) => {
+    const x = setup();
+    x.controller.setRole(true);
+    await flush();
+    x.channels.forEach((c) => {
+      c.status('SUBSCRIBED');
+    });
+    const messages = [];
+    for (let question = 1; question <= 20; question += 1) {
+      const message = {
+        payload: {
+          ...payload(question),
+          ...(wire ? { id: 'c920f7ad-47df-4a14-9359-d091a7a4309c' } : {}),
+        },
+      };
+      messages.push(message);
+      x.channels[1]?.broadcast(message);
+    }
+    expect(x.broadcast.mock.calls.flat()).toEqual(messages);
+    expect(x.changes).toHaveBeenLastCalledWith({
+      status: 'connected',
+      reconnecting: false,
+      blocked: false,
+    });
+    expect(x.subscribed).toHaveBeenCalledOnce();
+    await x.controller.dispose();
+  },
+);
+it.each([
+  null,
+  undefined,
+  123,
+  '',
+  'not-a-uuid',
+  'c920f7ad47df4a149359d091a7a4309c',
+  'c920f7ad-47df-4a14-9359-d091a7a4309z',
+])(
+  'rejects a present malformed transport id %s without discounting the original boundary',
+  async (id) => {
+    const x = setup();
+    x.controller.setRole(true);
+    await flush();
+    x.channels[1]?.broadcast({ payload: { ...payload(), id } });
+    expect(x.broadcast).not.toHaveBeenCalled();
+    expect(x.changes).toHaveBeenLastCalledWith(
+      expect.objectContaining({ status: 'disconnected' }),
+    );
+    await x.controller.dispose();
+  },
+);
+it('rejects unknown wire fields and an id getter without invoking it', async () => {
+  const getter = vi.fn(() => 'c920f7ad-47df-4a14-9359-d091a7a4309c');
+  for (const value of [
+    { ...payload(), id: 'c920f7ad-47df-4a14-9359-d091a7a4309c', other: true },
+    Object.defineProperty({ ...payload() }, 'id', {
+      enumerable: true,
+      get: getter,
+    }),
+  ]) {
+    const x = setup();
+    x.controller.setRole(true);
+    await flush();
+    x.channels[1]?.broadcast({ payload: value });
+    expect(x.broadcast).not.toHaveBeenCalled();
+    expect(x.changes).toHaveBeenLastCalledWith(
+      expect.objectContaining({ status: 'disconnected' }),
+    );
+    await x.controller.dispose();
+  }
+  expect(getter).not.toHaveBeenCalled();
+});

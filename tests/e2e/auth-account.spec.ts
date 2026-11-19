@@ -131,8 +131,11 @@ test('student registers with OTP, signs in by account, and resets the password',
   const recoveryLink = await waitForEmailMatch(email, extractRecoveryLink);
   await page.goto(recoveryLink);
   await expect(page).toHaveURL(/\/reset-password/u, { timeout: 20_000 });
-  // 等 AuthBootstrap 接住 recovery session，避免 session 事件重掛頁面時清空輸入。
-  await expect(page.getByText(nickname, { exact: true }).first()).toBeVisible({
+  // Recovery uses the public shell; its own form owns readiness, not a HUD.
+  const resetForm = page.locator(
+    'form[data-interaction-group="reset-password"]',
+  );
+  await expect(resetForm.getByRole('status')).toHaveText('', {
     timeout: 20_000,
   });
   await expect(page.getByRole('button', { name: '更新密碼' })).toBeEnabled({

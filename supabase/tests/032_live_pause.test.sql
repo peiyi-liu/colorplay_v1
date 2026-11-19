@@ -1,6 +1,6 @@
 begin;
 
-select plan(18);
+select plan(19);
 
 select has_function('public', 'pause_live_session', 'pause command exists');
 select has_function('public', 'resume_live_session', 'resume command exists');
@@ -317,19 +317,31 @@ select lives_ok(
   'answers are accepted after resume'
 );
 
--- The streak-bearing submit must keep broadcasting the answered count
--- (the hardening behavior a later replacement must never drop again).
+-- The streak-bearing submit keeps answered count on owning Host progress;
+-- shared still carries all phase transitions without this mid-answer aggregate.
 reset role;
+select is(
+  (
+    select count(*)::integer
+    from realtime.messages
+    where topic = 'live-host-progress:' || current_setting('test.session_id')
+      and payload ->> 'state' = 'question_open'
+      and (payload ->> 'answered_count')::integer = 1
+  ),
+  1,
+  'submitting an answer still broadcasts the answered count'
+);
+
 select is(
   (
     select count(*)::integer
     from realtime.messages
     where topic = 'live-session:' || current_setting('test.session_id')
       and payload ->> 'state' = 'question_open'
-      and (payload ->> 'answered_count')::integer = 1
+      and payload ? 'answered_count'
   ),
-  1,
-  'submitting an answer still broadcasts the answered count'
+  0,
+  'mid-answer progress is absent from the shared topic'
 );
 
 set local role authenticated;

@@ -81,6 +81,10 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Prepare private temporary path for existing evidence contracts
+        run: sudo install -d -m 1777 /private/tmp
       - name: Set up pnpm from packageManager
         run: npm install --global "$(node --print "require('./package.json').packageManager")"
       - name: Set up pinned Node.js

@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { afterAll, expect, it } from 'vitest';
+import { z } from 'zod';
 import { createLiveRepository } from '../../src/features/live/api/live-repository';
 import type { Database } from '../../src/types/database';
 import { isExplicitPermissionDenial } from '../../scripts/live/capacity-permission-denial';
@@ -197,12 +198,17 @@ it('real private SDK enforces Host-only progress and preserves shared roster/pha
     };
     await studentOne.submitAnswer(answer);
     await expect.poll(() => progress.length, { timeout: 5000 }).toBe(1);
-    expect(progress[0]).toEqual({
-      session_id: created.sessionId,
-      state: 'question_open',
-      state_version: open.stateVersion,
-      answered_count: 1,
+    const wire = z.strictObject({
+      id: z.uuid(),
+      session_id: z.literal(created.sessionId),
+      state: z.literal('question_open'),
+      state_version: z.literal(open.stateVersion),
+      answered_count: z.number().int(),
     });
+    const first = wire.safeParse(progress[0]);
+    expect(first.success).toBe(true);
+    if (!first.success) throw new Error('HOST_PROGRESS_WIRE_INVALID');
+    expect(first.data.answered_count).toBe(1);
     await studentOne.submitAnswer(answer);
     await studentTwo.submitAnswer({ ...answer, idempotencyKey: randomUUID() });
     await expect.poll(() => progress.length, { timeout: 5000 }).toBe(2);
@@ -237,6 +243,12 @@ it('real private SDK enforces Host-only progress and preserves shared roster/pha
         expect(value).not.toHaveProperty('answered_count');
     }
     expect(progress).toHaveLength(2);
+    for (const [index, message] of progress.entries()) {
+      const parsed = wire.safeParse(message);
+      expect(parsed.success).toBe(true);
+      if (!parsed.success) throw new Error('HOST_PROGRESS_WIRE_INVALID');
+      expect(parsed.data.answered_count).toBe(index + 1);
+    }
     updates.assertNoForgery();
     for (const audit of denialAudits) audit();
     main.assertHealthy();
