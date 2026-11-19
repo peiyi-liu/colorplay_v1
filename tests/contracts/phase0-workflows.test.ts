@@ -57,7 +57,11 @@ describe('Phase 0 delivery workflows', () => {
   });
 
   it('keeps Local database and Chromium runners isolated', async () => {
-    const workflow = await readFile('.github/workflows/ci.yml', 'utf8');
+    const [workflow, caller, wrapper] = await Promise.all([
+      readFile('.github/workflows/ci.yml', 'utf8'),
+      readFile('scripts/test-db.sh', 'utf8'),
+      readFile('scripts/supabase/start-local-with-evidence.py', 'utf8'),
+    ]);
     const databaseJob = workflow.slice(
       workflow.indexOf('  local-database:'),
       workflow.indexOf('  chromium-e2e:'),
@@ -68,13 +72,42 @@ describe('Phase 0 delivery workflows', () => {
     );
 
     expect(databaseJob).toContain('pnpm test:db');
-    expect(chromiumJob).toContain('pnpm exec supabase start');
+    const entry = 'python3 -B scripts/supabase/start-local-with-evidence.py';
+    expect(chromiumJob.split(entry)).toHaveLength(2);
+    expect(caller.split(entry)).toHaveLength(2);
+    expect(wrapper).toMatch(
+      /^COMMAND = \['pnpm', 'exec', 'supabase', 'start'\]$/mu,
+    );
+    expect(wrapper.match(/subprocess\.Popen\(/gu)).toHaveLength(1);
+    expect(wrapper).toContain(
+      'subprocess.Popen(COMMAND, stdout=subprocess.PIPE, stderr=subprocess.PIPE)',
+    );
     expect(chromiumJob).toContain('pnpm exec supabase db reset --local');
     expect(chromiumJob).toContain(
       'pnpm exec tsx scripts/supabase/seed-auth.ts',
     );
     expect(chromiumJob).toContain('pnpm preview --host 127.0.0.1 --port 4173');
     expect(chromiumJob).toContain('pnpm test:e2e --project=chromium');
+    const ordered = (source: string, commands: string[]) => {
+      let previous = -1;
+      for (const command of commands) {
+        const index = source.indexOf(command);
+        expect(index).toBeGreaterThan(previous);
+        previous = index;
+      }
+    };
+    ordered(caller, [
+      entry,
+      'pnpm exec supabase db reset --local',
+      'pnpm exec tsx scripts/supabase/seed-auth.ts',
+    ]);
+    ordered(chromiumJob, [
+      entry,
+      'pnpm exec supabase db reset --local',
+      'pnpm exec tsx scripts/supabase/seed-auth.ts',
+      'pnpm preview --host 127.0.0.1 --port 4173',
+      'pnpm test:e2e --project=chromium',
+    ]);
   });
 
   it('requires protected exact-SHA owner approval without executing PR code', async () => {
