@@ -1,3 +1,4 @@
+import { createLiveTopicAck, type LiveAckMode } from './live-topic-ack';
 import type { LiveJoinResult } from './staging-capacity-live-join';
 export {
   collectLiveJoinAttempts,
@@ -166,6 +167,7 @@ export type PageDiagnostics = Readonly<{
   waitForSubscriptionAck: (
     timeoutMs: number,
     signal?: AbortSignal,
+    mode?: LiveAckMode,
   ) => Promise<boolean>;
   authTimings: () => Promise<readonly AuthLoginStageTiming[]>;
   consoleErrors: string[];
@@ -233,8 +235,8 @@ export const attachDiagnostics = async (
   let realtimeErrorCount = 0;
   let realtimeSocketCount = 0;
   const liveJoinRefs = new Set<string>();
+  const topicAck = createLiveTopicAck(page);
   const subscriptionStatusSequence: SafeSubscriptionStatus[] = [];
-  const ackWaiters = new Set<() => void>();
   const recordSubscriptionStatus = (status: SafeSubscriptionStatus) => {
     if (
       subscriptionStatusSequence.at(-1) !== status &&
@@ -242,7 +244,6 @@ export const attachDiagnostics = async (
     ) {
       subscriptionStatusSequence.push(status);
     }
-    for (const waiter of ackWaiters) waiter();
   };
   page.on('console', (message) => {
     if (message.type() === 'error') consoleErrors.push(message.text());
@@ -269,6 +270,7 @@ export const attachDiagnostics = async (
   });
   page.on('websocket', (socket) => {
     if (!socket.url().includes('/realtime/v1/websocket')) return;
+    const ackSocket = topicAck.open();
     realtimeSocketCount += 1;
     const generation = liveDiagnostics.generation();
     let observedOpen = false;
@@ -281,6 +283,7 @@ export const attachDiagnostics = async (
       observeOpen();
       liveDiagnostics.frame(generation, 'sent', payload);
       const frame = decodeSafeRealtimeFrame(payload);
+      if (frame) topicAck.sent(ackSocket, frame);
       if (
         frame?.event === 'phx_join' &&
         frame.isLiveTopic &&
@@ -295,6 +298,7 @@ export const attachDiagnostics = async (
       liveDiagnostics.frame(generation, 'received', payload);
       const frame = decodeSafeRealtimeFrame(payload);
       if (!frame) return;
+      topicAck.received(ackSocket, frame);
       if (
         frame.event === 'phx_reply' &&
         frame.ref !== null &&
@@ -314,11 +318,13 @@ export const attachDiagnostics = async (
       }
     });
     socket.on('close', () => {
+      topicAck.closed(ackSocket);
       realtimeCloseCount += 1;
       liveDiagnostics.record(generation, 'closed', 'error', 'transport');
       recordSubscriptionStatus('SOCKET_CLOSED');
     });
     socket.on('socketerror', () => {
+      topicAck.closed(ackSocket);
       realtimeErrorCount += 1;
       liveDiagnostics.record(generation, 'closed', 'error', 'transport');
       recordSubscriptionStatus('SOCKET_ERROR');
@@ -388,46 +394,7 @@ export const attachDiagnostics = async (
         truncated,
       };
     },
-    waitForSubscriptionAck: (timeoutMs, signal) => {
-      if (signal?.aborted || page.isClosed()) return Promise.resolve(false);
-      if (subscriptionStatusSequence.includes('SUBSCRIBED'))
-        return Promise.resolve(true);
-      if (!Number.isFinite(timeoutMs) || timeoutMs <= 0)
-        return Promise.resolve(false);
-      return new Promise<boolean>((resolve) => {
-        const wait: {
-          settled: boolean;
-          timer?: ReturnType<typeof setTimeout>;
-        } = { settled: false };
-        const finish = (observed: boolean) => {
-          if (wait.settled) return;
-          wait.settled = true;
-          if (wait.timer !== undefined) clearTimeout(wait.timer);
-          ackWaiters.delete(check);
-          signal?.removeEventListener('abort', abort);
-          page.off('close', closed);
-          resolve(observed);
-        };
-        const check = () => {
-          if (subscriptionStatusSequence.includes('SUBSCRIBED')) finish(true);
-        };
-        const abort = () => {
-          finish(false);
-        };
-        const closed = () => {
-          finish(false);
-        };
-        page.on('close', closed);
-        if (wait.settled) return;
-        signal?.addEventListener('abort', abort, { once: true });
-        wait.timer = setTimeout(() => {
-          finish(false);
-        }, timeoutMs);
-        ackWaiters.add(check);
-        if (signal?.aborted || page.isClosed()) finish(false);
-        else check(); // Recheck after listener installation to avoid a lost ACK.
-      });
-    },
+    waitForSubscriptionAck: topicAck.wait,
     authTimings: () => Promise.all(authTimingTasks),
     consoleErrors,
     disconnects: () =>

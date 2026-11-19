@@ -1,16 +1,15 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import type { SupabaseClient } from '@supabase/supabase-js';
 import { act, cleanup, renderHook } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
-import type { Database } from '../../../types/database';
 import {
   LiveRepositoryError,
   type LiveRepository,
   type LiveSessionState,
 } from '../types';
 import { liveKeys, useLiveSession } from './use-live-session';
+import { createLiveChannelFixture } from './live-session-channel-fixture';
 
 const session = 'synthetic-session';
 const lobby: LiveSessionState = {
@@ -66,26 +65,8 @@ const mount = (shared?: {
   queryClient: QueryClient;
   repository: LiveRepository;
 }) => {
-  let broadcast: ((message: { payload: unknown }) => void) | undefined;
-  let status: ((value: string) => void) | undefined;
-  const channel = {
-    on: (
-      _type: string,
-      _filter: unknown,
-      callback: (message: { payload: unknown }) => void,
-    ) => {
-      broadcast = callback;
-      return channel;
-    },
-    subscribe: (callback: (value: string) => void) => {
-      status = callback;
-      return channel;
-    },
-  };
-  const client = {
-    channel: () => channel,
-    removeChannel: () => Promise.resolve('ok'),
-  } as unknown as SupabaseClient<Database>;
+  const transport = createLiveChannelFixture();
+  const client = transport.client;
   const reads: ReturnType<typeof deferred>[] = [];
   let active = 0;
   let maxActive = 0;
@@ -121,10 +102,14 @@ const mount = (shared?: {
     reads,
     maxActive: () => maxActive,
     broadcast: (payload: unknown) => {
-      act(() => broadcast?.({ payload }));
+      act(() => {
+        transport.broadcast(payload);
+      });
     },
     status: (value: string) => {
-      act(() => status?.(value));
+      act(() => {
+        transport.status(value);
+      });
     },
   };
 };

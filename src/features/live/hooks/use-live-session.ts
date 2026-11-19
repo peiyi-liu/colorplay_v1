@@ -26,8 +26,8 @@ import {
   type LiveSessionState,
 } from '../types';
 
+import { createLiveSessionTopics } from '../lib/live-session-topics';
 import {
-  createLiveSubscriptionLifecycle,
   type LiveConnectionStatus,
   type LiveSubscriptionState,
 } from '../lib/live-subscription-lifecycle';
@@ -67,7 +67,7 @@ export function useLiveSession(
     [queryClient, sessionId],
   );
   const lifecycleRef = useRef<ReturnType<
-    typeof createLiveSubscriptionLifecycle
+    typeof createLiveSessionTopics
   > | null>(null);
   const [connection, setConnection] = useState<
     LiveSubscriptionState & { sessionId: string }
@@ -235,12 +235,16 @@ export function useLiveSession(
       emitLiveTrace(trace, 'HANDLER_AUTHORITATIVE', payload);
       scheduler.request('authoritative');
     };
-    const lifecycle = createLiveSubscriptionLifecycle({
-      createChannel: () =>
-        client.channel(`live-session:${sessionId}`, {
-          config: { broadcast: { self: true }, private: true },
-        }),
-      attach: (channel, broadcast, status) => {
+    const lifecycle = createLiveSessionTopics({
+      sessionId,
+      createChannel: (topic) =>
+        client.channel(
+          `${topic === 'SHARED' ? 'live-session' : 'live-host-progress'}:${sessionId}`,
+          {
+            config: { broadcast: { self: true }, private: true },
+          },
+        ),
+      attach: (channel, _topic, broadcast, status) => {
         channel
           .on(
             'broadcast',
@@ -270,10 +274,26 @@ export function useLiveSession(
       unobserve?.();
       disposed = true;
       scheduler.dispose();
-      lifecycle.dispose();
+      void lifecycle.dispose();
       if (lifecycleRef.current === lifecycle) lifecycleRef.current = null;
     };
   }, [client, queryClient, sessionId, trace]);
+
+  useEffect(() => {
+    lifecycleRef.current?.setRole(
+      !query.isError && query.data?.sessionId === sessionId
+        ? query.data.isHost
+        : undefined,
+    );
+  }, [
+    client,
+    queryClient,
+    sessionId,
+    trace,
+    query.data?.sessionId,
+    query.data?.isHost,
+    query.isError,
+  ]);
 
   return {
     ...query,

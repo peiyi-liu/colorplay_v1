@@ -167,6 +167,7 @@ export const runCapacityLiveGame = async (
         ).diagnostics.waitForSubscriptionAck(
           Math.max(0, 20000 - (performance.now() - started)),
           signal,
+          'HOST_PROGRESS',
         ))
       )
         return capacityFailure();

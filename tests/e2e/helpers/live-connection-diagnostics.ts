@@ -35,6 +35,19 @@ type SafeRealtimeFrame = Readonly<{
   replyStatus: 'error' | 'ok' | null;
 }>;
 
+const liveTopics = new WeakMap<
+  SafeRealtimeFrame,
+  {
+    kind: 'SHARED' | 'HOST_PROGRESS';
+    sessionId: string;
+    joinRef: string | null;
+  }
+>();
+export const liveFrameTopic = (frame: SafeRealtimeFrame, sessionId: string) => {
+  const value = liveTopics.get(frame);
+  return value?.sessionId === sessionId ? value : undefined;
+};
+
 export const decodeSafeRealtimeFrame = (
   raw: string | Buffer,
 ): SafeRealtimeFrame | null => {
@@ -71,12 +84,38 @@ export const decodeSafeRealtimeFrame = (
       (payload as Record<string, unknown>).status === 'error')
       ? ((payload as Record<string, unknown>).status as 'error' | 'ok')
       : null;
-  return {
+  const result: SafeRealtimeFrame = {
     event,
-    isLiveTopic: typeof topic === 'string' && topic.includes('live-session:'),
+    isLiveTopic:
+      typeof topic === 'string' &&
+      (topic.includes('live-session:') ||
+        topic.includes('live-host-progress:')),
     ref: typeof ref === 'string' ? ref : null,
     replyStatus,
   };
+  const match =
+    typeof topic === 'string'
+      ? /^(?:realtime:)?(live-session|live-host-progress):([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})$/u.exec(
+          topic,
+        )
+      : null;
+  if (match?.[2]) {
+    const joinRef: unknown = objectFrame
+      ? objectFrame.join_ref
+      : arrayFrame?.[0];
+    if (
+      joinRef !== undefined &&
+      joinRef !== null &&
+      typeof joinRef !== 'string'
+    )
+      return result;
+    liveTopics.set(result, {
+      kind: match[1] === 'live-session' ? 'SHARED' : 'HOST_PROGRESS',
+      sessionId: match[2].toLowerCase(),
+      joinRef: typeof joinRef === 'string' ? joinRef : null,
+    });
+  }
+  return result;
 };
 
 const recordObject = (value: unknown): Record<string, unknown> | undefined =>

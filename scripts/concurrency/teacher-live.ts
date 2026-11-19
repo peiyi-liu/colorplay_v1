@@ -205,6 +205,7 @@ export const runTeacherLiveJourney = async (
           !(await bindings[0]?.diagnostics.waitForSubscriptionAck(
             Math.max(0, 20_000 - (performance.now() - hostReadyStarted)),
             signal,
+            'HOST_PROGRESS',
           ))
         )
           return fail('FUNCTIONAL_OPERATION_FAILED');

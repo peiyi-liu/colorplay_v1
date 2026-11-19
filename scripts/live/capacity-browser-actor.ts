@@ -213,7 +213,11 @@ export const createBrowserLiveActor = async (
               0,
               20_000 - (performance.now() - readinessStarted),
             );
-            ack = await diagnostics.waitForSubscriptionAck(remaining, signal);
+            ack = await diagnostics.waitForSubscriptionAck(
+              remaining,
+              signal,
+              'HOST_PROGRESS',
+            );
           } else {
             const realtime = await diagnostics.realtime();
             ack = realtime.subscriptionStatusSequence.includes('SUBSCRIBED');

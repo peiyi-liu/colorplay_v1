@@ -3,6 +3,8 @@ import { describe, expect, it, vi } from 'vitest';
 
 import {
   createLiveConnectionDiagnostics,
+  decodeSafeRealtimeFrame,
+  liveFrameTopic,
   observeLiveSnapshots,
   liveDiagnosticStageTimings,
 } from '../e2e/helpers/live-connection-diagnostics';
@@ -417,5 +419,53 @@ it.each(['prototype', 'function', 'array', 'accessor', 'proxy'] as const)(
     own.stopAccepting();
     await owner.finish();
     await own.finish();
+  },
+);
+
+it.each([false, true])(
+  'keeps exact topic/session binding private in protocol array=%s, never granting it to clones',
+  (array) => {
+    const session = 'a1000000-aaaa-4bbb-8ccc-000000000001';
+    for (const prefix of ['live-session', 'live-host-progress']) {
+      const safe = decodeSafeRealtimeFrame(
+        JSON.stringify(
+          array
+            ? [
+                null,
+                '1',
+                'realtime:' + prefix + ':' + session.toUpperCase(),
+                'phx_join',
+                {},
+              ]
+            : {
+                join_ref: '1',
+                ref: '1',
+                topic: 'realtime:' + prefix + ':' + session.toUpperCase(),
+                event: 'phx_join',
+                payload: {},
+              },
+        ),
+      );
+      expect(safe).toBeDefined();
+      if (!safe) throw new Error('FRAME_MISSING');
+      expect(liveFrameTopic(safe, session)?.kind).toBe(
+        prefix === 'live-session' ? 'SHARED' : 'HOST_PROGRESS',
+      );
+      expect(liveFrameTopic(safe, 'foreign')).toBeUndefined();
+      expect(liveFrameTopic({ ...safe }, session)).toBeUndefined();
+      expect(JSON.stringify(safe)).not.toContain(session);
+    }
+    for (const topic of [
+      'live-host-progress:invalid',
+      'live-host-progress:' + session + ':extra',
+      'LIVE-SESSION:' + session,
+      'LIVE-HOST-PROGRESS:' + session,
+      'REALTIME:live-host-progress:' + session,
+    ]) {
+      const safe = decodeSafeRealtimeFrame(
+        JSON.stringify({ topic, event: 'phx_join', ref: '1', payload: {} }),
+      );
+      if (safe) expect(liveFrameTopic(safe, session)).toBeUndefined();
+    }
   },
 );

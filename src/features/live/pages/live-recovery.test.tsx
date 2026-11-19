@@ -15,7 +15,8 @@ import { TeacherLiveSessionPage } from './teacher-live-session-page';
 const setup = (host: boolean) => {
   const callbacks: ((status: string, error?: Error) => void)[] = [];
   const client = {
-    channel: vi.fn(() => {
+    channel: vi.fn((topic: string) => {
+      void topic;
       const channel = {
         on: vi.fn().mockReturnThis(),
         subscribe: vi.fn(
@@ -66,7 +67,7 @@ it.each([false, true])(
       ).toBeVisible();
     else expect(screen.getByText('連線正常')).toBeVisible();
     for (const [index, delay] of [500, 1000, 0].entries()) {
-      act(() => test.callbacks[index]?.('CHANNEL_ERROR'));
+      act(() => test.callbacks[host ? index * 2 : index]?.('CHANNEL_ERROR'));
       await tick(delay);
     }
     const button = screen.getByRole('button', { name: '重新連線' });
@@ -75,7 +76,12 @@ it.each([false, true])(
     fireEvent.click(button);
     expect(button).toBeDisabled();
     await tick(1);
-    expect(test.client.channel).toHaveBeenCalledTimes(4);
+    expect(test.client.channel).toHaveBeenCalledTimes(host ? 8 : 4);
+    expect(
+      test.client.channel.mock.calls.filter(([topic]) =>
+        topic.startsWith('live-session:'),
+      ),
+    ).toHaveLength(4);
     expect(test.repository.join).not.toHaveBeenCalled();
     expect(test.repository.submitAnswer).not.toHaveBeenCalled();
     expect(test.repository.finalize).not.toHaveBeenCalled();
@@ -108,6 +114,11 @@ it.each([false, true])(
     expect(
       screen.queryByText(/synthetic-private-marker/),
     ).not.toBeInTheDocument();
-    expect(test.client.channel).toHaveBeenCalledTimes(1);
+    expect(test.client.channel).toHaveBeenCalledTimes(host ? 2 : 1);
+    expect(
+      test.client.channel.mock.calls.filter(([topic]) =>
+        topic.startsWith('live-session:'),
+      ),
+    ).toHaveLength(1);
   },
 );

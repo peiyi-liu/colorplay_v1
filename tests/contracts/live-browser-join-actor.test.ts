@@ -37,19 +37,20 @@ const setup = async (
       callback({ payload: JSON.stringify(payload) } as never);
   };
   const deliverAck = () => {
-    const topic = `realtime:live-session:${SECRET}`;
-    emitFrame('framesent', {
-      event: 'phx_join',
-      topic,
-      ref: SECRET,
-      payload: {},
-    });
-    emitFrame('framereceived', {
-      event: 'phx_reply',
-      topic,
-      ref: SECRET,
-      payload: { status: 'ok' },
-    });
+    for (const prefix of [
+      'live-session',
+      ...(host ? ['live-host-progress'] : []),
+    ]) {
+      const topic = `realtime:${prefix}:${session}`;
+      const ref = prefix === 'live-session' ? SECRET : SECRET + '_PROGRESS';
+      emitFrame('framesent', { event: 'phx_join', topic, ref, payload: {} });
+      emitFrame('framereceived', {
+        event: 'phx_reply',
+        topic,
+        ref,
+        payload: { status: 'ok' },
+      });
+    }
   };
   const hostReady = vi.fn((options: { timeout: number; state: string }) => {
     expect(options).toEqual({ timeout: 20_000, state: 'visible' });
