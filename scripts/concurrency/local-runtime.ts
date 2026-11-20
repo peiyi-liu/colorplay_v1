@@ -99,7 +99,7 @@ export const requireFunctionalReady = (scope: FunctionalScope) => {
   if (!readyScopes.has(scope)) return fail('FUNCTIONAL_PREFLIGHT_FAILED');
 };
 const counts = z.strictObject({
-  migrations: z.literal(122),
+  migrations: z.literal(123),
   publicTables: z.literal(71),
   publicWithoutRls: z.literal(0),
   auth: z.literal(0),

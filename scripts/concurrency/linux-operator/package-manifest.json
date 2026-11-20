@@ -49,7 +49,7 @@
     "capacity-root-readonly.py": {
       "bytes": 14487,
       "role": "OPERATOR",
-      "sha256": "815a891b2307ccea0717e8cdaed1b682db7d93777a0cbf99b4ca6178af448d74"
+      "sha256": "e6f9d0082a266469fed9bafb6d025665e637de366910a049088096e95027941d"
     },
     "collect_readiness.py": {
       "bytes": 6460,
@@ -64,7 +64,7 @@
     "functional-preflight.py": {
       "bytes": 5272,
       "role": "OPERATOR",
-      "sha256": "f3c29e982d62d67b9eb0e17f9b44697a74bb835a7afd948f42c2d34d8a0dadc4"
+      "sha256": "2500100bed3f3389e1a2383fe84bd0ed3fbf5693e37701d689fe2b89b3c1164b"
     },
     "linux-host-sample.py": {
       "bytes": 20211,

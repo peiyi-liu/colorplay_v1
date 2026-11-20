@@ -61,8 +61,8 @@ describe('functional Local scope', () => {
   });
 });
 
-describe('exact new migration122 baseline', () => {
-  it('accepts the fixed122 baseline in both actual guards', async () => {
+describe('exact new migration123 baseline', () => {
+  it('accepts the fixed123 baseline in both actual guards', async () => {
     const current = syntheticScope();
     await expect(
       preflightFunctional(
@@ -79,7 +79,7 @@ describe('exact new migration122 baseline', () => {
       }).success,
     ).toBe(true);
   });
-  it.each([120, 121, 123])(
+  it.each([120, 121, 122, 124, true])(
     'rejects migration%i in both active guards',
     async (migrations) => {
       const baseline = { ...syntheticBaseline(), migrations };

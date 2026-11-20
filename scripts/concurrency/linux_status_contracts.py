@@ -91,7 +91,7 @@ def safe_status(proof):
 
 
 READBACK_FIELDS={'containers':{'count','roles','loopback','backendGroup'},'authJwks':{'count','freshKey','privateAbsent'},'database':{'counts'}}
-EXPECTED_BASELINE={'migrations':122,'publicTables':71,'publicWithoutRls':0,
+EXPECTED_BASELINE={'migrations':123,'publicTables':71,'publicWithoutRls':0,
                    'auth':0,'profiles':0,'classrooms':0,'xp':0,'wallet':0,'mediaRuns':0,'mediaAssets':0,
                    'questions':259,'publishedQuestions':258,'reviewCards':9,'hints':17,'blooks':20,'quizTemplates':26}
 BASELINE_KEYS=set(EXPECTED_BASELINE)

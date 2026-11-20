@@ -155,7 +155,7 @@ def project(io, source, runtime, tools, inputs, inputs_sha):
     target.mkdir(parents=True, mode=0o700)
     (target.parent).chmod(0o700)
     names = [name for name in tracked if name and (name.startswith(('supabase/migrations/', 'supabase/functions/')))]
-    require(sum(name.startswith('supabase/migrations/') and name.endswith('.sql') for name in names) == 122)
+    require(sum(name.startswith('supabase/migrations/') and name.endswith('.sql') for name in names) == 123)
     require(all(not any(p.startswith('.env') for p in Path(name).parts) and '..' not in Path(name).parts for name in names))
     hashes = {}
     for name in names:

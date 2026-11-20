@@ -122,11 +122,11 @@ class CryptoTests(unittest.TestCase):
 
 
     def test_parent_database_pass_requires_complete_exact_baseline(self):
-        canonical={'migrations':122,'publicTables':71,'publicWithoutRls':0,'auth':0,'profiles':0,'classrooms':0,'xp':0,'wallet':0,'mediaRuns':0,'mediaAssets':0,'questions':259,'publishedQuestions':258,'reviewCards':9,'hints':17,'blooks':20,'quizTemplates':26}
+        canonical={'migrations':123,'publicTables':71,'publicWithoutRls':0,'auth':0,'profiles':0,'classrooms':0,'xp':0,'wallet':0,'mediaRuns':0,'mediaAssets':0,'questions':259,'publishedQuestions':258,'reviewCards':9,'hints':17,'blooks':20,'quizTemplates':26}
         readback=D.empty_readback();readback['database']={'state':'PASS','counts':canonical}
         value={'result':'FAILED','code':'BOOTSTRAP_BASELINE_INVALID','readback':readback}
         self.assertIsNotNone(S.safe_bootstrap_outcome(value))
-        for counts in [dict.fromkeys(canonical),{**canonical,'auth':1},{**canonical,'migrations':True},{**canonical,'migrations':121},{**canonical,'migrations':123}]:
+        for counts in [dict.fromkeys(canonical),{**canonical,'auth':1},{**canonical,'migrations':True},{**canonical,'migrations':121},{**canonical,'migrations':122},{**canonical,'migrations':124}]:
             with self.subTest(case='INVALID_PASS'):
                 invalid=copy.deepcopy(value);invalid['readback']['database']['counts']=counts
                 self.assertIsNone(S.safe_bootstrap_outcome(invalid))

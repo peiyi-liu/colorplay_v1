@@ -41,7 +41,7 @@ def database(url):
 
 def snapshot(value,expected_identifier):
     assert set(value)=={'systemIdentifier','baseline'} and value['systemIdentifier']==expected_identifier and re.fullmatch('[0-9]{1,24}',value['systemIdentifier']),'DATABASE_IDENTITY_INVALID'
-    expected={'migrations':122,'publicTables':71,'publicWithoutRls':0,**{key:0 for key in TABLES}}
+    expected={'migrations':123,'publicTables':71,'publicWithoutRls':0,**{key:0 for key in TABLES}}
     assert set(value['baseline'])==set(expected),'BASELINE_SHAPE_INVALID'
     assert all(type(value['baseline'][key]) is int and value['baseline'][key]==count for key,count in expected.items()),'FRESH_BASELINE_INVALID'
     return {'baseline':value['baseline'],'databaseIdentity':PROJECT+':'+value['systemIdentifier']+':postgres'}

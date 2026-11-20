@@ -199,14 +199,16 @@ export function readReviewReadinessView(sectionKey: string) {
         : pathname === '/register'
           ? 'REGISTER'
           : 'OTHER';
-  const visible = (element: Element | null) => {
-    if (!element) return false;
-    const style = getComputedStyle(element);
-    return (
-      style.display !== 'none' &&
-      style.visibility !== 'hidden' &&
-      element.getClientRects().length > 0
-    );
+  const dom = {
+    visible(element: Element | null) {
+      if (!element) return false;
+      const style = getComputedStyle(element);
+      return (
+        style.display !== 'none' &&
+        style.visibility !== 'hidden' &&
+        element.getClientRects().length > 0
+      );
+    },
   };
   const nav = document.querySelectorAll('nav[aria-label="第三章小節"]');
   const buttons = Array.from(nav).flatMap((n) =>
@@ -241,27 +243,29 @@ export function readReviewReadinessView(sectionKey: string) {
     slot: data,
     navCount: Math.min(65535, nav.length),
     targetCount: Math.min(65535, targets.length),
-    targetVisible: targets.some(visible),
+    targetVisible: targets.some((element) => dom.visible(element)),
     loading:
-      visible(
+      dom.visible(
         document.querySelector('[aria-label="頁面載入中"][role="status"]'),
       ) ||
       Array.from(
         document.querySelectorAll('p[role="status"][aria-live="polite"]'),
       ).some(
         (element) =>
-          element.textContent === '章節資料載入中…' && visible(element),
+          element.textContent === '章節資料載入中…' && dom.visible(element),
       ),
-    error: visible(
+    error: dom.visible(
       document.querySelector('.chapter-detail-state--error, [role="alert"]'),
     ),
-    locked: visible(document.querySelector('.chapter-detail-state--locked')),
-    preparing: visible(
+    locked: dom.visible(
+      document.querySelector('.chapter-detail-state--locked'),
+    ),
+    preparing: dom.visible(
       document.querySelector(
         '.chapter-detail-state--preparing, .chapter-detail-state--readiness-error',
       ),
     ),
-    reader: visible(document.querySelector('.chapter-review-reader')),
+    reader: dom.visible(document.querySelector('.chapter-review-reader')),
   };
 }
 

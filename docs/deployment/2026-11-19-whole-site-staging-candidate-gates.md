@@ -21,12 +21,13 @@ Native 全部通過後，結果存 Root review、handoff、私有 evidence 與 P
 
 ## Migration lineage 與部署副作用
 
-先前唯讀快照是 remote120/local121；M82 新增 migration 後候選預期 local122。正式操作前必須重新唯讀取得 remote ledger、候選本機列表與 linked dry-run，確認 non-divergent。若 remote 未被其他工作推進，預期 pending 必須恰為以下兩個，不能套用歷史「只允許一個 pending」的舊修補範圍：
+先前唯讀快照是 remote120/local121；M82 與教師總覽完成查詢 migration 後候選預期 local123。正式操作前必須重新唯讀取得 remote ledger、候選本機列表與 linked dry-run，確認 non-divergent。若 remote 未被其他工作推進，預期 pending 必須恰為以下三個，不能套用歷史「只允許一個 pending」的舊修補範圍：
 
 1. 20261116000100_content_media_manifest_digest_index.sql
 2. 20261119000100_live_host_answer_progress.sql
+3. 20261121000100_teacher_overview_completion_lookup.sql
 
-第一個 migration 移除 manifest digest 的全域唯一限制，改成非唯一查詢 index，讓不同授權上傳流程能各自保存內容相同、asset UUID 不同的資產；不放寬 immutable content／ownership／RLS。第二個 migration 新增非公開 schema 的 Host-only progress helper 與精確 receive policy，只重定向正常／逾時作答的兩個進度廣播 callsite；join／phase、計分與獎勵規則不變。兩者皆須真 Local DB 與權限負向證據。
+第一個 migration 移除 manifest digest 的全域唯一限制，改成非唯一查詢 index，讓不同授權上傳流程能各自保存內容相同、asset UUID 不同的資產；不放寬 immutable content／ownership／RLS。第二個 migration 新增非公開 schema 的 Host-only progress helper 與精確 receive policy，只重定向正常／逾時作答的兩個進度廣播 callsite；join／phase、計分與獎勵規則不變。第三個 migration 只將教師班級總覽的完成判斷改為 immutable finalize fact EXISTS，保留精熟、分析、日期與權限語意，不加索引；效能收益仍待真 DB／完整 Local 實測。三者皆須真 Local DB 與權限負向證據。
 
 若集合、checksum、lineage 或實際 Staging head 不符就停止該寫入並查明，不執行 migration repair、db pull、Hosted reset，也不擅自改 ledger。這裡只定預期集合；當前 remote 狀態、dry-run 與最終 migration hashes 仍待同版查證。
 

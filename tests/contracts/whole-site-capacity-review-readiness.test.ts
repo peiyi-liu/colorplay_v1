@@ -1,3 +1,6 @@
+import { spawnSync } from 'node:child_process';
+import { pathToFileURL } from 'node:url';
+import { resolve } from 'node:path';
 import { performance as nodePerformance } from 'node:perf_hooks';
 import { EventEmitter } from 'node:events';
 import type { Page } from '@playwright/test';
@@ -367,5 +370,112 @@ it('an unavailable installer slot does not erase independently observed UI evide
   expect(parseReviewReadinessView({ ...view(), slot: null })).toMatchObject({
     slotCollection: 'UNOBSERVED',
     targetCount: 0,
+  });
+});
+
+const serializedReviewReadinessControl = String.raw`import assert from 'node:assert/strict';
+import { createContext, runInContext } from 'node:vm';
+import { TextEncoder } from 'node:util';
+const { readReviewReadinessView, installReviewReadinessSlot } = await import(process.argv[1]);
+const rows = [];
+for (const count of [0, 1, 2]) {
+  const canary = 'SYNTHETIC_PRIVATE_LABEL';
+  const pathname = '/app/chapters/21000000-0000-0000-0000-000000000003';
+  const node = (text = '') => ({ textContent: text, getClientRects() { return [{}]; } });
+  const buttons = Array.from({ length: count }, () => ({ ...node(canary), getAttribute(name) { assert.equal(name, 'aria-label'); return '3-1 ' + canary; } }));
+  const nav = { querySelectorAll(selector) { assert.equal(selector, 'button'); return buttons; } };
+  const sandbox = {
+    TextEncoder,
+    location: { pathname },
+    getComputedStyle() { return { display: 'block', visibility: 'visible' }; },
+    document: {
+      querySelectorAll(selector) {
+        if (selector === 'nav[aria-label="第三章小節"]') return [nav];
+        assert.equal(selector, 'p[role="status"][aria-live="polite"]');
+        return [node('章節資料載入中…')];
+      },
+      querySelector() { return null; },
+    },
+  };
+  const realm = createContext(sandbox);
+  assert.equal(runInContext('typeof __name', realm), 'undefined');
+  assert.equal(runInContext('typeof process', realm), 'undefined');
+  runInContext('(' + installReviewReadinessSlot.toString() + ')()', realm);
+  const d = Object.getOwnPropertyDescriptor(sandbox, '__colorplayReviewReadinessV1');
+  assert.equal(d.writable, false); assert.equal(d.configurable, false);
+  const query = { status: 'pending', fetchStatus: 'fetching', pending: true, error: 'NONE' };
+  d.value.json = JSON.stringify({ version: 1, epoch: 1, route: 'CHAPTER', shell: null, chapter: { epoch: 1, queries: [query, query, query, query], view: 'loading', reader: false } });
+  const value = runInContext('(' + readReviewReadinessView.toString() + ')("3-1")', realm);
+  assert.equal(value.targetCount, count); assert.equal(value.targetVisible, count > 0); assert.equal(value.navCount, 1);
+  assert.equal(value.loading, true); assert.equal(value.route, 'CHAPTER');
+  assert.equal(value.slot.chapter.view, 'loading'); assert.equal(value.slot.chapter.queries.length, 4);
+  assert.ok(value.slot.chapter.queries.every(q => q.status === 'pending' && q.fetchStatus === 'fetching' && q.pending));
+  for (const forbidden of [canary, pathname, '3-1']) assert.equal(JSON.stringify(value).includes(forbidden), false);
+  sandbox.location.pathname = '/login'; d.value.json = JSON.stringify({ version: 1, epoch: 2, route: 'LOGIN', shell: null, chapter: null });
+  const login = runInContext('(' + readReviewReadinessView.toString() + ')("3-1")', realm);
+  assert.equal(login.route, 'LOGIN'); assert.equal(login.slot.chapter, null);
+  rows.push({ count, observed: value.targetCount, loading: true, queryPending: true, loginRoute: true, privateTextAbsent: true });
+}
+console.log(JSON.stringify({ kind: 'ACTUAL_TSX_SERIALIZATION_IN_ISOLATED_REALM_ONLY', rows, hiddenHelperInjected: false, installerExecuted: true }));
+`;
+it('actual tsx compiler output executes the serialized readiness read in a fresh realm', () => {
+  const result = spawnSync(
+    process.execPath,
+    [
+      '--import',
+      'tsx',
+      '--input-type=module',
+      '--eval',
+      serializedReviewReadinessControl,
+      pathToFileURL(
+        resolve(
+          process.cwd(),
+          'src/features/learning/lib/review-readiness-diagnostics.ts',
+        ),
+      ).href,
+    ],
+    {
+      cwd: process.cwd(),
+      encoding: 'utf8',
+      shell: false,
+      timeout: 10000,
+      maxBuffer: 16384,
+      env: { TSX_DISABLE_CACHE: '1' },
+    },
+  );
+  expect(result.error).toBeUndefined();
+  expect(result.status).toBe(0);
+  expect(result.signal).toBeNull();
+  expect(result.stderr).toBe('');
+  expect(JSON.parse(result.stdout)).toMatchObject({
+    kind: 'ACTUAL_TSX_SERIALIZATION_IN_ISOLATED_REALM_ONLY',
+    rows: [
+      {
+        count: 0,
+        observed: 0,
+        loading: true,
+        queryPending: true,
+        loginRoute: true,
+        privateTextAbsent: true,
+      },
+      {
+        count: 1,
+        observed: 1,
+        loading: true,
+        queryPending: true,
+        loginRoute: true,
+        privateTextAbsent: true,
+      },
+      {
+        count: 2,
+        observed: 2,
+        loading: true,
+        queryPending: true,
+        loginRoute: true,
+        privateTextAbsent: true,
+      },
+    ],
+    hiddenHelperInjected: false,
+    installerExecuted: true,
   });
 });
