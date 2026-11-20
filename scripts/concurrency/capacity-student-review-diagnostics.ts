@@ -50,6 +50,7 @@ export interface ReviewObservation extends ReviewContext {
   phase: ReviewPhase;
   state: ReviewState;
   errorClass?: ReviewError;
+  matcher?: { collection: 'UNOBSERVED'; actual: null; expected: null };
 }
 export type ReviewObserver = (event: ReviewObservation) => void;
 const errorClass = (error: unknown): ReviewError => {
@@ -85,6 +86,15 @@ export const createReviewTrace = (
         phase,
         state,
         errorClass: state === 'FAILED' ? errorClass(error) : 'NONE',
+        ...(state === 'FAILED' && phase === 'SECTION_COUNT'
+          ? {
+              matcher: {
+                collection: 'UNOBSERVED' as const,
+                actual: null,
+                expected: null,
+              },
+            }
+          : {}),
       });
     } catch {
       /* Passive observer cannot change the original operation. */
@@ -143,9 +153,14 @@ const safe = (value: unknown): ReviewObservation | undefined => {
     !data ||
     Object.keys(data).some(
       (k) =>
-        !['phase', 'state', 'errorClass', 'matched', ...numericKeys].includes(
-          k,
-        ),
+        ![
+          'phase',
+          'state',
+          'errorClass',
+          'matched',
+          'matcher',
+          ...numericKeys,
+        ].includes(k),
     )
   )
     return;
@@ -166,6 +181,18 @@ const safe = (value: unknown): ReviewObservation | undefined => {
   )
     return;
   if (data.matched !== undefined && typeof data.matched !== 'boolean') return;
+  if (data.matcher !== undefined) {
+    const m = object(data.matcher);
+    if (
+      !m ||
+      Object.keys(m).length !== 3 ||
+      m.collection !== 'UNOBSERVED' ||
+      m.actual !== null ||
+      m.expected !== null
+    )
+      return;
+    data.matcher = { collection: 'UNOBSERVED', actual: null, expected: null };
+  }
   return data as unknown as ReviewObservation;
 };
 export const createStudentReviewDiagnostics = (actorIndex: number) => {

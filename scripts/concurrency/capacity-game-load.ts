@@ -1,3 +1,4 @@
+import type { CapacityReviewReadinessObservation } from './capacity-review-readiness-observation';
 import { createStudentReviewDiagnostics } from './capacity-student-review-diagnostics';
 import {
   gameObserve,
@@ -28,6 +29,7 @@ export interface CapacityGameLoadOptions {
   stop: () => void;
   diagnostics?: GameObserver;
   continueProtocolReads?: true;
+  reviewReadiness?: CapacityReviewReadinessObservation;
 }
 export const runCapacityGameLoad = async (
   options: CapacityGameLoadOptions,
@@ -266,7 +268,17 @@ export const runCapacityGameLoad = async (
           60,
           journal,
           owned,
-          review?.observe,
+          review
+            ? (event) => {
+                review.observe(event);
+                try {
+                  if (!owned.aborted)
+                    options.reviewReadiness?.observe(actor.actorIndex, event);
+                } catch {
+                  /* Passive only. */
+                }
+              }
+            : undefined,
         );
         if (continuation) {
           continuation.coreComplete = true;

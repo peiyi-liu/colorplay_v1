@@ -1,3 +1,4 @@
+import { installReviewReadinessSlot } from '../../src/features/learning/lib/review-readiness-diagnostics';
 import {
   createRegistrationFirstReason,
   registrationPortDiagnostics,
@@ -296,6 +297,12 @@ export const createNativeCapacityBrowser = (
         );
         running();
         context.setDefaultTimeout(15000);
+        try {
+          await context.addInitScript(installReviewReadinessSlot);
+        } catch {
+          /* Passive setup unavailable; original browser admission remains authoritative. */
+        }
+        running();
         const page = await generatorOperation(
           generator,
           'PAGE',

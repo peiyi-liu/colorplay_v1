@@ -1,3 +1,4 @@
+import { createCapacityReviewReadinessObservation } from './capacity-review-readiness-observation';
 import { createCapacityColdNetworkObserver } from './capacity-cold-network-observer';
 import { createCapacityLiveQuestionObservation } from './capacity-live-question-observation';
 import { captureCapacityOperationLifecycle } from './capacity-operation-diagnostics';
@@ -90,6 +91,10 @@ export const createCapacityJourneys = (
         })
       : undefined;
   const gameDiagnostics = createCapacityGameDiagnostics();
+  const reviewReadiness =
+    leg.mode === 'NATIVE_BROWSER'
+      ? createCapacityReviewReadinessObservation(scope, signal)
+      : null;
   const liveQuestionObservation = createCapacityLiveQuestionObservation(
     scope,
     signal,
@@ -202,6 +207,7 @@ export const createCapacityJourneys = (
       const actor = await native.createActor(index);
       check();
       coldNetwork?.attach(actor);
+      reviewReadiness?.register(actor);
       errors.track(actor);
       liveQuestionObservation.register(actor);
       const observer = await generatorOperation(
@@ -531,6 +537,7 @@ export const createCapacityJourneys = (
             ? { continueProtocolReads: true as const }
             : {}),
           diagnostics: gameDiagnostics.observe,
+          ...(reviewReadiness ? { reviewReadiness } : {}),
         });
         check();
         const live = await runCapacityLiveGame(
@@ -562,13 +569,23 @@ export const createCapacityJourneys = (
         stopping = true;
         coldNetwork?.stopAdmission('EARLY_STOP');
         liveQuestionObservation.stopAccepting();
+        reviewReadiness?.stopAccepting();
         for (const read of initialReads.values()) read.finish();
         const pending = [...initialReads.values()].map((r) => r.task);
         const results = await Promise.allSettled([
           ...pending,
           ...clients.map((c) => c.close()),
           ...[...observers.values()].map((o) => o.dispose()),
-          ...(native ? [native.close()] : []),
+          ...(native
+            ? [
+                reviewReadiness?.pending()
+                  ? reviewReadiness
+                      .beforeClose()
+                      .catch(() => undefined)
+                      .then(() => native.close())
+                  : native.close(),
+              ]
+            : []),
         ]);
         errors.dispose();
         const health = await collector.stop();
@@ -606,6 +623,9 @@ export const createCapacityJourneys = (
         originalFailed = false;
         return health;
       } finally {
+        await reviewReadiness
+          ?.finish(runtime.journal, native?.snapshot().resourcesClosed === true)
+          .catch(() => undefined);
         await coldNetwork?.finish(runtime.journal);
         await liveQuestionObservation.finish();
         await sendDiagnostics?.finish(runtime.journal);

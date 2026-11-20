@@ -1,3 +1,8 @@
+import {
+  reviewReadinessEnabled,
+  reviewQueryState,
+  tapReviewShell,
+} from '../../features/learning/lib/review-readiness-diagnostics';
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { RouteLoading } from '../boundaries/route-loading';
@@ -237,6 +242,14 @@ export function AppShell() {
       : isCompletedStudent
         ? 'student'
         : 'public';
+  if (reviewReadinessEnabled())
+    tapReviewShell({
+      auth: auth.status,
+      profile: reviewQueryState(profile),
+      matched: isAuthenticatedProfile,
+      completed: isCompletedStudent,
+      role: shellRole,
+    });
   const isStudentLearningMap =
     isCompletedStudent && location.pathname === '/app';
   const isRegistrationRoute = location.pathname === '/register';

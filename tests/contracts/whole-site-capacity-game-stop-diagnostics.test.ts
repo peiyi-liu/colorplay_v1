@@ -1,3 +1,4 @@
+import { createCapacityReviewReadinessObservation } from '../../scripts/concurrency/capacity-review-readiness-observation';
 import { describe, expect, it } from 'vitest';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../../src/types/database';
@@ -391,6 +392,11 @@ it.each(['SUCCESS', 'STUDENT_FAILURE', 'TEACHER_FAILURE'] as const)(
     const pages = [new EventEmitter(), new EventEmitter()];
     const written: { name: string; value: unknown }[] = [];
     const signalStates: boolean[] = [];
+    const readiness = createCapacityReviewReadinessObservation(
+      scope,
+      new AbortController().signal,
+    );
+    const readinessObserved = vi.spyOn(readiness, 'observe');
     let release = () => {
       /* assigned below */
     };
@@ -415,6 +421,7 @@ it.each(['SUCCESS', 'STUDENT_FAILURE', 'TEACHER_FAILURE'] as const)(
         actors,
         identities: actors.map(() => ({ userId: 'synthetic' })),
         classroomId: 'synthetic',
+        reviewReadiness: readiness,
         signal: new AbortController().signal,
         onActive: () => undefined,
         stop: () => undefined,
@@ -465,6 +472,10 @@ it.each(['SUCCESS', 'STUDENT_FAILURE', 'TEACHER_FAILURE'] as const)(
     );
     if (mode === 'SUCCESS') await expect(task).resolves.toHaveLength(3);
     else await expect(task).rejects.toThrow('CAPACITY_EVIDENCE_INVALID');
+    expect(readinessObserved).toHaveBeenCalledWith(1, {
+      phase: 'GOTO',
+      state: 'ENTERED',
+    });
     expect(written.map((row) => row.name).sort()).toEqual([
       'actor-1-student-review-diagnostics',
       'actor-2-student-review-diagnostics',
