@@ -1,3 +1,4 @@
+import { createNativeTransport } from './capacity-native-transport';
 import {
   createCapacityColdEntryDiagnostics,
   type ColdEntryJournal,
@@ -144,6 +145,7 @@ export const createNativeCapacityBrowser = (
   ports?: NativeCapacityBrowserPorts,
   generator?: GeneratorObserver,
   entryActorsExpected?: number,
+  legId?: string,
 ) => {
   const coldEntry =
     entryActorsExpected === undefined
@@ -155,11 +157,20 @@ export const createNativeCapacityBrowser = (
     proxy: (stop: AbortSignal) => createCapacityProxy(scope, stop),
     launchServer: (
       options: NonNullable<Parameters<typeof chromium.launchServer>[0]>,
-    ) => chromium.launchServer(options),
-    connect: (endpoint: string) => chromium.connect(endpoint),
+    ) =>
+      transport
+        ? transport.browserType.launchServer(options)
+        : chromium.launchServer(options),
+    connect: (endpoint: string) =>
+      transport
+        ? transport.browserType.connect(endpoint)
+        : chromium.connect(endpoint),
   };
   requireCapacityScope(scope);
   if (signal.aborted) return capacityFailure();
+  const transport = nativeSource
+    ? createNativeTransport(scope, signal, entryActorsExpected, legId)
+    : undefined;
   let proxy: CapacityProxyLease | null = null,
     server: BrowserServer | null = null,
     browser: Browser | null = null,
@@ -345,6 +356,7 @@ export const createNativeCapacityBrowser = (
         observers.add(observer);
         running();
         const actor = { actorIndex, context, page, observer };
+        transport?.bind(actorIndex, page);
         const ownedActor = actor;
         const onboarding = getCapacityOnboardingController(observer);
         if (onboarding)
@@ -401,6 +413,11 @@ export const createNativeCapacityBrowser = (
   const close = () => {
     diagnostic.note('STOP');
     stopping = true;
+    try {
+      transport?.beforeClose();
+    } catch {
+      /* Passive diagnostic only. */
+    }
     signal.removeEventListener('abort', abort);
     return (closing ??= (async () => {
       const early = [closeBrowser(), closeServer()];
@@ -430,6 +447,7 @@ export const createNativeCapacityBrowser = (
         return capacityFailure();
       }
       resourcesClosed = true;
+      transport?.closed(true);
     })());
   };
   const abort = () => {
@@ -445,6 +463,8 @@ export const createNativeCapacityBrowser = (
     finishColdEntry: (journal: ColdEntryJournal) =>
       coldEntry?.finish(journal, resourcesClosed) ?? Promise.resolve(),
     close,
+    finishTransportDiagnostics: (journal: ColdEntryJournal) =>
+      transport?.finish(journal, resourcesClosed) ?? Promise.resolve(),
     identity: () => {
       if (!server?.process().pid) return capacityFailure();
       return { nodePid: process.pid, browserPid: server.process().pid };

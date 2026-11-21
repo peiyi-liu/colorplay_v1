@@ -125,6 +125,7 @@ export const createCapacityJourneys = (
           undefined,
           generator?.observe,
           leg.actors,
+          leg.legId,
         )
       : null;
   const clients: ReturnType<typeof createCapacityProtocolActor>[] = [],
@@ -631,6 +632,11 @@ export const createCapacityJourneys = (
         originalFailed = false;
         return health;
       } finally {
+        try {
+          await native?.finishTransportDiagnostics(runtime.journal);
+        } catch {
+          /* Passive only. */
+        }
         try {
           await operationTiming?.finish(
             runtime.journal,

@@ -250,6 +250,12 @@ it.each([
       undefined,
       3,
     );
+    const finishTransport = vi.fn((journal: CapacityRuntime['journal']) =>
+      journal.write('native-transport-diagnostics', {
+        resourcesClosed: browser.snapshot().resourcesClosed,
+      }),
+    );
+    Object.assign(browser, { finishTransportDiagnostics: finishTransport });
     await browser.start();
     const actor = await browser.createActor(1);
     actor.observer.coldEntry?.arm();
@@ -347,6 +353,7 @@ it.each([
     let stopSettled = false;
     const stop = journey.stop().then(
       () => {
+        expect(finishTransport).toHaveBeenCalledTimes(1);
         stopSettled = true;
       },
       (error: unknown) => {
