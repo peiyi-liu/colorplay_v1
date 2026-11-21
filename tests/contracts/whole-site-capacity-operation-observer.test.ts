@@ -4,7 +4,9 @@ import { describe, expect, it, vi } from 'vitest';
 import { createCapacityOperationObserver } from '../../scripts/concurrency/capacity-operation-observer';
 import { capacityFixture } from './helpers/whole-site-capacity';
 import { parseCapacityScope } from '../../scripts/concurrency/capacity-scope';
-const fixture = async () => {
+const fixture = async (
+  timing?: Parameters<typeof createCapacityOperationObserver>[8],
+) => {
   const f = await capacityFixture(),
     scope = parseCapacityScope(f.input, f.proof),
     cdp = Object.assign(new EventEmitter(), {
@@ -34,6 +36,8 @@ const fixture = async () => {
     signal.signal,
     () => `op-${String(++id).padStart(6, '0')}`,
     () => true,
+    undefined,
+    timing,
   );
   return { scope, cdp, observer, signal };
 };
@@ -231,3 +235,109 @@ it.each(['sw', 'cache', 'duplicate', 'http', 'abort'] as const)(
     expect(f.cdp.eventNames()).toHaveLength(0);
   },
 );
+
+it('keeps original physical sample while forwarding native timing at the actual CDP listener', async () => {
+  const timing = {
+    request: vi.fn(),
+    response: vi.fn(),
+    finished: vi.fn(),
+    failed: vi.fn(),
+    dispose: vi.fn(),
+  };
+  const f = await fixture(timing);
+  const native = {
+    requestTime: 100,
+    sendStart: 0,
+    sendEnd: 1,
+    receiveHeadersStart: 20,
+    receiveHeadersEnd: 21,
+  };
+  await f.observer.run('published_content', 'cold', async () => {
+    await Promise.resolve();
+    f.cdp.emit('Network.requestWillBeSent', {
+      requestId: 'private-id',
+      timestamp: 100,
+      request: {
+        url: f.scope.supabaseUrl + '/rest/v1/rpc/get_student_chapter_map',
+        method: 'POST',
+      },
+    });
+    f.cdp.emit('Network.responseReceived', {
+      requestId: 'private-id',
+      response: { status: 200, timing: native },
+    });
+    f.cdp.emit('Network.loadingFinished', {
+      requestId: 'private-id',
+      timestamp: 100.05,
+    });
+  });
+  expect(f.observer.samples()[0]).toMatchObject({
+    startedAtMs: 100000,
+    finishedAtMs: 100050,
+    status: 'success',
+    attempts: [{ startedAtMs: 100000, finishedAtMs: 100050 }],
+  });
+  expect(timing.request).toHaveBeenCalledTimes(1);
+  expect(timing.response).toHaveBeenCalledWith(
+    expect.anything(),
+    expect.objectContaining({ response: { status: 200, timing: native } }),
+  );
+  expect(timing.finished).toHaveBeenCalledTimes(1);
+  expect(f.cdp.send.mock.calls).toHaveLength(1);
+  await f.observer.dispose();
+  expect(timing.dispose).toHaveBeenCalledOnce();
+});
+
+it('throwing passive hooks preserve original success, physical count and original operation failure', async () => {
+  const passive = () => {
+    throw Error('PRIVATE_PASSIVE');
+  };
+  const f = await fixture({
+    request: passive,
+    response: passive,
+    finished: passive,
+    failed: passive,
+    dispose: passive,
+  });
+  const events = () => {
+    f.cdp.emit('Network.requestWillBeSent', {
+      requestId: 'private',
+      timestamp: 1,
+      request: {
+        url: f.scope.supabaseUrl + '/rest/v1/rpc/get_student_chapter_map',
+        method: 'POST',
+      },
+    });
+    f.cdp.emit('Network.responseReceived', {
+      requestId: 'private',
+      response: { status: 200 },
+    });
+    f.cdp.emit('Network.loadingFinished', {
+      requestId: 'private',
+      timestamp: 1.1,
+    });
+  };
+  const result = {};
+  await expect(
+    f.observer.run('published_content', 'cold', () => {
+      events();
+      return Promise.resolve(result);
+    }),
+  ).resolves.toBe(result);
+  expect(f.observer.samples()[0]).toMatchObject({
+    status: 'success',
+    startedAtMs: 1000,
+    finishedAtMs: 1100,
+  });
+  const original = Error('PRIVATE_ACTION');
+  await expect(
+    f.observer.run('published_content', 'cold', () => {
+      events();
+      return Promise.reject(original);
+    }),
+  ).rejects.toThrow('CAPACITY_EVIDENCE_INVALID');
+  expect(f.observer.samples()[1]?.status).toBe('error');
+  expect(f.observer.snapshot().physicalRequests).toBe(2);
+  await expect(f.observer.dispose()).resolves.toBeUndefined();
+  expect(f.cdp.send.mock.calls).toHaveLength(1);
+});

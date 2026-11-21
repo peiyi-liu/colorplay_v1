@@ -298,6 +298,17 @@ it.each([
     } as LiveSessionState)({ wait: 'MODE_TEXT', state: 'FAILED' });
     expect(owner.pending()).toBe(1);
     const write = vi.fn((name: string, value: unknown) => {
+      if (name === 'published-content-timing-diagnostics') {
+        trace.push('TIMING_WRITE');
+        expect(trace).toContain('BROWSER_CLOSE');
+        expect(value).toMatchObject({
+          sealed: true,
+          resourcesClosed: mode !== 'close-fails',
+          collection: 'UNOBSERVED',
+        });
+        if (mode === 'writer-fails')
+          return Promise.reject(Error('PRIVATE_TIMING_WRITER'));
+      }
       if (name === 'cold-entry-diagnostics') {
         trace.push('ENTRY_WRITE');
         expect(value).toMatchObject({
@@ -382,6 +393,14 @@ it.each([
       write.mock.calls.filter(([name]) => name === 'capacity-live-diagnostics'),
     ).toHaveLength(1);
     expect(owner.pending()).toBe(0);
+    expect(
+      write.mock.calls.filter(
+        ([name]) => name === 'published-content-timing-diagnostics',
+      ),
+    ).toHaveLength(1);
+    expect(trace.indexOf('BROWSER_CLOSE')).toBeLessThan(
+      trace.indexOf('TIMING_WRITE'),
+    );
     expect(trace.indexOf('BROWSER_CLOSE')).toBeLessThan(
       trace.indexOf('ENTRY_WRITE'),
     );

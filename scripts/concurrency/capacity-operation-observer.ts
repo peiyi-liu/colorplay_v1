@@ -1,3 +1,7 @@
+import {
+  captureOperationTiming,
+  type CapacityOperationTiming,
+} from './capacity-operation-timing-diagnostics';
 import { types } from 'node:util';
 import {
   createCapacityOperationLifecycle,
@@ -120,6 +124,7 @@ export const createCapacityOperationObserver = async (
   nextId: () => string,
   businessActive: () => boolean,
   now = () => performance.now(),
+  timing?: CapacityOperationTiming,
 ) => {
   requireCapacityScope(scope);
   if (signal.aborted || actorIndex < 0 || actorIndex > 59)
@@ -208,6 +213,10 @@ export const createCapacityOperationObserver = async (
       };
       records.set(value.requestId, attempt);
       active.attempts.push(attempt);
+      if (op === 'published_content' && active.cache === 'cold')
+        captureOperationTiming(() =>
+          timing?.request(attempt, value.timestamp * 1000),
+        );
       lifecycle.track(attempt, op);
       observe('REQUEST', attempt, value.timestamp * 1000);
       if (active.attempts.length > 64) {
@@ -233,6 +242,7 @@ export const createCapacityOperationObserver = async (
       const attempt = records.get(value.requestId);
       if (!attempt) return;
       attempt.status = value.response.status;
+      captureOperationTiming(() => timing?.response(attempt, raw));
       attempt.cached = value.response.fromDiskCache === true;
       if (value.response.fromServiceWorker) {
         available = false;
@@ -258,6 +268,7 @@ export const createCapacityOperationObserver = async (
       const a = records.get(value.requestId);
       if (!a) return;
       a.end = value.timestamp * 1000;
+      captureOperationTiming(() => timing?.finished(a, value.timestamp * 1000));
       if (a.end < a.start) {
         available = false;
         observe('INVALID', a, a.end, 'FINISH_BEFORE_START');
@@ -283,6 +294,7 @@ export const createCapacityOperationObserver = async (
       validated = true;
       const a = records.get(value.requestId);
       if (!a) return;
+      captureOperationTiming(() => timing?.failed(a, value.timestamp * 1000));
       a.status = 0;
       a.end = value.timestamp * 1000;
       records.delete(value.requestId);
@@ -429,6 +441,7 @@ export const createCapacityOperationObserver = async (
       unattributedRequests,
     }),
     dispose: async () => {
+      captureOperationTiming(() => timing?.dispose());
       disposed = true;
       observe('DISPOSE');
       signal.removeEventListener('abort', abort);

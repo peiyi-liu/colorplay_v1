@@ -1,3 +1,4 @@
+import { createCapacityOperationTimingDiagnostics } from './capacity-operation-timing-diagnostics';
 import { createCapacityReviewReadinessObservation } from './capacity-review-readiness-observation';
 import { createCapacityColdNetworkObserver } from './capacity-cold-network-observer';
 import { createCapacityLiveQuestionObservation } from './capacity-live-question-observation';
@@ -102,6 +103,10 @@ export const createCapacityJourneys = (
   const coldNetwork =
     leg.mode === 'NATIVE_BROWSER' && leg.scenario !== 'anonymous_entry_prepare'
       ? createCapacityColdNetworkObserver(scope)
+      : null;
+  const operationTiming =
+    leg.mode === 'NATIVE_BROWSER'
+      ? createCapacityOperationTimingDiagnostics()
       : null;
   const activity = <T>(
     actorIndex: number,
@@ -224,6 +229,8 @@ export const createCapacityJourneys = (
             signal,
             nextId,
             () => business > 0,
+            undefined,
+            operationTiming?.actor(index),
           ),
       );
       check();
@@ -624,6 +631,14 @@ export const createCapacityJourneys = (
         originalFailed = false;
         return health;
       } finally {
+        try {
+          await operationTiming?.finish(
+            runtime.journal,
+            native?.snapshot().resourcesClosed === true,
+          );
+        } catch {
+          /* Optional diagnostics never replace the original stop result. */
+        }
         try {
           await native?.finishColdEntry(runtime.journal);
         } catch {
