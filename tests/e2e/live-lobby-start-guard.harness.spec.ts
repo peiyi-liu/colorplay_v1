@@ -41,7 +41,9 @@ test('lobby start confirmation stays inside the projector and preserves waiting'
 
   await page.getByRole('button', { name: '繼續等待' }).click();
   await expect(dialog).toBeHidden();
-  await expect(page.getByText('60 位同學已加入')).toBeVisible();
+  await expect(
+    page.getByLabel('Live 課堂狀態').getByText('已加入 60 人'),
+  ).toBeVisible();
   expect(consoleErrors).toEqual([]);
   expect(pageErrors).toEqual([]);
 });

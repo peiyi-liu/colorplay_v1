@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -71,20 +71,24 @@ describe('useEconomySummary', () => {
   });
 
   it('retries unavailable failures fewer than two times', async () => {
+    vi.useFakeTimers();
     const getSummary = vi
       .fn<() => Promise<EconomySummary>>()
       .mockRejectedValue(new EconomyRepositoryError('UNAVAILABLE'));
-    const client = new QueryClient({
-      defaultOptions: { queries: { retryDelay: 0 } },
-    });
-
-    const { result } = renderHook(() => useEconomySummary({ getSummary }), {
+    const client = new QueryClient();
+    const hook = renderHook(() => useEconomySummary({ getSummary }), {
       wrapper: createWrapper(client),
     });
-
-    await waitFor(() => {
-      expect(result.current.isError).toBe(true);
-    });
-    expect(getSummary).toHaveBeenCalledTimes(3);
+    try {
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(10_000);
+      });
+      expect(hook.result.current.isError).toBe(true);
+      expect(getSummary).toHaveBeenCalledTimes(3);
+    } finally {
+      hook.unmount();
+      client.clear();
+      vi.useRealTimers();
+    }
   });
 });

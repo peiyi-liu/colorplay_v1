@@ -53,8 +53,10 @@ const sessionPayload = {
 
 describe('quiz repository', () => {
   const rpc = vi.fn();
-  const order = vi.fn();
-  const eq = vi.fn(() => ({ order }));
+  const order = vi.fn<(...args: unknown[]) => Promise<unknown>>();
+  const eq = vi.fn(() => ({
+    order: (...args: unknown[]) => ({ retry: () => order(...args) }),
+  }));
   const select = vi.fn(() => ({ eq }));
   const from = vi.fn(() => ({ select }));
   const client = { from, rpc } as unknown as SupabaseClient<Database>;

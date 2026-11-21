@@ -1,0 +1,33 @@
+# M74 — 學生題目顯示模式契約修正審查
+
+結論：Root唯一一輪review接受，1個P2在同輪解決，無未結項目。這是容量工具task完成；尚待新Native原15leg矩陣，不等於60全站、Hosted或phase通過。
+
+## 修正與對應範圍
+
+原capacity在QUESTION_OPTIONS無條件要求學生prompt，與spec05預設screen_only的合法過濾payload不符。新helper讀既有questionDisplay，不預設未知值；驗question_open、position/count、非host／非waiting room、題目與至少2個唯一非空option IDs。device保題幹；screen_only拒題幹／option.text外洩，依公開題號及「請看投影幕作答」準備作答。沒有修改產品、預設模式、權限或從host補學生payload。
+
+對應原60人計畫的Live完整遊戲路徑及AC-SEC-005越權／資料過濾邊界；屬測試工具修正，不宣稱AC完整驗收。原20題、choice、真click／API submit、response／finished、a.measure、feedback/ranking/advance/completed/report、M73outsider與cleanup/SLO保留。新增題號＋mode文字共用原PROMPT_VISIBLE剩餘20s；首選項可見＋數量共用原OPTIONS_VISIBLE剩餘20s，無新寬限。API路徑不碰Page。
+
+## 五檔與審查
+
+game542/105d9505f213578988e13f8b0d8093d7ebe6f749f24e52a227b816fcf92bf822；
+newhelper96/f5cd847b4a98275d6286ecaeb536683f1c8327d78277b800f6e768cc29b22b71；
+oldgamefixture386/3e5bed7209ae5d0c60ca2fa3b05a43cd9f3097ce240f7437deb08695d9bd8106；
+oldlifecycle535/caf59854b67816dadec2d10526e54731e69fc07527fa8b2fb21336f9816394c4；
+newtest492/4e0139f9e12f9619a3e7de6c5c985f521fe2570191b7124048d05ebcf53abcc2。
+
+兩oldfixtures補合法device/position/2options及窄count fake，整檔反向回復basee9原bytes，原assertions/trace/故障矩陣全保。game只四個mode/readiness接線片段與import，反向亦byte相等。game/lifecycle<=545例外已在brief說明，其他<=500；未改第六Source。
+
+Root本輪P2：最初fake任何文字都visible，缺brief要求的題號／提示文字錯誤負向。修後三actualcaller案例（錯題號、缺screen_only提示、缺device題幹）都在PROMPT_VISIBLE拒絕，UI_CLICK/API_SUBMIT/RESPONSE_ARM為0、不進OPTIONS/count；P2只改newtest，另四檔hash不變。Root重讀該修正後同輪clearance，沒有第二reviewer或第二review round。
+
+## 真正執行的檢查
+
+合法screen_only無題幹／文字、2options的API與page-backed兩actualcaller先有效RED（2failed，非importERROR），後均完整20題／40次作答GREEN，device回歸亦過。18個state反例、bound/資料不變、deadline剩餘/倒退/nonfinite/abort、count mismatch及原locator exception identity均驗。
+
+P2前完整union59files1078PASS；P2測試檔變更後，只重核受影響Live3files91PASS（新檔39項），其餘原58files1042測試與實作／fixture Source保持資格。沒有執行或混加宣稱「final59/1081」。必要fulltype/lint/format/import/diff/static/inverse均0，初RED/lintFAIL與v1全27records保留；未重跑無關產品1771/Python81或Native。
+
+packet .git/m74-live-question/validation-final.json SHA3eb9ddc46df549639d9bc5b8d9e90f07a289d7259ee63ee0099c29f8d8bfe935（56records21checks）。Root直接2379paths核Source/log/packet/bytes/mode/blob；2033nonownedtracked/2282currentimmutable、三owned舊Source按歷史Git、Original9/prefix、M69四與Native歷史保。Root亦執行已讀inverse配方的無寫入prefix，實核所有原fixture／game與P2 v1反向hash。Root私有audit-v1漏空白SyntaxError保，v2僅空白修正PASS，無產品改動。final .git/m74-root-review-final.json SHA8c74cb658cbc1d21788b399f8a0a2956f5d317f7fb448cfef977e62b07add20a。
+
+## 風險與下一步
+
+VM18 cold已證screen_only／兩學生active eligible1，但未存wire q欄位仍UNKNOWN，不能以新單測追認舊wire。後半20題至報表只讀Source對照未見另一個已確認重大不一致，亦非新Native證據。Root保存新exactSource，fresh12CPU VM19單次原15leg矩陣；十八舊VM STOPPED/repo0，19僅London草稿／quota無warning但stock未知，startup2bb17357032c7a61db959e8a9d877735176b2154da6a2e3803a03292dd450b7b全文一致，未Create。next保守基本預留2.30、planned37.1208/actualconfigured34.8208非invoice，US150/noPaid。永久清理pending，Original G8 STOPPED85／Hosted0／Production禁。

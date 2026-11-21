@@ -16,9 +16,12 @@ const source = () =>
   });
 
 const transport = () => {
-  const abort = vi
-    .fn<ContentMediaTransport['abort']>()
-    .mockResolvedValue(undefined);
+  const abort = vi.fn<ContentMediaTransport['abort']>().mockResolvedValue({
+    action: 'abort',
+    outcome: 'ok',
+    request_id: requestId,
+    run_id: runId,
+  });
   const begin = vi.fn<ContentMediaTransport['begin']>().mockResolvedValue({
     action: 'begin',
     bucket: 'content-media-quarantine',
@@ -176,7 +179,7 @@ describe('ContentMedia repository', () => {
         requestId,
         semanticRole: 'standard',
       }),
-    ).rejects.toMatchObject({ code: 'CONTENT_MEDIA_INVALID_RESPONSE' });
+    ).rejects.toMatchObject({ code: 'CONTENT_MEDIA_PENDING' });
   });
 
   it('rejects a well-formed receipt from another request or semantic role', async () => {
@@ -193,6 +196,6 @@ describe('ContentMedia repository', () => {
         requestId,
         semanticRole: 'color_critical',
       }),
-    ).rejects.toMatchObject({ code: 'CONTENT_MEDIA_INVALID_RESPONSE' });
+    ).rejects.toMatchObject({ code: 'CONTENT_MEDIA_PENDING' });
   });
 });

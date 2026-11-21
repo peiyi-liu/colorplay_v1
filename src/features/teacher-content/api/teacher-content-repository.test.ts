@@ -117,35 +117,39 @@ describe('teacher content repository', () => {
   });
 
   it('lists review cards with current-version media only', async () => {
-    const order = vi.fn().mockResolvedValue({
-      data: [
-        {
-          content: '色彩三要素是色相、明度、彩度。',
-          group_label: '基礎',
-          id: '31600000-0000-0000-0000-000000000001',
-          requires_recompletion: false,
-          review_card_media: [
-            {
-              alt_text: '舊版圖片',
-              asset_path: 'https://example.com/old.png',
-              card_version: 1,
-            },
-            {
-              alt_text: '色相環圖',
-              asset_path: 'https://example.com/wheel.png',
-              card_version: 2,
-            },
-          ],
-          stable_code: 'sheet-card-demo',
-          status: 'published',
-          subtopic_id: '23000000-0000-0000-0000-000000000001',
-          title: '色彩三要素',
-          version: 2,
-        },
-      ],
-      error: null,
-    });
-    const select = vi.fn(() => ({ order }));
+    const order = vi
+      .fn<(...args: unknown[]) => Promise<unknown>>()
+      .mockResolvedValue({
+        data: [
+          {
+            content: '色彩三要素是色相、明度、彩度。',
+            group_label: '基礎',
+            id: '31600000-0000-0000-0000-000000000001',
+            requires_recompletion: false,
+            review_card_media: [
+              {
+                alt_text: '舊版圖片',
+                asset_path: 'https://example.com/old.png',
+                card_version: 1,
+              },
+              {
+                alt_text: '色相環圖',
+                asset_path: 'https://example.com/wheel.png',
+                card_version: 2,
+              },
+            ],
+            stable_code: 'sheet-card-demo',
+            status: 'published',
+            subtopic_id: '23000000-0000-0000-0000-000000000001',
+            title: '色彩三要素',
+            version: 2,
+          },
+        ],
+        error: null,
+      });
+    const select = vi.fn(() => ({
+      order: (...args: unknown[]) => ({ retry: () => order(...args) }),
+    }));
     const from = vi.fn(() => ({ select }));
     const repository = createTeacherContentRepository({
       from,

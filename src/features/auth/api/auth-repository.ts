@@ -145,6 +145,7 @@ const classifyFunctionError = (error: unknown): AuthRepositoryError => {
   }
   if (error instanceof FunctionsHttpError) {
     const status = readStatus(error);
+    if (status === 504) return new AuthRepositoryError('AUTH_TIMEOUT');
     if (status === 400 || status === 401 || status === 403) {
       return new AuthRepositoryError('AUTH_INVALID_CREDENTIALS');
     }

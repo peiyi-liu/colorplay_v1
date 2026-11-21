@@ -1,3 +1,4 @@
+import { quizReadQueryOptions } from '../lib/quiz-read-query-options';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -44,7 +45,6 @@ const quizSessionQueryKey = (sessionId: string) =>
   ['quiz', 'session', sessionId] as const;
 
 const requestId = () => globalThis.crypto.randomUUID();
-
 type SubmissionAttempt = Readonly<{
   idempotencyKey: string;
   questionId: string;
@@ -91,8 +91,7 @@ export function QuizSessionPage({
       return repository.getSession(routeSessionId);
     },
     queryKey: quizSessionQueryKey(routeSessionId ?? 'missing'),
-    retry: (failureCount, error) =>
-      error.code === 'UNAVAILABLE' && failureCount < 2,
+    ...quizReadQueryOptions,
   });
 
   const createMutation = useMutation({

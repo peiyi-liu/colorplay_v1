@@ -63,9 +63,7 @@ describe('TeacherLiveSessionPage (host console)', () => {
     await user.click(await screen.findByRole('button', { name: '開始遊戲' }));
 
     expect(openQuestion).not.toHaveBeenCalled();
-    expect(
-      screen.getByRole('alertdialog', { name: '立即開始' }),
-    ).toBeVisible();
+    expect(screen.getByRole('alertdialog', { name: '立即開始' })).toBeVisible();
     expect(screen.getByRole('button', { name: '開始' })).toBeVisible();
     expect(screen.getByRole('button', { name: '繼續等待' })).toBeVisible();
 

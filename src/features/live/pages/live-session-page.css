@@ -11,7 +11,8 @@
   inset: 0;
 }
 
-#main-content.route-world-stage:has(> .live-student-arena) > .student-route-back {
+#main-content.route-world-stage:has(> .live-student-arena)
+  > .student-route-back {
   top: 16px;
 }
 
@@ -25,7 +26,12 @@
   color: #f7fbff;
   background-color: #071120;
   background-image:
-    linear-gradient(180deg, rgb(2 8 20 / 8%) 0%, rgb(3 10 24 / 18%) 48%, rgb(3 8 19 / 78%) 100%),
+    linear-gradient(
+      180deg,
+      rgb(2 8 20 / 8%) 0%,
+      rgb(3 10 24 / 18%) 48%,
+      rgb(3 8 19 / 78%) 100%
+    ),
     url('../../../assets/live/live-student-arena-desktop-v1.webp');
   background-repeat: no-repeat;
   background-position: center;
@@ -38,7 +44,9 @@
 .live-student-status-bar {
   z-index: 1;
   display: grid;
-  grid-template-columns: 112px minmax(180px, 1.35fr) minmax(138px, 1fr) minmax(122px, 0.9fr) 64px minmax(120px, 0.8fr);
+  grid-template-columns:
+    112px minmax(180px, 1.35fr) minmax(138px, 1fr) minmax(122px, 0.9fr)
+    64px minmax(120px, 0.8fr);
   gap: 14px;
   align-items: center;
   min-height: 76px;
@@ -222,7 +230,9 @@
 
 .live-student-arena .ui-option:hover:not(:disabled) {
   border-color: #55baff;
-  box-shadow: 0 0 0 2px rgb(85 186 255 / 18%), 0 10px 26px rgb(0 0 0 / 34%);
+  box-shadow:
+    0 0 0 2px rgb(85 186 255 / 18%),
+    0 10px 26px rgb(0 0 0 / 34%);
   transform: translateY(-1px);
 }
 
@@ -235,7 +245,9 @@
   color: #f2fff7;
   background: linear-gradient(145deg, rgb(16 74 64 / 96%), rgb(5 40 38 / 96%));
   border-color: #4ade80;
-  box-shadow: 0 0 0 2px rgb(74 222 128 / 18%), 0 10px 28px rgb(0 0 0 / 32%);
+  box-shadow:
+    0 0 0 2px rgb(74 222 128 / 18%),
+    0 10px 28px rgb(0 0 0 / 32%);
   opacity: 1;
 }
 
@@ -310,10 +322,19 @@
   .scene-night.live-session-shell.live-student-arena {
     min-height: 100%;
     background-image:
-      linear-gradient(180deg, rgb(2 8 20 / 2%) 0%, rgb(3 10 24 / 14%) 34%, #071120 66%),
+      linear-gradient(
+        180deg,
+        rgb(2 8 20 / 2%) 0%,
+        rgb(3 10 24 / 14%) 34%,
+        #071120 66%
+      ),
       url('../../../assets/live/live-student-arena-desktop-v1.webp');
-    background-position: center, center 72%;
-    background-size: cover, auto 120%;
+    background-position:
+      center,
+      center 72%;
+    background-size:
+      cover,
+      auto 120%;
   }
 
   .live-student-status-bar {
@@ -354,7 +375,8 @@
     height: 42px;
   }
 
-  #main-content.route-world-stage:has(> .live-student-arena) > .student-route-back {
+  #main-content.route-world-stage:has(> .live-student-arena)
+    > .student-route-back {
     top: 32px;
   }
 

@@ -15,11 +15,15 @@ export default defineConfig({
       VITE_SUPABASE_ANON_KEY: 'synthetic-browser-public-anon-key',
     },
     exclude: [
+      // Private diagnostic evidence is not part of the repository test suite.
+      '**/.git/**',
       // Root-anchored 'node_modules/**' misses nested copies — a git worktree
       // under .worktrees/ carries its own, and vitest would then discover and
       // run every dependency's own test suite.
       '**/node_modules/**',
-      '.worktrees/**',
+      '**/.worktrees/**',
+      '**/.claude/worktrees/**',
+      '**/.pnpm-store/**',
       'tests/e2e/**',
       'tests/acceptance/**',
       'tests/visual/**',

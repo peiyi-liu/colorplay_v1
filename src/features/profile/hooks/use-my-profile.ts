@@ -1,3 +1,4 @@
+import { readQueryRetryDelay } from '../../../lib/query/read-retry';
 import {
   useMutation,
   type UseMutationResult,
@@ -5,7 +6,6 @@ import {
   useQueryClient,
   type UseQueryResult,
 } from '@tanstack/react-query';
-import { useEffect, useRef } from 'react';
 
 import { useAuth } from '../../auth/context/auth-context';
 import { parsePublicEnv } from '../../../lib/config/public-env';
@@ -18,6 +18,8 @@ import {
 } from '../types';
 
 export const myProfileQueryKey = ['profile', 'me'] as const;
+export const myProfileUserQueryKey = (userId: string | undefined) =>
+  [...myProfileQueryKey, userId] as const;
 
 export type MyProfileQuery = Pick<
   UseQueryResult<SafeProfile, ProfileRepositoryError>,
@@ -28,28 +30,19 @@ export function useMyProfile(): MyProfileQuery {
   const auth = useAuth();
   const authenticatedUserId =
     auth.status === 'authenticated' ? auth.session?.userId : undefined;
-  const queryClient = useQueryClient();
-  const previousUserId = useRef(authenticatedUserId);
   const query = useQuery<SafeProfile, ProfileRepositoryError>({
     enabled: auth.status === 'authenticated',
     queryFn: () =>
       createProfileRepository(
         getBrowserSupabaseClient(parsePublicEnv(import.meta.env)),
       ).getMyProfile(),
-    queryKey: myProfileQueryKey,
+    queryKey: myProfileUserQueryKey(authenticatedUserId),
     retry: (failureCount, error) =>
-      error.code !== 'PROFILE_AUTHORIZATION' && failureCount < 2,
+      error instanceof ProfileRepositoryError &&
+      error.code === 'PROFILE_UNAVAILABLE' &&
+      failureCount < 2,
+    retryDelay: readQueryRetryDelay,
   });
-
-  useEffect(() => {
-    if (previousUserId.current !== authenticatedUserId) {
-      previousUserId.current = authenticatedUserId;
-      void queryClient.resetQueries({
-        exact: true,
-        queryKey: myProfileQueryKey,
-      });
-    }
-  }, [authenticatedUserId, queryClient]);
 
   const data =
     authenticatedUserId !== undefined && query.data?.id === authenticatedUserId

@@ -50,6 +50,7 @@ import {
 import {
   TeacherContentError,
   toTeacherContentError as toError,
+  toTeacherContentReadError,
 } from './teacher-content-errors';
 import type { ImportQuestionRow, ImportReviewCardRow } from './xlsx-codec';
 
@@ -389,15 +390,16 @@ export function createTeacherContentRepository(
     },
 
     async listCards() {
-      const { data, error } = await client
+      const { data, error, status } = await client
         .from('review_cards')
         .select(
           'id, stable_code, group_label, title, content, status, version, ' +
             'requires_recompletion, subtopic_id, ' +
             'review_card_media (asset_path, alt_text, card_version)',
         )
-        .order('title');
-      if (error) throw toError(error.message);
+        .order('title')
+        .retry(false);
+      if (error) throw toTeacherContentReadError(error, status);
       return parseWith(z.array(cardRowSchema), data).map((row) => ({
         cardId: row.id,
         content: row.content,
@@ -437,11 +439,12 @@ export function createTeacherContentRepository(
     },
 
     async listSubtopics() {
-      const { data, error } = await client
+      const { data, error, status } = await client
         .from('subtopics')
         .select('id, stable_code, title')
-        .order('stable_code');
-      if (error) throw toError(error.message);
+        .order('stable_code')
+        .retry(false);
+      if (error) throw toTeacherContentReadError(error, status);
       return parseWith(z.array(subtopicOptionSchema), data).map((row) => ({
         stableCode: row.stable_code,
         subtopicId: row.id,

@@ -1,0 +1,21 @@
+# M79 — 登入cohort唯一審查
+
+Root唯一一輪 ACCEPTED，standards0/spec0/open0。Root final 072e61223865cede51836712abf574bde76c8866c0a8d5d77b6a3e5c2814ba96；這是task級工具修正接受，尚無修後40／60人Native或Staging PASS。
+
+## 變更
+
+只existing-login真Native caller先準備全cohort的固定登入submit按鈕／focus／handle，再原dispatcher先arm所有physicalobserver，freshreadonlypredicate及每人一次nativeEnter。固定OTP_SEND/EXISTING_LOGIN與私有owner驗同instance/intent，沒有任意selector/URL或legacy重送。保各actor準備至press結束共15s、CDP250ms、原產品API SLO。LOGIN只有consumed且PRESS後、同genuinelease與approvedorigin+role精確/app或/teacher可正常導航；這不是成功authority。錯路徑、query/hash、prepress、foreign、abort/close/expiry全拒。
+
+entry570行抽移5decl至UIhelper，原export identity及postreg/standalone click不變。Sourcefreeze6包含原entrytest完全未變，實際changed5=3Source＋2tests。行數entry482/cohort495/UI251/newtest500/OTPtest480。唯一optional<=16KiB loginPreparation沿原reportwriter、只nativeexisting、awaitclose後snapshot；Root approval e85606978a2e3e914c83b42a3eebdb5b1ae863a90f1107f610ca849315adca38，不增加IO或authority。
+
+## 驗證與保護
+
+packete6ee1294bad712721c5c2ada7b96ac5ff72d46ea99ce5e0ffd379ea7d2c6337f/81records35checks；final66files1178PASS，28新controls，fulltype/lint/format/import/AST/inverse/static/diff全綠。effective actualcaller RED命中舊reportPASS但nativepress0，GREEN後全prepare/allarm/nativepress；初fake locator/argument marshalling/type/lint、SYMLINK vs SYMLINK_TARGET verifier等8類初FAIL全保，未算Native失敗或skip。
+
+Root親讀全部records/logs與10074protected（10052files22linktargets）、Original9/prefix、6Source；10165distinctpaths。直接replay AST：移出5decl／原dispatcher+postreg+readback等7decl完全相同、舊OTP predicate specialization與63expect calls相同、原entrytest全byte不變；4既有檔inverse還原整檔對Gitshow bc精確一致。Root一處查ASThelper錯檔名僅read miss，已由packet argv定位ast-proof.mjs並用獨立輸出重算，沒有Source變動或假PASS。
+
+修改檔案為scripts/concurrency/{capacity-browser-entry.ts,capacity-send-cohort.ts,capacity-browser-entry-ui.ts}與tests/contracts/{whole-site-capacity-send-cohort.test.ts,whole-site-capacity-login-cohort.test.ts}；whole-site-capacity-browser-entry.test.ts只列owned保護，未改。AC-PERF-003原API門檻保；此task無phase接受、真Native trusted-event／CDP latency或Hosted證明。
+
+## 風險與下一步
+
+降低burst時actionability往返是工程假說；新Source必須重新跑原full15／60Native。VM21保持原40login346.639ms GENERATOR_LIMITED，不追認；全21VM已STOPPED。下一保存exactSource後freshVM22j22a40/europe-west3-b/12CPU32GiB+12GiBbrowser，原250ms與其餘guards全保。US150/noPaid/next2.30/planned44.0208非invoice；永久清理pending，Hosted0／Production禁。獨立operatorM78 local54065與Rootconnector bridge提案均不混入被測appauthority。

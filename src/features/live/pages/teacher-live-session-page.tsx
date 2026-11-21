@@ -10,6 +10,7 @@ import {
 } from '../hooks/use-live-commands';
 import { useLiveSession } from '../hooks/use-live-session';
 import type { LiveRepository } from '../types';
+import { LiveConnectionRecovery } from '../components/live-connection-recovery';
 import { LivePresenter } from '../components/live-presenter';
 import { actionCopy, transitionErrorCopy } from '../lib/live-action-copy';
 import { hostConsoleView } from '../lib/live-phase-view';
@@ -45,7 +46,7 @@ export function TeacherLiveSessionPage({
       </section>
     );
   }
-  if (session.isError) {
+  if (session.isError || session.connectionBlocked) {
     return (
       <section
         aria-label="Live 主持工作階段"
@@ -97,6 +98,7 @@ export function TeacherLiveSessionPage({
       className="teacher-live-session-page"
     >
       {transitionError ? <p role="alert">{transitionError}</p> : null}
+      <LiveConnectionRecovery {...session} host />
       <LivePresenter
         footerActions={[
           ...view.hostActions

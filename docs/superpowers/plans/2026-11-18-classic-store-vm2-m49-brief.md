@@ -1,0 +1,17 @@
+# M49 明確 classic Docker image store 前置與 fresh VM2 bootstrap
+
+Base71b5d97618d9a7513645fd66498067a701ed666a，Root唯一一輪審查，同一implementer。Owner已授多輪執行至60Local與現有Staging、US150；此task仍離線，不啟服務/cloud/credential/push。
+
+真VM1 run44171162232/job134350306751/attempt1在B.start首imageinspect停止：Docker29.1.3/overlayfs/containerd snapshotter、image.Id=amd64 manifest SHA，arch/Os/RepoDigest/Descriptor正確，既有contract期望configDigest。CLI未started，containers0/volumes0/appfixtures0。Root下載ZIP2506B SHA384d70ad415ead3400962f3d4beb216994749acf7572c63a03b366cec7a743b8，agecipher d70abfa4e629d97b54d902609cdc7662d77f84f6a638f419c0dd8e98a58695e0，6files3722B/manifest b8c94779b5b591580efd9a8ff96ef41205ec9fff1d806c618e2863b695b76f01 verified；bootstrap13logs16507B已保。不是40/60測試失敗。
+
+你已完成影響圖：至少start/containers/observer/pinner與Edge/Kong/DB/REST shutdown硬碼config域。Root選擇固定classic overlay2 store使既有完整閉包語義保持，不做本次dual-store架構改造。Docker29版本保留，僅官方features.containerd-snapshotter=false；不能換image pins/tag/CLI/下降guard或把ID接受config OR manifest。B.isolate會保原daemon.features設定，這是Source可核的接線。
+
+Source ownership請先報exact最小scope：預期linux-local-bootstrap.py現有Dockerinfo admission加explicitstorageDriver／DriverStatus見證，classic overlay2與non-containerd嚴格前置在runtime/system/cgroup mutation前驗，不支援以既有BOOTSTRAP_DOCKER_UNSUPPORTED拒絕；原systemd/cgv2保持。若需純validator可置既有linux_bootstrap_contracts.py或backend小function，先報，無新helper/manifest擴張。相應test_linux_local_bootstrap.py及最小fakeFixture可改；保free16/paid16/paid12 positives。實測Docker29 JSON作RED，classicpositive與missing/unknown/矛盾/重複marker、wrongcgroup/unsupported negatives；完整fakebootstrap證nativebeforemutation失敗且不pull，B.isolate保featurefalse。原image/shutdown/observer/pin/snapshot configDigest比較不改。你不是獨自在codebase，Root擁docs/handoff/ops，不回退他人；Source其他閉包先報Root，不擴產品/DB/deps/lock/G8/Original/legacy。全type/lint、affectedPython與必要contracts/format/import/diff，不跑產品4000或pnpmacceptance。
+
+Private ownership新.git/m49-classic-store-vm2/。準備fixed freshVM2 name cp-capacity-20261118-b4c72e、project仍project-2cb97613-9124-4f2a-bef、UID1001／12CPU32GiB／100GB／Ubuntu24.04。不修改M46/M47/M48歷史。建小adapter/template reuse exact accepted M47 baseSHA008a9bd0145cacd2652d266db2bc1ac16e772d50a21396be7ffcc71dd01e5dad，只固定NAME換VM2及以下準備，全部kernel/project/CPU/UID/home/vendor/emptydocker/timeout guard保。可產生startup bundle嵌入exactbasebytes（generated不整段回讀review，但packet驗payloadSHA，無networkdownload自家code），不以大複製保存baseline。
+
+VM2 adapter在原prepare讀取所有admission後才mutation：原01APT update前新root-owned canonical /etc/apt/apt.conf.d/99colorplay-capacity-temporary exact5strictsettings（Languagesnone/Retry1/http/httpsTimeout30/ErrorModeany），只新檔，不改signed sources/TLS，核apt-config的語義normalized Languages list，update300秒單次。其餘install/vendor/deps命令deadline保持。06Dockerstart前核同一freshVM Docker containers/volumes/images全0，既有daemon.json absent或root-owned空{}，只設定features.containerd-snapshotter=false；dockerd--validate後restart並readback store=classic overlay2/noncontainerd、cgroupdriver=systemd/v2與empty resources。此proof新root600 sidecar，不改原receipt定義。不接token或註冊runner。
+
+Fake/TempFS驗真正base prepare與adapter wiring、argv與canonical/owner/mode/nooverwrite/資源不空/unsupported store negatives before broad mutation；生成bundle解碼SHA/compile/import，不執行Native/cloud/VM。packet精確ownedpaths/hashes/RED-final與歷史保護。Root審查後才commitSource新SHA、同VMbranch normalff新push event attempt1；舊run不能re-run，VM1證據保後停止節費，VM2新隔離測試。不要動GitHub/VM/credentials或commit/push。
+
+Primary：Docker https://docs.docker.com/engine/storage/containerd/ 官方features切換；29freshdefaultcontainerd。configID差異有此輪真imageinspect證據；本次未觀測container.Image，不能延伸宣稱。固定classic前置維持原testedshutdown域，避免未經證實dual-domain擴權。

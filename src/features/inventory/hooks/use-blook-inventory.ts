@@ -1,3 +1,4 @@
+import { readQueryRetryDelay } from '../../../lib/query/read-retry';
 import {
   useMutation,
   useQuery,
@@ -37,6 +38,7 @@ export function useBlookInventory(
     queryKey: inventoryQueryKey,
     retry: (failureCount, error) =>
       error.code === 'UNAVAILABLE' && failureCount < 2,
+    retryDelay: readQueryRetryDelay,
   });
 }
 
@@ -87,6 +89,7 @@ export function useFrameInventory(
     queryKey: frameInventoryQueryKey,
     retry: (failureCount, error) =>
       error.code === 'UNAVAILABLE' && failureCount < 2,
+    retryDelay: readQueryRetryDelay,
   });
 }
 

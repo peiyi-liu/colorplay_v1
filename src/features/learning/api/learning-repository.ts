@@ -1,77 +1,17 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
+import { FunctionsHttpError, type SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 
 import type { Database } from '../../../types/database';
-
-const uuidString = z
-  .string()
-  .regex(/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/iu);
-
-export type LearningErrorCode =
-  | 'CHAPTER_LOCKED'
-  | 'HINT_CLOSED'
-  | 'HINT_SEQUENCE'
-  | 'HINT_UNAVAILABLE'
-  | 'INVALID_RESPONSE'
-  | 'REMEDIATION_NOTHING_OPEN'
-  | 'REVIEW_CARD_NOT_FOUND'
-  | 'UNAVAILABLE';
-
-const learningMessages: Record<LearningErrorCode, string> = {
-  CHAPTER_LOCKED: '請先完成上一章的複習與挑戰。',
-  HINT_CLOSED: '這一題已經作答，提示已關閉。',
-  HINT_SEQUENCE: '請依序索取提示。',
-  HINT_UNAVAILABLE: '這一題沒有更多提示了。',
-  INVALID_RESPONSE: '學習資料格式不正確，請稍後重試。',
-  REMEDIATION_NOTHING_OPEN: '這個小節目前沒有待補救的錯題。',
-  REVIEW_CARD_NOT_FOUND: '找不到這張複習卡，或內容尚未發布。',
-  UNAVAILABLE: '目前無法完成操作，請稍後重試。',
-};
-
-export class LearningError extends Error {
-  readonly code: LearningErrorCode;
-
-  constructor(code: LearningErrorCode) {
-    super(learningMessages[code]);
-    this.name = 'LearningError';
-    this.code = code;
-  }
-}
-
-const toLearningError = (message: string): LearningError => {
-  const known: readonly LearningErrorCode[] = [
-    'CHAPTER_LOCKED',
-    'HINT_CLOSED',
-    'HINT_SEQUENCE',
-    'HINT_UNAVAILABLE',
-    'REMEDIATION_NOTHING_OPEN',
-    'REVIEW_CARD_NOT_FOUND',
-  ];
-  const match = known.find((code) => message.includes(code));
-  return new LearningError(match ?? 'UNAVAILABLE');
-};
-
-const parseWith = <Output>(
-  schema: z.ZodType<Output>,
-  value: unknown,
-): Output => {
-  const parsed = schema.safeParse(value);
-  if (!parsed.success) throw new LearningError('INVALID_RESPONSE');
-  return parsed.data;
-};
-
-const parsePrivateReviewMediaAssetPath = (
-  assetPath: string,
-): Readonly<{ bucket: string; objectPath: string }> => {
-  const separator = assetPath.indexOf('/');
-  if (separator <= 0 || separator === assetPath.length - 1) {
-    throw new LearningError('INVALID_RESPONSE');
-  }
-  return {
-    bucket: assetPath.slice(0, separator),
-    objectPath: assetPath.slice(separator + 1),
-  };
-};
+import {
+  LearningError,
+  uuidString,
+  parsePrivateReviewMediaAssetPath,
+  parseLearningResponse as parseWith,
+  toLearningError,
+  toLearningReadError,
+} from './learning-errors';
+export { LearningError, toLearningReadError } from './learning-errors';
+export type { LearningErrorCode } from './learning-errors';
 
 export const isDirectReviewMediaAssetPath = (assetPath: string): boolean =>
   assetPath.startsWith('/') || assetPath.startsWith('https://');
@@ -327,10 +267,13 @@ export function createLearningRepository(
     },
 
     async getClassroomProgress(classroomId) {
-      const { data, error } = await client.rpc('get_classroom_progress', {
-        p_classroom_id: classroomId,
-      });
-      if (error) throw toLearningError(error.message);
+      const { data, error, status } = await client.rpc(
+        'get_classroom_progress',
+        {
+          p_classroom_id: classroomId,
+        },
+      );
+      if (error) throw toLearningReadError(error, status);
       return parseWith(classroomProgressSchema, data).map((row) => ({
         chapterId: row.chapter_id,
         displayName: row.display_name,
@@ -341,11 +284,11 @@ export function createLearningRepository(
     },
 
     async getLearningProgress(chapterId) {
-      const { data, error } = await client.rpc(
+      const { data, error, status } = await client.rpc(
         'get_learning_progress',
         chapterId ? { p_chapter_id: chapterId } : {},
       );
-      if (error) throw toLearningError(error.message);
+      if (error) throw toLearningReadError(error, status);
       return parseWith(progressRowsSchema, data).map((row) => ({
         accuracy: row.accuracy,
         chapterId: row.chapter_id,
@@ -361,11 +304,11 @@ export function createLearningRepository(
     },
 
     async listChapterReview(chapterId) {
-      const { data, error } = await client.rpc(
+      const { data, error, status } = await client.rpc(
         'get_accessible_chapter_review',
         { p_chapter_id: chapterId },
       );
-      if (error) throw toLearningError(error.message);
+      if (error) throw toLearningReadError(error, status);
       const sections = parseWith(chapterReviewSchema, data);
       return sections.map((section) => ({
         quizTemplateId: section.quiz_template_id,
@@ -402,8 +345,8 @@ export function createLearningRepository(
     },
 
     async listMistakes() {
-      const { data, error } = await client.rpc('list_my_mistakes');
-      if (error) throw toLearningError(error.message);
+      const { data, error, status } = await client.rpc('list_my_mistakes');
+      if (error) throw toLearningReadError(error, status);
       return parseWith(mistakeRowsSchema, data).map((row) => ({
         correctOptionText: row.correct_option_text,
         lastEventAt: row.last_event_at,
@@ -417,10 +360,11 @@ export function createLearningRepository(
     },
 
     async listReviewProgress() {
-      const { data, error } = await client
+      const { data, error, status } = await client
         .from('review_progress')
-        .select('review_card_id, card_version');
-      if (error) throw toLearningError(error.message);
+        .select('review_card_id, card_version')
+        .retry(false);
+      if (error) throw toLearningReadError(error, status);
       return parseWith(reviewProgressRowsSchema, data).map((row) => ({
         cardVersion: row.card_version,
         reviewCardId: row.review_card_id,
@@ -469,7 +413,7 @@ export function createLearningRepository(
           const { data, error } = await client.storage
             .from(bucket)
             .createSignedUrls(paths, 3600);
-          if (error) throw new LearningError('UNAVAILABLE');
+          if (error) throw toLearningReadError(error);
 
           const signedUrlByPath = new Map(
             data.map((item) => [item.path, item.error ? null : item.signedUrl]),
@@ -490,7 +434,17 @@ export function createLearningRepository(
         const invocation = (await client.functions.invoke('content-media', {
           body: { action: 'resolve', assetIds },
         })) as Readonly<{ data: unknown; error: unknown }>;
-        if (invocation.error) throw new LearningError('UNAVAILABLE');
+        if (invocation.error) {
+          const context: unknown =
+            invocation.error instanceof FunctionsHttpError
+              ? Object.getOwnPropertyDescriptor(invocation.error, 'context')
+                  ?.value
+              : undefined;
+          throw toLearningReadError(
+            invocation.error,
+            context instanceof Response ? context.status : undefined,
+          );
+        }
         const payload = parseWith(
           trustedMediaResolutionSchema,
           invocation.data,

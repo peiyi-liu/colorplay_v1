@@ -1,0 +1,11 @@
+# M78 — 對齊獨立 Hosted operator 的已核12GiB驗證器
+
+Owner 已授權持續實作／唯一Root審查／完整60人Local後Staging，US150/noPaid/Production禁。VM21 exactSourcebc2581a6afa3b4d4b7779de7957619afb35499ef/run44404679498正在原full15，不可修改Recovery Source／原目錄Source／VM／runner或重試。此task只在 /private/tmp/colorplay-hosted-root-m65-20261118，base3081400e70c9b2b622d8cab9f7fd91c639edeaaa，維持獨立operator。
+
+已確認M65依賴其本地execution-profile/capacity-manifest/capacity-linux-health，舊版不能識別新BROWSER12G。Root選擇最小必要validator版本對齊，不增加caller JSON假證據或ancestor豁免；Root connectors私有交付bridge另task，現在不實作。
+
+唯一ownership5paths：scripts/concurrency/execution-profile.ts、capacity-manifest.ts、capacity-linux-health.ts；tests/contracts/whole-site-vm-profile.test.ts；新增tests/contracts/whole-site-vm-browser-budget.test.ts。前三 Source及兩tests必須逐byte等於Recovery已核bc2581a對應檔案，copy前以gitshow/sha核，不泛用cherry-pick其他修改。前三expected SHA依序5a746c68e202d8555f2367ef25681a5900117ea94d38f719d8bb94610c539952／403b68cc1dd37305974918c96339cd184ccf21564368bc5db7e925aa60e67aa0／75815f0bbf7f1e90722d5da0e50ebc49a92ecdafffee3eafe44800488214d72e。profiletestcd56c9ffd41c6d55675985eafb160c0fb686a533ad80115fbcba56d11a696e41，newbudgete4f12032165fb9afacc264df845171d0fa99c8cdf641ff3ce79975e5906ad9c4。若helpers／types有真必要其他改動，先回Root，不自行擴張。不能改M57/M65/M69module、nonce store、app產品或任何guard/SLO／舊6GiB配置；不編造M65 full15 PASS。
+
+開始先讀operator最新handoff與status，記錄原dirty docs/handoff.md及node_modules symlink並保護，不覆寫。你不是唯一編輯者，Root寫Recovery/Original handoff及 .git VM21；禁止回復、清理他人修改。先保存private baseline，至少涵蓋全部operator tracked Source（不讀legacy內容）、既有測試／M69 Source4／dirtyhandoff wholebytes及symlink target、Recovery五要copy檔案、Original9/prefix；後續只允許owned5檔變動。有效RED：新增budget測試對舊validators拒絕新kind；再只移植三validator+必要profiletest版本GREEN。所有失敗保留。
+
+跑受影響VM/profile/health/manifest/M65predecessor/M57admission/M69nonce原集合，fulltype/lint/format/compile與import/diff相關檢查。無pnpmacceptance/Cloud/SSH/GitHub/Mail/DB/Auth/Hosted呼叫。不要先寫新bridge、不要commit/push。交private .git/m78-operator-browser-budget/ packet：actualargv/rawlogs+hash、final Sourcefreeze5、exactcopy証明、protected checks及風險；Root一輪唯一審查。每檔<=500，M65既有507tests只跑不改。M76測試系統是工具控制，Native full60結果另由Root真證據核。

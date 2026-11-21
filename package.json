@@ -57,7 +57,13 @@
     "phase:teacher-content": "bash scripts/acceptance/run-teacher-content.sh",
     "phase:content-studio-ch3": "bash scripts/acceptance/run-content-studio-ch3.sh",
     "phase:live-advanced": "bash scripts/acceptance/run-live-advanced.sh",
-    "phase:ui-restyle": "bash scripts/acceptance/run-ui-restyle.sh"
+    "phase:ui-restyle": "bash scripts/acceptance/run-ui-restyle.sh",
+    "whole-site:functional": "node --import tsx scripts/concurrency/run-functional.ts",
+    "live:capacity": "node --import tsx scripts/live/run-capacity.ts",
+    "live:verify:local": "bash scripts/live/verify-local.sh",
+    "live:capacity:browser": "playwright test --config scripts/live/playwright.config.ts",
+    "live:capacity:hybrid": "COLORPLAY_LIVE_PROFILE=hybrid playwright test --config scripts/live/playwright.config.ts",
+    "whole-site:capacity": "node --import tsx scripts/concurrency/run-capacity.ts"
   },
   "keywords": [],
   "author": "",
@@ -86,7 +92,7 @@
   "devDependencies": {
     "@axe-core/playwright": "^4.12.1",
     "@eslint/js": "^10.0.1",
-    "@playwright/test": "^1.61.1",
+    "@playwright/test": "1.65.1",
     "@tailwindcss/vite": "^4.3.2",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",

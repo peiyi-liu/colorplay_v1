@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { ContentAuthoringRepository } from '../api/content-authoring-repository';
 import {
   createContentMediaRepository,
+  ContentMediaRepositoryError,
   type ContentMediaRepository,
 } from '../api/content-media-repository';
 import type { ContentEditorState } from '../api/contracts';
@@ -12,7 +13,7 @@ import type { ContentStudioItem } from '../lib/content-studio-model';
 export function ContentMediaWorkflow({
   authoringRepository,
   editorState,
-  mediaRepository = createContentMediaRepository(),
+  mediaRepository,
   onAttached,
   selected,
 }: Readonly<{
@@ -22,6 +23,10 @@ export function ContentMediaWorkflow({
   onAttached: () => void;
   selected: ContentStudioItem | null;
 }>) {
+  const [fallbackRepository] = useState(createContentMediaRepository);
+  const repository = mediaRepository ?? fallbackRepository;
+  const [uncertain, setUncertain] = useState(false);
+  const actionBusy = useRef(false);
   const [file, setFile] = useState<File | null>(null);
   const [semanticRole, setSemanticRole] = useState<
     'standard' | 'color_critical'
@@ -33,16 +38,42 @@ export function ContentMediaWorkflow({
   const attachRequest = useRef<string | null>(null);
   const previewUrlRef = useRef<string | null>(null);
   const upload = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (action: 'upload' | 'recover' | 'cancel') => {
+      if (action !== 'upload') {
+        if (!uploadRequest.current) throw new Error('UPLOAD_REQUIRED');
+        if (action === 'recover')
+          return repository.recover(uploadRequest.current);
+        await repository.cancel(uploadRequest.current);
+        uploadRequest.current = null;
+        return null;
+      }
       if (!file) throw new Error('FILE_REQUIRED');
       uploadRequest.current ??= crypto.randomUUID();
-      return mediaRepository.uploadAndProcess({
+      return repository.uploadAndProcess({
         file,
         requestId: uploadRequest.current,
         semanticRole,
       });
     },
+    onError: (error) => {
+      if (
+        error instanceof ContentMediaRepositoryError &&
+        error.code === 'CONTENT_MEDIA_PENDING'
+      )
+        setUncertain(true);
+    },
+    onSuccess: () => {
+      setUncertain(false);
+    },
+    onSettled: () => {
+      actionBusy.current = false;
+    },
   });
+  const runUploadAction = (action: 'upload' | 'recover' | 'cancel') => {
+    if (actionBusy.current) return;
+    actionBusy.current = true;
+    upload.mutate(action);
+  };
   const attach = useMutation({
     mutationFn: async () => {
       if (
@@ -103,7 +134,9 @@ export function ContentMediaWorkflow({
         <input
           accept="image/jpeg,image/png,image/webp"
           type="file"
+          disabled={uncertain || upload.isPending}
           onChange={(event) => {
+            if (uncertain || actionBusy.current) return;
             const nextFile = event.target.files?.[0] ?? null;
             setFile(nextFile);
             if (previewUrlRef.current)
@@ -132,8 +165,11 @@ export function ContentMediaWorkflow({
         用途
         <select
           value={semanticRole}
+          disabled={uncertain || upload.isPending}
           onChange={(event) => {
             setSemanticRole(event.target.value as typeof semanticRole);
+            uploadRequest.current = null;
+            upload.reset();
           }}
         >
           <option value="standard">一般教學圖片</option>
@@ -142,15 +178,40 @@ export function ContentMediaWorkflow({
       </label>
       <button
         className="primary-action"
-        disabled={!file || upload.isPending}
+        disabled={!file || upload.isPending || uncertain}
         type="button"
         onClick={() => {
-          upload.mutate();
+          runUploadAction('upload');
         }}
       >
         {upload.isPending ? '壓縮驗證中…' : '上傳並建立 WebP 衍生檔'}
       </button>
-      {upload.isError ? (
+      {uncertain ? (
+        <div>
+          <p role="alert">
+            處理結果尚未確認；請確認並恢復處理，或取消這次上傳後重新操作。
+          </p>
+          <button
+            type="button"
+            disabled={upload.isPending}
+            onClick={() => {
+              runUploadAction('recover');
+            }}
+          >
+            確認並恢復處理
+          </button>
+          <button
+            type="button"
+            disabled={upload.isPending}
+            onClick={() => {
+              runUploadAction('cancel');
+            }}
+          >
+            取消這次上傳
+          </button>
+        </div>
+      ) : null}
+      {upload.isError && !uncertain ? (
         <p role="alert">圖片處理失敗；不合格圖片不會進入正式內容。</p>
       ) : null}
       {upload.data ? (

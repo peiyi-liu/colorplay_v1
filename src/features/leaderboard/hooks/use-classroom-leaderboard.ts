@@ -1,3 +1,4 @@
+import { readQueryRetryDelay } from '../../../lib/query/read-retry';
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 
 import { parsePublicEnv } from '../../../lib/config/public-env';
@@ -30,5 +31,6 @@ export function useClassroomLeaderboard(
     queryKey: leaderboardKeys.classroom(classroomId),
     retry: (failureCount, error) =>
       error.code === 'UNAVAILABLE' && failureCount < 2,
+    retryDelay: readQueryRetryDelay,
   });
 }

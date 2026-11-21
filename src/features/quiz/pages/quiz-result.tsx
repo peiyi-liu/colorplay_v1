@@ -1,3 +1,4 @@
+import { quizReadQueryOptions } from '../lib/quiz-read-query-options';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
@@ -62,10 +63,7 @@ export function QuizResultPage({
       return repository.getSession(sessionId);
     },
     queryKey: ['quiz', 'session', sessionId ?? 'missing'],
-    retry: (failureCount, error) =>
-      error instanceof QuizRepositoryError &&
-      error.code === 'UNAVAILABLE' &&
-      failureCount < 2,
+    ...quizReadQueryOptions,
   });
 
   if (sessionQuery.isPending) return <RouteLoading withinMain />;

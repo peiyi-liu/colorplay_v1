@@ -37,8 +37,9 @@ export const LIVE_PRESENTER_HARNESS_SCENARIOS: readonly LivePresenterHarnessScen
 
 const sizedText = (length: number, source: string): string => {
   const characters = Array.from(source);
-  return Array.from({ length }, (_, index) =>
-    characters[index % characters.length],
+  return Array.from(
+    { length },
+    (_, index) => characters[index % characters.length],
   ).join('');
 };
 

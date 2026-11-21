@@ -1,0 +1,9 @@
+# M20：恢復正常 Local suite 唯一 Root review
+
+**ACCEPTED_NORMAL_LOCAL_SUITE_PENDING_NEW_SOURCE**。Root唯一一輪，Standards／Spec／Security各0 findings。Base e866e30861bfd93eb11fbf334113d781865a5db4；只刪workflow兩行diagnostic env，新增一個actual workflow契約，既有missing-flag完整15legs與diagnostic1/unknown負向斷言保持。對應WB4／AC-PERF-003準備，非容量PASS。
+
+Packet924c3b3437f95f0048518bd1940f5c47d2a811357e6a6274d2acee72de634828；Root核2Source、66protected actualGit、operator44及全部check rawSHA，worker另1,918 unowned non-docs bytes保持。Worker8tests、lint/typecheck/workflow Prettier/AST/import/EOF/diff全0，Root8tests PASS/0.325s，workflow確等於舊bytes僅刪指定env區塊。Rootsummary94aa9d47de9634476c987c1308b7306737cdbe3bd578d55e2d62b1a7f3826eb6。
+
+前級Native14 final receipt5097c815167df533ce81c06f75cec7a695faa371f591d4cc17440dd23bc072e3已核完整cold capture/transfer，job因預定business-barrier exit1；不是restore/business/capacity證據。下一新Source須新build/profile/request/receipt，先six-person functional，再依原15分立legs/fail-stop/資源與SLO逐級，不攜舊SHA冒充。
+
+Root exact5paths commit/check0/clean後正常FF專用testbranch，一個新push/attempt1。Actor上限與fresh40/60、總106 Local身份計畫不改，不fakeIP/預建fresh/錯峰/放寬額度。原WIP/G8/85保護；US$0、Hosted／Production／真寄信0。Local Mailpit/IPheader旁路不替代Hosted同NAT與真郵件容量。

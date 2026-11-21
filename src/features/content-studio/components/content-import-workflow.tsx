@@ -8,9 +8,13 @@ import {
 import { createContentImportTemplate } from '../import/content-import-template';
 import {
   createContentMediaRepository,
+  ContentMediaRepositoryError,
   type ContentMediaRepository,
 } from '../api/content-media-repository';
-import { inspectContentImportMedia } from '../import/package-media';
+import {
+  createContentImportMediaBatch,
+  type ImportMediaProgress,
+} from '../import/package-media-batch';
 
 const readableIssue = (value: unknown): string => {
   if (typeof value === 'string') return value;
@@ -25,65 +29,73 @@ const readableIssue = (value: unknown): string => {
 
 export function ContentImportWorkflow({
   onCommitted,
-  repository = createContentImportRepository(),
-  mediaRepository = createContentMediaRepository(),
+  repository: suppliedRepository,
+  mediaRepository,
 }: Readonly<{
   mediaRepository?: ContentMediaRepository | undefined;
   onCommitted: () => void;
   repository?: ContentImportRepository | undefined;
 }>) {
+  const [fallbackRepository] = useState(createContentImportRepository);
+  const repository = suppliedRepository ?? fallbackRepository;
+  const [fallbackMediaRepository] = useState(createContentMediaRepository);
+  const [mediaBatch] = useState(() =>
+    createContentImportMediaBatch(mediaRepository ?? fallbackMediaRepository),
+  );
   const [file, setFile] = useState<File | null>(null);
+  const [fileEpoch, setFileEpoch] = useState(0);
+  const [uncertain, setUncertain] = useState(false);
+  const actionBusy = useRef(false);
   const [confirmWarnings, setConfirmWarnings] = useState(false);
   const [mediaProgress, setMediaProgress] = useState<
-    readonly Readonly<{
-      path: string;
-      status: 'pending' | 'processing' | 'verified';
-    }>[]
+    readonly ImportMediaProgress[]
   >([]);
   const requestId = useRef<string | null>(null);
   const commitRequestId = useRef<string | null>(null);
-  const mediaRequestIds = useRef(new Map<string, string>());
   const preview = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (action: 'preview' | 'recover' | 'cancel') => {
+      if (action === 'cancel') {
+        await mediaBatch.cancel();
+        requestId.current = null;
+        commitRequestId.current = null;
+        setFile(null);
+        setFileEpoch((value) => value + 1);
+        setMediaProgress([]);
+        return null;
+      }
       if (!file) throw new Error('FILE_REQUIRED');
       requestId.current ??= crypto.randomUUID();
-      const media = await inspectContentImportMedia(file);
-      setMediaProgress(
-        media.map((item) => ({ path: item.path, status: 'pending' })),
+      const mediaManifestMap = await mediaBatch.process(
+        file,
+        action === 'recover',
+        setMediaProgress,
       );
-      const mediaManifestMap: Record<string, string> = {};
-      for (const item of media) {
-        setMediaProgress((current) =>
-          current.map((entry) =>
-            entry.path === item.path
-              ? { ...entry, status: 'processing' }
-              : entry,
-          ),
-        );
-        let mediaRequestId = mediaRequestIds.current.get(item.path);
-        if (!mediaRequestId) {
-          mediaRequestId = crypto.randomUUID();
-          mediaRequestIds.current.set(item.path, mediaRequestId);
-        }
-        const asset = await mediaRepository.uploadAndProcess({
-          file: item.file,
-          requestId: mediaRequestId,
-          semanticRole: item.semanticRole,
-        });
-        mediaManifestMap[item.path] = asset.assetId;
-        setMediaProgress((current) =>
-          current.map((entry) =>
-            entry.path === item.path ? { ...entry, status: 'verified' } : entry,
-          ),
-        );
-      }
+      setUncertain(false);
       return repository.previewPackage({
         file,
         mediaManifestMap,
         requestId: requestId.current,
       });
     },
+    onError: (error) => {
+      if (
+        error instanceof ContentMediaRepositoryError &&
+        error.code === 'CONTENT_MEDIA_PENDING'
+      )
+        setUncertain(true);
+    },
+    onSuccess: () => {
+      setUncertain(false);
+    },
+    onSettled: () => {
+      actionBusy.current = false;
+    },
   });
+  const runPreviewAction = (action: 'preview' | 'recover' | 'cancel') => {
+    if (actionBusy.current) return;
+    actionBusy.current = true;
+    preview.mutate(action);
+  };
   const commit = useMutation({
     mutationFn: async () => {
       if (!preview.data) throw new Error('PREVIEW_REQUIRED');
@@ -128,13 +140,16 @@ export function ContentImportWorkflow({
       <label>
         內容套件（XLSX 或 CSV＋圖片 ZIP）
         <input
+          key={fileEpoch}
           accept=".xlsx,.zip"
+          disabled={uncertain || preview.isPending}
           type="file"
           onChange={(event) => {
+            if (uncertain || actionBusy.current) return;
+            mediaBatch.reset();
             setFile(event.target.files?.[0] ?? null);
             requestId.current = null;
             commitRequestId.current = null;
-            mediaRequestIds.current.clear();
             setMediaProgress([]);
             preview.reset();
             commit.reset();
@@ -147,10 +162,10 @@ export function ContentImportWorkflow({
       </p>
       <button
         className="primary-action"
-        disabled={!file || preview.isPending}
+        disabled={!file || preview.isPending || uncertain}
         type="button"
         onClick={() => {
-          preview.mutate();
+          runPreviewAction('preview');
         }}
       >
         {preview.isPending ? '可信驗證中…' : '上傳並預覽差異'}
@@ -169,7 +184,33 @@ export function ContentImportWorkflow({
           ))}
         </ul>
       ) : null}
-      {preview.isError ? (
+      {uncertain ? (
+        <div>
+          <p role="alert">
+            圖片處理結果尚未確認；請確認並恢復處理，或取消這次上傳後重新選擇
+            ZIP。已驗證圖片不會被刪除。
+          </p>
+          <button
+            type="button"
+            disabled={preview.isPending}
+            onClick={() => {
+              runPreviewAction('recover');
+            }}
+          >
+            確認並恢復處理
+          </button>
+          <button
+            type="button"
+            disabled={preview.isPending}
+            onClick={() => {
+              runPreviewAction('cancel');
+            }}
+          >
+            取消這次上傳
+          </button>
+        </div>
+      ) : null}
+      {preview.isError && !uncertain ? (
         <p role="alert">套件驗證失敗；尚未建立任何草稿。</p>
       ) : null}
       {preview.data ? (

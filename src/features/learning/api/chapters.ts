@@ -1,3 +1,5 @@
+import { classifyReadFailure } from '../../../lib/query/read-failure';
+import { readQueryRetryDelay } from '../../../lib/query/read-retry';
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
@@ -53,9 +55,16 @@ export type PublishedChapter = Readonly<{
 }>;
 
 export type LearningRepositoryErrorCode =
-  'CHAPTERS_INVALID_RESPONSE' | 'CHAPTERS_UNAVAILABLE';
+  | 'CHAPTERS_INVALID_RESPONSE'
+  | 'CHAPTERS_UNAVAILABLE'
+  | 'CHAPTERS_AUTHORIZATION'
+  | 'CHAPTERS_RATE_LIMITED'
+  | 'CHAPTERS_NOT_FOUND';
 
 const learningMessages: Record<LearningRepositoryErrorCode, string> = {
+  CHAPTERS_AUTHORIZATION: '目前無法存取章節，請重新登入或確認權限。',
+  CHAPTERS_RATE_LIMITED: '章節讀取過於頻繁，請稍後再試。',
+  CHAPTERS_NOT_FOUND: '找不到可存取的章節。',
   CHAPTERS_INVALID_RESPONSE: '章節資料格式不正確，請稍後重試。',
   CHAPTERS_UNAVAILABLE: '目前無法載入章節，請稍後重試。',
 };
@@ -117,7 +126,7 @@ const collectSubtopicTitles = (
 export async function fetchPublishedChapters(
   client: SupabaseClient<Database>,
 ): Promise<PublishedChapter[]> {
-  const { data, error } = await client
+  const { data, error, status } = await client
     .from('quiz_templates')
     .select(
       `
@@ -141,9 +150,22 @@ export async function fetchPublishedChapters(
     )
     .eq('status', 'published')
     .is('section_id', null)
-    .order('sort_order', { referencedTable: 'chapters' });
+    .order('sort_order', { referencedTable: 'chapters' })
+    .retry(false);
 
-  if (error) throw new LearningRepositoryError('CHAPTERS_UNAVAILABLE');
+  if (error) {
+    const codes = {
+      AUTH: 'CHAPTERS_AUTHORIZATION',
+      PERMISSION: 'CHAPTERS_AUTHORIZATION',
+      RATE_LIMIT: 'CHAPTERS_RATE_LIMITED',
+      VALIDATION: 'CHAPTERS_INVALID_RESPONSE',
+      NOT_FOUND: 'CHAPTERS_NOT_FOUND',
+      UNAVAILABLE: 'CHAPTERS_UNAVAILABLE',
+    } as const;
+    throw new LearningRepositoryError(
+      codes[classifyReadFailure({ error, status })],
+    );
+  }
 
   const parsed = catalogSchema.safeParse(data);
   if (!parsed.success) {
@@ -183,7 +205,8 @@ export function usePublishedChapters(): PublishedChaptersQuery {
       ),
     queryKey: publishedChaptersQueryKey,
     retry: (failureCount, error) =>
-      error.code !== 'CHAPTERS_INVALID_RESPONSE' && failureCount < 2,
+      error.code === 'CHAPTERS_UNAVAILABLE' && failureCount < 2,
+    retryDelay: readQueryRetryDelay,
   });
 
   return {

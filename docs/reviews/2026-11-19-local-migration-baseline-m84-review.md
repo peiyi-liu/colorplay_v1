@@ -1,0 +1,27 @@
+# M84 Local migration 基線與 operator 清單審查
+
+## 變更摘要
+
+Root 唯一一輪審查，0未解finding；離線Source放行，真新CI／Native待驗。Base07ccdf3800452c5c028a86f9683a7be1a5a538b9；freeze22702cddffbcc090af5861492e3ef10124ee7a8a4c9eb7894d97830e8c57e00c。六個Local runtime guard僅固定121→122，其他基線／權限／SQL／15與20秒／SLO／core5不變；121／123仍拒、保120負向。
+
+## 對應 AC
+
+支援AC-PERF-003完整60人測試的準備工作；本次不是容量或phase PASS。Native25在建庫前被舊121 guard拒絕，functional／capacity NOT_RUN。前候選真CI八綠不挪作本候選驗證；新Source需新CI／新VM原functional15＋capacity15。
+
+## 修改檔案與接線
+
+Worker只改正式brief的12檔：六runtime guards、operator manifest、四既有tests、一個新test_linux_migration_baseline.py。46entry只改functional-preflight.py與capacity-root-readonly.py的實際bytes/hash，其餘44及metadata/order不變；35installed、core5 Git bytes相同。新manifest SHA18d378def7ea5317db497b0a6f289e1149a9801ab0f3cc07d0b1e3409a92d5ec，原c567 pin會拒絕，後續Root admission必改綁新digest。
+
+Root另在unit CI原coverage前加一個明確Python discover step，原因是原CI只跑固定drivers，不會自動執行新regression。只有兩行addition，原9177B/b93b92aa...可完整inverse；current b381ba450e03fa7863a9ebfd40bdb0c0b2903dc5e026b462311503220fd5fda6。未刪改任何原job、test、skip、門檻或timeout；詳M84 CI amendment。
+
+## 命令與結果
+
+新regression使用實際tracked122及既有migration SHA，經真正capture_project_inputs／B.project caller取得舊Source有效RED；修後122成功、121/123在copy/services前拒絕，並驗真正status、functional與capacity snapshot boundary。focused Python4／TS16綠；完整受影響Python12files102 tests、TS109files1859 tests全綠，typecheck／lint／ownedformat／TS-Python importcompile／diff／static全0。Root依CI原discovery args獨立執行4tests PASS；Ubuntu CI仍待新Source。
+
+Root全讀窄diff與新regression，獨立重核57207 current inputs（76 symlink targets）、CI1 historical／exact兩行inverse、兩handoff prefixes、11完整Gitbaseinverse、六runtime單literal；52packet records／18checks的bytes／mode／metadata／log hash均核符。12owned全≤500行（最大457）。新manifest經完整operator validator接受且舊digest拒絕；不是放寬檢查或重用舊收據。
+
+原兩個RED、TS新assertion誤用identity、private inverse pattern及packet builder syntax失敗全部保留。Root最初沿用M83 packet schema與manifest array假設，按實際dict／nested metadata-log核正後通過；Source／packet未因此修改。Root clearance37a266e141fe253d5faa82e8d4106fac7fcda84cf00f71aab5b67209f37b65d6；packet7cdc1843f5788175f62b3602d8e67f519ae5a9e7dff6e7f2b55e0bec50a0b3d2；獨立保護proof6088fdce8fa2831ea6de45e0cc52c94deadec3e628053a14a0dc50dc71c99d78。
+
+## 風險與下一步
+
+新Source尚未真CI／Native；固定122刻意不自動接受未核的新migration，CI新step應提前擋漂移。獨立operator checkout四處121仍未改，不宣稱其已相容；這不替代Hosted admission或授權。全25VM已normalSTOP、repo0，2500GiB磁碟retain／永久清理未授權，US150/noPaid。VM26僅離線準備，不先Create。新CI八綠後freshVM原full15/60，全通才protected Staging；Production禁止。

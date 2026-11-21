@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
@@ -22,7 +22,7 @@ import type { LiveRepository } from '../types';
 import './teacher-live-page.css';
 import './teacher-live-workspace.css';
 
-const createSchema = z.strictObject({
+export const createLiveClassroomSchema = z.strictObject({
   classroomId: z.string().min(1, '請選擇班級'),
   sectionId: z.string().min(1, '請選擇要對戰的單元'),
   timeLimit: z
@@ -34,7 +34,7 @@ const createSchema = z.strictObject({
       return seconds >= 5 && seconds <= 120;
     }, '每題秒數需為 5 到 120 的整數'),
 });
-type CreateValues = z.infer<typeof createSchema>;
+type CreateValues = z.infer<typeof createLiveClassroomSchema>;
 
 const TIME_LIMIT_OPTIONS = ['5', '10', '15', '20', '30', '45', '60'] as const;
 
@@ -54,6 +54,7 @@ export function TeacherLivePage({
   const createActivity = useCreateLiveActivity(repository);
   const launchSession = useLaunchLiveSession(repository);
   const [actionError, setActionError] = useState<string>();
+  const submitting = useRef(false);
   const {
     control,
     formState: { errors, isSubmitting },
@@ -62,16 +63,13 @@ export function TeacherLivePage({
     setValue,
   } = useForm<CreateValues>({
     defaultValues: { classroomId: '', sectionId: '', timeLimit: '20' },
-    resolver: zodResolver(createSchema),
+    resolver: zodResolver(createLiveClassroomSchema),
   });
   const classroomOptions = useMemo(
     () => classrooms.data ?? [],
     [classrooms.data],
   );
-  const sectionOptions = useMemo(
-    () => sections.data ?? [],
-    [sections.data],
-  );
+  const sectionOptions = useMemo(() => sections.data ?? [], [sections.data]);
   const selectedClassroomId = useWatch({ control, name: 'classroomId' });
   const selectedSectionId = useWatch({ control, name: 'sectionId' });
   const timeLimit = useWatch({ control, name: 'timeLimit' });
@@ -154,12 +152,15 @@ export function TeacherLivePage({
         data-interaction-group="create-live-activity"
         onSubmit={(event) => {
           void handleSubmit(async (values) => {
+            if (submitting.current) return;
+            submitting.current = true;
             setActionError(undefined);
             const section = sectionOptions.find(
               (entry) => entry.sectionId === values.sectionId,
             );
             if (!section) {
               setActionError('請選擇要對戰的單元。');
+              submitting.current = false;
               return;
             }
             try {
@@ -172,12 +173,17 @@ export function TeacherLivePage({
               await launchFor(activity.activityId, values.classroomId);
             } catch {
               setActionError('目前無法建立活動，請稍後重試。');
+            } finally {
+              submitting.current = false;
             }
           })(event);
         }}
       >
         <section className="teacher-live-create__step">
-          <label className="teacher-live-create__step-title" htmlFor="live-classroom">
+          <label
+            className="teacher-live-create__step-title"
+            htmlFor="live-classroom"
+          >
             <span aria-hidden="true">1</span>
             選擇班級
           </label>
@@ -220,7 +226,10 @@ export function TeacherLivePage({
                   type="radio"
                   value={section.sectionId}
                 />
-                <span aria-hidden="true" className="teacher-live-create__radio" />
+                <span
+                  aria-hidden="true"
+                  className="teacher-live-create__radio"
+                />
                 <span>{section.title}</span>
               </label>
             ))}
@@ -271,22 +280,34 @@ export function TeacherLivePage({
 
         <section className="teacher-live-create__summary">
           <h2 aria-label="4・建立課堂摘要">
-            <span aria-hidden="true" className="teacher-live-create__step-number">
+            <span
+              aria-hidden="true"
+              className="teacher-live-create__step-number"
+            >
               4
             </span>
             建立課堂摘要
           </h2>
           <dl>
             <div>
-              <dt><Icon aria-hidden="true" name="users" size={18} />班級</dt>
+              <dt>
+                <Icon aria-hidden="true" name="users" size={18} />
+                班級
+              </dt>
               <dd>{selectedClassroom?.classroomName ?? '尚未選擇'}</dd>
             </div>
             <div>
-              <dt><Icon aria-hidden="true" name="book" size={18} />小節</dt>
+              <dt>
+                <Icon aria-hidden="true" name="book" size={18} />
+                小節
+              </dt>
               <dd>{selectedSection?.title ?? '尚未選擇'}</dd>
             </div>
             <div>
-              <dt><Icon aria-hidden="true" name="clock" size={18} />每題作答時間</dt>
+              <dt>
+                <Icon aria-hidden="true" name="clock" size={18} />
+                每題作答時間
+              </dt>
               <dd>{timeLimit} 秒</dd>
             </div>
           </dl>

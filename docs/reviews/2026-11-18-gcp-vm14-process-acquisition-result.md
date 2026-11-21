@@ -1,0 +1,23 @@
+# VM14 — 首次40人註冊 INCONCLUSIVE／程序取得轉換
+
+結論：本輪 Source84ec24bae25396656af705b274c73fa5f78c7ad2 的 functional15、匿名3/10/20通過，capacity3/15；fresh40 INCONCLUSIVE，後11組未執行。未到教師讀取，不能把M66/M67合成控制當Native驗證。VM13較早Source的40/60註冊PASS保留，不能移作本輪結果。
+
+## 變更與對應驗收
+
+M57/M65已接受七檔、M66五檔、M67四檔與Root報告以exact24paths提交84ec24b/tree8d7eefe62b4f37b14b4e172abcbefa9fc4d6e516/parent e46562c；49files843tests/fullchecks0/Root唯一reviews接受後，normalFF專用Localbranch。未改SLO或原全站40基線/60目標、原30教師讀取、自然窗口；AC-AUTH-001/AC-SEC-005/AC-PERF-003僅對應已取得部分，不是phase PASS。
+
+## 真實結果
+
+run44301879660/job134793408280/attempt1/runner34；functional wsb-261118-ec6205189f17十五stages PASS。planwsc-261118-8f8e6676df17/106planned，anon3/10/20 PASS（SLO NOT_APPLICABLE）；fresh40 wcr-261118-53b07fc40958 約29510.80854ms，runAbortedtrue/timedOutfalse。失敗原因列表含timeout不代表outer deadline已到；controls全null，AuthCreated UNKNOWN，不造0或40完成。
+
+parent first TRACK_EXCEPTION/COMPARE [exe,inode]/PYTHON→OTHER，lastLoop28447.523019ms不是精確compare時點；cancelledtrue、exit-9、stdout0、stderr0、sawBrowsertrue、residue0、原timedOutfalse。M64新sideband已觸發：新candidate/pidfdOpenObserved，pid/start/uid/device/ppid/state相同，image/inode不同，第二readlink為KNOWN_PATH_ONLY_DOCKER_INSPECT。該label只核Docker路徑，不能當inspect subcommand證據。afterFailure0.65892ms/birth/ppid/leaf boundaries相同，但原子性false、uidFresh及pidfdBirth未見證，candidate argv OTHER/NO_MATCH/UNPINNED、parent CAPACITY_REGISTRATION/UNPINNED。Root真age檔與SSH診斷一致，不據此判合法exec。Source定位顯示registration→readonly query→local-psql wrapper→同PID execve Docker exec是相容候選，尚非本次唯一來源證明。
+
+## 證據與保留
+
+artifact14426243417 ZIP43430313B/SHA664e65432fda4bce9409049d83ae13146414971c708d1addbca6cb52b0444041；cipher62a3c77c8de03df62f584f3ad8f355cc7242eaf77f02cecb5b99cbb27a6a97a2。真age1347files216141711B／outer053e4562b485254b09319f94d31333cd4d9e3d64192210e14869c100b8ee2551；cold1294／snapshot9f021b76eb3ec1c9332d97ccd1e51720bdfacc9c4a784b43c9eef369fb3dc6d8，8stop/roleproof、2DB127tables31roles ORDER_ONLYequal、三vol所有filehash/portable metadata核符，runtime1202copied/34publiccodereconstructible/metadataonly0，25bootlogs30940B保。未restore。Root final f0b167028a77a235fb3cc411f0e106ff0825fd67542853f988942698e9361ae7；六失敗inputs另以第一projection逐檔hash固定。
+
+原hold12:30:08→12:40:08UTC自然完成、jobfailure、runner34自移repo0；Google strict已停止、normal skip false先斷言，100GBretain；fresh盤點十四台全STOPPED。啟動前盤點innerText漏img aria、log-retainer缺本機父目錄、reload未載入空清單等均安全停止或只讀補正，紀錄保，無Native重跑/force stop/Source偷改。
+
+## 風險與下一步
+
+目前全站未通過，不部署。先完整修正新程序取得時把可變image與生命週期綁定混為一談的問題，再同一worker/Root唯一review與fresh exactSource；不以路徑/argv側帶判合法、不降低健康/SLO門檻。Source84ec凍結，Original G8仍STOPPED85。累計configured maxbase reserveUS26.3408非invoice，未含IP/egress/tax；十四100GB磁碟仍估約US150/月持續計費，需完成證據保留後處理清理，尚未永久刪除。總budgetUS150/noPaid／Hosted0/Production禁。

@@ -1,0 +1,31 @@
+# Auth SDK classification and precise functional observations
+
+Base9a1ada3644956eb728e8047f73ec4e86476739f6. New empirically triggered M task; same worker, root coordinator and sole reviewer, one review round. Not alone: preserve other edits and root private runtime/docs. No product/session architecture/DB/threshold/SDK/dependency changes.
+
+## Confirmed evidence
+
+G2 functional wsb-261115-e5c02e95a9b3 root FAIL22.08s; registration/recovery PASS, auth_controls2153ms FAIL. Original receipt SHA7564ee8de12f8967374d930a0a3e8e779b7e8acdbc30e9023a9e8fc8006b41ee retained. Root independently verified actual owned process exit/no residue.
+
+Root existing S1/S2 actual authIsolationJourney diagnostic confirms copied signout then raw Node user403. Installed auth-js2.110.2 fetch.ts134–138 turns raw session_not_found into AuthSessionMissingError(status400/codeundefined). Direct true login/local revoke/getUser explicit-token probe confirms this shape. Existing driver requires401/403+rawcode and falsely fails.
+
+Continued diagnostic using actual runFunctionalTabLifecycle/actual helpers/SDK with ONLY the explicit missing-class guard overlay completes41actions/82records; no new users/mail/game/gate. Raw user403/session_not_found and SDK missing-class400/null matched. Root native observers/exit complete. Product reload/copy/switch/independent/fresh-tab behavior all executed, but this is diagnostic, not acceptance.
+
+Exact health witnesses: copied owned native popup receives7 same-App /assets/*.js and *.css HTTP200 Script/Stylesheet response events without prior CDP request events after Network.enable; actual parent is owned S1 page0. Popup-only witness reproduces available:false/unexpected0 with all7 exact static assets, no logout. Original blanket unknown-record rule falsely invalidates functional health. Do NOT infer unknown API/foreign/error traffic safe.
+
+Exact logout witnesses: three normal UI POSTs have their own observed204 response then same requestId net::ERR_ABORTED; distinguish OPTIONS preflight204 from POST. One deliberately revoked source logout raw403 produces expected missing-session denial and one console error. Current health counts these as6 errors. Do not blanket-ignore cancellations/401/403/204.
+
+Actual native blank component close control, Node network fully forbidden and unready scope preventing fixtures, proves current actual close starts Browser then Context; Context rejects while Browser fulfills, health errors0. This confirms the parallel close race. Root control had remaining0 but its browser lived too briefly for independent1s sampler to fully attest; do not claim full root process-close from this control.
+
+Runtime evidence in current whole-site-261115: owned-auth-tabs-diagnostic.json; owned-revoked-user-probe.json; owned-auth-tabs-continued-diagnostic-v3/v4.json; owned-popup-static-witness.json; native-functional-close-control.json and respective parent close files. Root diagnostic's initial two setup exits were an isolated location().url property/method bug, independently located/pure-controlled then corrected; originals retained, not product gate outcomes.
+
+## Ownership and bounded implementation
+
+1. scripts/concurrency/auth-journey.ts: accept official isAuthSessionMissingError only for this explicit-token known-owned revoked-session action with null user. No generic status400/403 or spoofed/foreign error acceptance. Preserve UI/canonical/official-user checks and original APIs/reexports. Existing auth test uses actual installed SDK synthetic403 and the actual actions seam.
+2. scripts/concurrency/functional-health.ts and direct health tests: precise observation policy for (a) initial owned S1 native popup's successful same-App static Script/CSS response gap, and (b) declared owned UI logout. For popup, validate phase/opener/initial-load scope, exact App origin/noquery/static asset path/status200/resource type and MIME; keep all unknown API/nonstatic/foreign/late/failed traffic fail-closed and preserve PW console/pageerror detection. It is functional completeness classification, NEVER native request timing or capacity proof. Any unresolved evidence must remain unavailable.
+3. Logout expectations must be registered before actual action and bind exact owned page/phase/methodPOST/local endpoint/scope/token hash/requestId;204+exactERR_ABORTED may be successful bodyless completion only for that declared action. Revoked403 requires the deliberate shared-revoke action, matching token and known raw missing-session code, exact CDP proof before reconciling its console stream. All unknown/mismatched/body-unavailable/error cases remain failures. Do not exempt ordinary logout403. Include reset journey's normal logout and auth tab journey hooks. Keep snapshot's stable4fields compatible; new expected counters/proof diagnostics can use a separate count/enum-only method, no tokens/body/URLqueries.
+4. scripts/concurrency/functional-journeys.ts: close context then browser for normal startup; preserve late-launch/abort bounded closure and always attempt browser close despite context failure. Add fixed component-kind result diagnostics if needed, root physical exit remains separate. Avoid same browser promise counted twice. Existing15stage/25min/deadline/fresh preflight/retention remain strict.
+5. May need focused helper(s) to stay<500. Before creating one, propose exact path/responsibility; approved scope may include minimal auth-tab-lifecycle/auth-popup observation hooks and direct tests where necessary. Do not refactor unrelated code, change browser transport/native3/C1/C2, retry limits, public product UI, migrations, quota or nonempty gate.
+
+## Validation
+
+Actual-export RED→GREEN cases for SDK class; popup legitimate and negative origin/path/status/MIME/opener/phase/late/API/console cases; exact normal204 cancellation and deliberate403 classification with unmatched negatives; actual close-order regression/late-start/closure rejection. Full lint/typecheck/scoped format/affected tests/entry import/diff; exact files commit/freeze/packet. Root reviews once and runs appropriate real native component/Auth diagnostic after accepted source; no full gate rerun until explicit new reviewed candidate and fresh Local. Worker does no real browser/service/login/OTP/SQL/Hosted operations.

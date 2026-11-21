@@ -1,9 +1,4 @@
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { BLOOK_ART_CODES, BlookArt } from '../../../components/ui/blook-art';
 import { Icon } from '../../../components/ui/icons';
@@ -11,6 +6,7 @@ import { useProjectorDialog } from '../hooks/use-projector-dialog';
 import type { LiveParticipantName } from '../types';
 
 import './live-projector.css';
+import './live-projector-lobby-responsive.css';
 
 type LiveProjectorHudProps = Readonly<{
   joinCode: string | null;
@@ -74,9 +70,7 @@ export function LiveProjectorHud({
     knownParticipantKeysRef.current = new Set(participantKeys);
     if (addedKeys.length === 0) return;
 
-    setJoiningParticipantKeys(
-      (current) => new Set([...current, ...addedKeys]),
-    );
+    setJoiningParticipantKeys((current) => new Set([...current, ...addedKeys]));
     const settleTimer = window.setTimeout(() => {
       setJoiningParticipantKeys(new Set());
     }, 1_950);
@@ -100,7 +94,10 @@ export function LiveProjectorHud({
           <Icon name="clock" size={28} />
           <span>
             <small>作答倒數環</small>
-            <strong aria-label="倒數尚未開始" className="live-projector__idle-ring">
+            <strong
+              aria-label="倒數尚未開始"
+              className="live-projector__idle-ring"
+            >
               <span aria-hidden="true">—</span>
             </strong>
             <span>待開始</span>
@@ -117,7 +114,7 @@ export function LiveProjectorHud({
           <Icon name="users" size={28} />
           <span>
             <small>參與狀況</small>
-            <strong>{participantCount} 人已加入</strong>
+            <strong>已加入 {participantCount} 人</strong>
           </span>
         </section>
       </header>
@@ -129,12 +126,9 @@ export function LiveProjectorHud({
             {joinCode ?? '請回活動頁產生代碼'}
           </p>
           <p aria-live="polite" className="live-presenter__count">
-            {participantCount} 位同學已加入
+            已加入 {participantCount} 人
           </p>
-          <ul
-            aria-label="已加入同學"
-            className="live-presenter__wall"
-          >
+          <ul aria-label="已加入同學" className="live-presenter__wall">
             {participantEntries.map(({ key, participant }) => (
               <li
                 aria-label={`${participant.displayName}已加入`}
@@ -231,7 +225,7 @@ export function LiveProjectorHud({
                 ? '退出會結束這場 Live 課堂，已加入的同學將無法繼續。'
                 : dialog === 'start-empty'
                   ? '目前還沒有學生加入，請等待學生輸入課堂代碼後再開始。'
-                  : `${String(participantCount)} 位同學已加入，確定要開始第一題嗎？`}
+                  : `已加入 ${String(participantCount)} 人，確定要開始第一題嗎？`}
             </p>
             <div
               className={

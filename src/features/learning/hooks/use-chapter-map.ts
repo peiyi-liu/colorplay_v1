@@ -1,3 +1,4 @@
+import { readQueryRetryDelay } from '../../../lib/query/read-retry';
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
@@ -26,5 +27,6 @@ export function useStudentChapterMap(
     queryKey: studentChapterMapKey,
     retry: (failureCount, error) =>
       error.code === 'UNAVAILABLE' && failureCount < 2,
+    retryDelay: readQueryRetryDelay,
   });
 }

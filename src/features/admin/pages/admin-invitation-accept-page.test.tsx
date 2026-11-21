@@ -1,4 +1,8 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import {
+  QueryClient,
+  QueryClientProvider,
+  useQuery,
+} from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
@@ -64,7 +68,7 @@ describe('AdminInvitationAcceptPage', () => {
     });
     expect(window.location.search).toBe('');
     expect(refetchProfiles).toHaveBeenCalledWith({
-      exact: true,
+      exact: false,
       queryKey: myProfileQueryKey,
       type: 'active',
     });
@@ -108,4 +112,47 @@ describe('AdminInvitationAcceptPage', () => {
     ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '接受邀請' })).toBeEnabled();
   });
+});
+
+it('refetches the active user-scoped profile through the base prefix after accepting an invitation', async () => {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false, staleTime: Infinity } },
+  });
+  const readProfile = vi
+    .fn<() => Promise<{ role: string }>>()
+    .mockResolvedValueOnce({ role: 'teacher' })
+    .mockResolvedValue({ role: 'admin' });
+  const key = [...myProfileQueryKey, 'synthetic-user'];
+  function ProfileObserver() {
+    const query = useQuery({ queryKey: key, queryFn: readProfile });
+    return <p>profile-role:{query.data?.role}</p>;
+  }
+  vi.mocked(adminRpc).mockResolvedValue({ outcome: 'ok' });
+  const user = userEvent.setup();
+  render(
+    <QueryClientProvider client={client}>
+      <MemoryRouter initialEntries={['/admin/invitations/accept']}>
+        <ProfileObserver />
+        <Routes>
+          <Route
+            path="/admin/invitations/accept"
+            element={<AdminInvitationAcceptPage />}
+          />
+          <Route
+            path="/admin/mfa/enroll"
+            element={<p>MFA enrollment page</p>}
+          />
+        </Routes>
+      </MemoryRouter>
+    </QueryClientProvider>,
+  );
+  await screen.findByText('profile-role:teacher');
+  await user.type(screen.getByLabelText('邀請 token'), 'synthetic-invitation');
+  await user.click(screen.getByRole('button', { name: '接受邀請' }));
+  await screen.findByText('MFA enrollment page');
+  await waitFor(() => {
+    expect(readProfile).toHaveBeenCalledTimes(2);
+  });
+  expect(client.getQueryData(key)).toEqual({ role: 'admin' });
+  client.clear();
 });

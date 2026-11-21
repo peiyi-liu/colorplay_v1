@@ -5,10 +5,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 
 import type { ContentAuthoringRepository } from '../api/content-authoring-repository';
-import {
-  createContentMediaRepository,
-  type ContentMediaRepository,
-} from '../api/content-media-repository';
+import { type ContentMediaRepository } from '../api/content-media-repository';
 import type {
   ContentEditorState,
   ContentCatalog,
@@ -29,6 +26,7 @@ import {
   payloadFromValues,
   valuesFromState,
 } from './content-editor-form-model';
+import { useContentEditorMedia } from './use-content-editor-media';
 import { ContentEditorMediaField } from './content-editor-media-field';
 import { ContentEditorScopeFields } from './content-editor-scope-fields';
 import {
@@ -41,7 +39,7 @@ export function ContentEditorForm({
   allItems,
   catalog,
   item,
-  mediaRepository = createContentMediaRepository(),
+  mediaRepository,
   onCancel,
   onChapterChange,
   onCreated,
@@ -76,13 +74,7 @@ export function ContentEditorForm({
   }));
   const [notice, setNotice] = useState<string | null>(null);
   const [conflicted, setConflicted] = useState(false);
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imageAlt, setImageAlt] = useState('');
-  const [imageRole, setImageRole] = useState<'standard' | 'color_critical'>(
-    'standard',
-  );
   const saveRequest = useRef<{ id: string; signature: string } | null>(null);
-  const uploadRequest = useRef<string | null>(null);
   const initialValues = useMemo(() => {
     const initial = valuesFromState(item, state, scope);
     const order = isNew
@@ -95,6 +87,7 @@ export function ContentEditorForm({
     control,
     formState: { errors, isDirty },
     handleSubmit,
+    getValues,
     register,
     reset,
     setValue,
@@ -106,12 +99,32 @@ export function ContentEditorForm({
     control,
     defaultValue: initialValues,
   }) as EditorValues;
+  const uploadImage = useContentEditorMedia(
+    mediaRepository,
+    (asset, altText) => {
+      const media = getValues('media');
+      setValue(
+        'media',
+        [
+          ...media,
+          {
+            alt_text: altText,
+            manifest_id: asset.assetId,
+            semantic_role: asset.semanticRole,
+            sort_order: media.length,
+          },
+        ],
+        { shouldDirty: true },
+      );
+    },
+    setNotice,
+  );
   useEffect(() => {
-    onDirtyChange(isDirty);
+    onDirtyChange(isDirty || uploadImage.locked);
     return () => {
       onDirtyChange(false);
     };
-  }, [isDirty, onDirtyChange]);
+  }, [isDirty, onDirtyChange, uploadImage.locked]);
 
   useEffect(() => {
     if (!isNew) return;
@@ -234,40 +247,6 @@ export function ContentEditorForm({
     },
     onError: () => {
       setNotice('請先儲存草稿，才能產生學生預覽。');
-    },
-  });
-
-  const uploadImage = useMutation({
-    mutationFn: async () => {
-      if (!imageFile || !imageAlt.trim()) throw new Error('IMAGE_REQUIRED');
-      uploadRequest.current ??= crypto.randomUUID();
-      return mediaRepository.uploadAndProcess({
-        file: imageFile,
-        requestId: uploadRequest.current,
-        semanticRole: imageRole,
-      });
-    },
-    onError: () => {
-      setNotice('圖片處理失敗；原圖不會加入內容。');
-    },
-    onSuccess: (asset) => {
-      setValue(
-        'media',
-        [
-          ...values.media,
-          {
-            alt_text: imageAlt.trim(),
-            manifest_id: asset.assetId,
-            semantic_role: asset.semanticRole,
-            sort_order: values.media.length,
-          },
-        ],
-        { shouldDirty: true },
-      );
-      setImageFile(null);
-      setImageAlt('');
-      uploadRequest.current = null;
-      setNotice('圖片已壓縮為 WebP 並加入表單；儲存草稿後才會套用。');
     },
   });
 
@@ -422,15 +401,8 @@ export function ContentEditorForm({
             <textarea rows={10} {...register('content')} />
           </label>
           <ContentEditorMediaField
-            altText={imageAlt}
-            file={imageFile}
-            isUploading={uploadImage.isPending}
+            {...uploadImage}
             media={values.media}
-            onAltTextChange={setImageAlt}
-            onFileChange={(file) => {
-              setImageFile(file);
-              uploadRequest.current = null;
-            }}
             onRemove={(index) => {
               setValue(
                 'media',
@@ -443,11 +415,6 @@ export function ContentEditorForm({
                 { shouldDirty: true },
               );
             }}
-            onRoleChange={setImageRole}
-            onUpload={() => {
-              uploadImage.mutate();
-            }}
-            role={imageRole}
           />
         </>
       ) : null}

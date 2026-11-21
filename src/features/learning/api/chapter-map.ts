@@ -2,7 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 
 import type { Database } from '../../../types/database';
-import { LearningError } from './learning-repository';
+import { LearningError, toLearningReadError } from './learning-errors';
 
 const uuidSchema = z
   .string()
@@ -91,8 +91,8 @@ const studentChapterMapSchema = z.strictObject({
 export async function fetchStudentChapterMap(
   client: SupabaseClient<Database>,
 ): Promise<StudentChapterMap> {
-  const { data, error } = await client.rpc('get_student_chapter_map');
-  if (error) throw new LearningError('UNAVAILABLE');
+  const { data, error, status } = await client.rpc('get_student_chapter_map');
+  if (error) throw toLearningReadError(error, status);
 
   const parsed = studentChapterMapSchema.safeParse(data);
   if (!parsed.success) throw new LearningError('INVALID_RESPONSE');

@@ -42,6 +42,9 @@ export type InventoryRepository = Readonly<{
 
 export type InventoryRepositoryErrorCode =
   | 'AUTH_REQUIRED'
+  | 'PERMISSION_DENIED'
+  | 'RATE_LIMITED'
+  | 'INVALID_INPUT'
   | 'ALREADY_OWNED'
   | 'INSUFFICIENT_TOKENS'
   | 'NOT_OWNED'

@@ -1,0 +1,33 @@
+# VM12：parent identity比較中止結果
+
+結論：Root真下載重算functional15＋匿名3/10/20＋fresh40 PASS，4/15容量legs。fresh60被parent程序追蹤guard中止，INCONCLUSIVE；後10legs未跑，未進existing3，因此沒有取得M61遊戲首因新證據。不是網站60人FAIL或全站驗收完成，Staging未部署。VM12已正常STOPPED、runner0、100GB磁碟保留。
+
+## Source與已通過項目
+
+app116442a1349960a5bb1f852569876f0a889b647f/tree22fd721e4993208ac9e5969a74054717f1abdc7f；run44262492936/job134658953640/attempt1/runner32。functional wsb-261118-9915d3d5d161 15stages PASS；plan wsc-261118-d449cdebf534規劃106身份，不把規劃數當實際新增或Hosted批准。
+
+匿名三段PASS／HTTP SLO原NOT_APPLICABLE。fresh40 wcr-261118-ba2ab4441c66正式PASS，completed/Authcreated40/ownershiptrue，entry128.261/send122.832ms，elapsed30771.041ms，原readback/retention/cleanup/closed/settled true、unexpected0、SLO PASS。原VM11 fresh60仍是其Source的PASS，不由本輪取消改判或搬到新Source。
+
+## 真parent停止證據與界線
+
+fresh60 wcr-261118-a30e1021c7d4 INCONCLUSIVE／receipt elapsed5435.959ms／timedOut false/runAborted true，SLO NOT_EVALUATED_MISSING_EVIDENCE。failureReasons含cleanup_incomplete/timeout/generator_unknown等，不能推成已證產品清理失敗或parent逾時。
+
+parent binding Source/profile6e25295f323337d37b12514db94fba85e79b4e8cb2e9b8d9627dee5e654d573e/job8346ee4c65e0453460ee6bab19095d87f68dce2b833e6af161096344d252bca1/boota5aa7cdc8fc238043e34822083a69edf467877c0997793fcef779ef199f3a5dd均核，contextMatches true。其legId保為原聲明，不另宣稱逐request獨立核；execution-context實際job身份另核。
+
+firstCause TRACK_EXCEPTION／COMPARE fields[exe,inode]，PYTHON→OTHER，ValueError PROCESS_CHANGED_WHILE_TRACKING；atElapsed null/time UNOBSERVED，lastLoop4386.96694ms不是精確compare時點。原比較字典pid/startTicks/uid/device相同，不等於已驗ppid／逐PID cgroup／exec授權。final completefalse/cancelled true/noTimeout/noOverflow/residue0/sawBrowserfalse/exit-9/stdout0/stderr0，guard如設計停止子程序。其他已完成五parent firstCause null/exit0/closed。
+
+Node firstSignal PARENT_SIGNAL4285.758447→journey4308.777122，不能與parent clock相減。generator只有REGISTRATION entered/failed與STOP，無NATIVE_START。原before_send會並行60個Root capture；此時24個helper accounting已完成（21registration/2preflight/1retention），28diagnostic calls其中4failure。這支持停止於browser前Root讀取階段，但沒有壞PID對哪個helper/OTHER目標的witness。
+
+原main Python→Node gate release前已seen，本次新PID COMPARE不能直接以它解釋。Root helpers確有git/docker/psql spawn路徑、readlink與fstat非atomic，因此合法exec／fork過渡／撕裂讀為候選；缺資料不能唯一歸因，亦未排除重用。Root准M64完整被動transition sideband，原identity equality/pidfd/UID/leaf/seen/stop/budget皆保持，不關guard或以重試救PASS。
+
+M62只讀另核教師URL/RPC契約相符；heading可見不代表資料已完成。它不解釋本輪parent停止，也不替代既有M61遊戲實際首因。
+
+## 真保留、停止與費用界線
+
+artifact14409347596，ZIP43462084B SHA26034ea4b25e93af807b96e013a73b624fa1b5935d6d5a9cb9eb62bba2c5b021；cipher43461946B SHA569fe8083efd6aac4cd6f4349de3281e6e46c8c7a29c249a650b88ed4af5ba8e。真age1481files216439643B，outerf64b3a21528f1a808d6e49c8fdaed9ed5f43582a06de0e9d44a0b3cace583210；cold1424files/snapshot1a71f1b3efed9dd3483bb49545d4e4898999f1be4efce869dfbe158a8a9a3f2f。8自然stop/role proof、2DB127tables31roles ORDER_ONLYequal；3vol文件1997/5016/16、bytes83122963/103212218/50878，全hash/portablemetadata核。runtime1332copied/33public可重建/metadata-only0；25bootlogs31092B保，未restore。
+
+VM12 f12c63/instance5444938758100150077/europe-west4-a，07:54:58UTC建，N2custom12/32 actual/minIceLake、新100GBbalancedretain/Ubuntu24.04，3h normalSTOP/1min/noRestart/noSA/Workload/Ops/snapshot/HTTP。雖重用VM11暫時IP，使用全新Google開機收據/host key與獨立known_hosts，未重用舊pin。原hold08:19:00自然完，job08:19:04 finalfailure/runner32自動移除repo0；Google嚴格已停止、未skipgrace，保disk。
+
+十二VM全stopped；配置base最大保守預留22.2808美元非帳單，十二disk1200GB約128美元/月，不含IP/egress/tax/其他費用，actualinvoice UNKNOWN。US150/noPaid/Hosted0/Production禁。尚無VM13，M64Source/唯一review後才新exact Source單次，不重跑VM12。
+
+Rootfinal .git/gcp-vm12-root-final-review.json SHA454649e483dc39a44e9df4614409b9fbef9a033a6e5473c597c2f5ed2703cf1d；真工具結果 .git/gcp-vm12-root-cold-business-reviews.json，首投影79ba0013d3b31790a1e35025c02661cfdd8b8cb32069eb2db42869b2b21bb515。Root早期兩個私有檔名查找錯誤皆唯讀，後以rg --files定位；不影響Native結果或Source。

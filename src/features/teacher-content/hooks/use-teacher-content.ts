@@ -1,3 +1,4 @@
+import { readQueryRetryDelay } from '../../../lib/query/read-retry';
 import {
   useMutation,
   type UseMutationResult,
@@ -65,6 +66,7 @@ export function useTeacherQuestions(
     queryFn: () => resolved.listQuestions(),
     queryKey: teacherContentKeys.questions,
     retry: retryRead,
+    retryDelay: readQueryRetryDelay,
   });
 }
 
@@ -76,6 +78,7 @@ export function useTeacherCards(
     queryFn: () => resolved.listCards(),
     queryKey: teacherContentKeys.cards,
     retry: retryRead,
+    retryDelay: readQueryRetryDelay,
   });
 }
 
@@ -87,6 +90,7 @@ export function useTeacherSubtopics(
     queryFn: () => resolved.listSubtopics(),
     queryKey: teacherContentKeys.subtopics,
     retry: retryRead,
+    retryDelay: readQueryRetryDelay,
   });
 }
 
@@ -106,6 +110,7 @@ export function useTeacherClassroomSummary(
       filters,
     ),
     retry: retryRead,
+    retryDelay: readQueryRetryDelay,
   });
 }
 
@@ -125,6 +130,7 @@ export function useTeacherClassroomOverview(
       filters,
     ),
     retry: retryRead,
+    retryDelay: readQueryRetryDelay,
   });
 }
 
@@ -147,6 +153,7 @@ export function useTeacherAssessmentQuestions(
       source,
     ),
     retry: retryRead,
+    retryDelay: readQueryRetryDelay,
   });
 }
 
@@ -166,6 +173,7 @@ export function useTeacherChapterCompletion(
       chapterId,
     ),
     retry: retryRead,
+    retryDelay: readQueryRetryDelay,
   });
 }
 
@@ -185,6 +193,7 @@ export function useTeacherQuestionAnalysis(
       filters,
     ),
     retry: retryRead,
+    retryDelay: readQueryRetryDelay,
   });
 }
 
@@ -204,6 +213,7 @@ export function useTeacherQuestionDetail(
       stableCode,
     ),
     retry: retryRead,
+    retryDelay: readQueryRetryDelay,
   });
 }
 
@@ -233,6 +243,7 @@ export function useTeacherQuestionAnswer(
       liveSessionId,
     ),
     retry: retryRead,
+    retryDelay: readQueryRetryDelay,
   });
 }
 
@@ -248,6 +259,7 @@ export function useTeacherSubtopicMastery(
     queryFn: () => resolved.getSubtopicMastery(classroomId, filters),
     queryKey: teacherContentKeys.subtopicMastery(actorId, classroomId, filters),
     retry: retryRead,
+    retryDelay: readQueryRetryDelay,
   });
 }
 
@@ -267,6 +279,7 @@ export function useTeacherAssignmentSummary(
       filters,
     ),
     retry: retryRead,
+    retryDelay: readQueryRetryDelay,
   });
 }
 
@@ -282,6 +295,7 @@ export function useTeacherLiveReport(
     queryFn: () => resolved.getLiveReport(classroomId, filters),
     queryKey: teacherContentKeys.liveReport(actorId, classroomId, filters),
     retry: retryRead,
+    retryDelay: readQueryRetryDelay,
   });
 }
 
@@ -303,6 +317,7 @@ export function useTeacherLiveHistory(
       page,
     ),
     retry: retryRead,
+    retryDelay: readQueryRetryDelay,
   });
 }
 

@@ -1,3 +1,8 @@
+import {
+  reviewReadinessEnabled,
+  reviewQueryState,
+  tapReviewShell,
+} from '../../features/learning/lib/review-readiness-diagnostics';
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { RouteLoading } from '../boundaries/route-loading';
@@ -237,6 +242,14 @@ export function AppShell() {
       : isCompletedStudent
         ? 'student'
         : 'public';
+  if (reviewReadinessEnabled())
+    tapReviewShell({
+      auth: auth.status,
+      profile: reviewQueryState(profile),
+      matched: isAuthenticatedProfile,
+      completed: isCompletedStudent,
+      role: shellRole,
+    });
   const isStudentLearningMap =
     isCompletedStudent && location.pathname === '/app';
   const isRegistrationRoute = location.pathname === '/register';
@@ -292,6 +305,28 @@ export function AppShell() {
       delete document.documentElement.dataset.reducedMotion;
     }
   }, [reducedMotion]);
+
+  // Recovery validates its own session while Auth/profile settle. One public
+  // Outlet parent preserves the form's in-memory values throughout this route.
+  if (location.pathname === '/reset-password') {
+    return (
+      <div className="game-viewport">
+        <div className="game-stage" data-shell-role="public">
+          <EnvironmentMarker />
+          <a className="skip-link" href="#main-content">
+            跳到主要內容
+          </a>
+          <RouteWorldStage
+            reducedMotion={reducedMotion}
+            scene="public-route"
+            transitionKey={location.pathname}
+          >
+            <Outlet />
+          </RouteWorldStage>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="game-viewport">

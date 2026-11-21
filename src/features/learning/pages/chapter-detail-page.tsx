@@ -1,3 +1,9 @@
+import {
+  reviewReadinessEnabled,
+  reviewQueryState,
+  tapReviewChapter,
+  tapReviewReader,
+} from '../lib/review-readiness-diagnostics';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
@@ -125,6 +131,7 @@ export function ChapterDetailPageView({
   viewModel: ChapterDetailViewModel;
 }>) {
   const [readingCardId, setReadingCardId] = useState<string | null>(null);
+  if (reviewReadinessEnabled()) tapReviewReader(false);
 
   if (viewModel.state === 'loading') return <LoadingState />;
   if (viewModel.state === 'locked') {
@@ -225,6 +232,7 @@ export function ChapterDetailPageView({
     </div>
   );
 
+  if (reviewReadinessEnabled()) tapReviewReader(readingCard !== undefined);
   if (readingCard) {
     return (
       <ChapterReviewReader
@@ -329,6 +337,19 @@ export function ChapterDetailPage({
     reviewIsPending: review.isPending,
     reviewSections: review.data,
   });
+
+  if (reviewReadinessEnabled())
+    tapReviewChapter({
+      queries: [chapterMap, review, progress, completions].map(
+        reviewQueryState,
+      ) as [
+        ReturnType<typeof reviewQueryState>,
+        ReturnType<typeof reviewQueryState>,
+        ReturnType<typeof reviewQueryState>,
+        ReturnType<typeof reviewQueryState>,
+      ],
+      view: viewModel.state,
+    });
 
   const retryActions: Record<ChapterDetailRetryTarget, () => void> = {
     'chapter-content': () => {

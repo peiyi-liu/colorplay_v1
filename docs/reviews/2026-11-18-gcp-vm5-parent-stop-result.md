@@ -1,0 +1,21 @@
+# VM5 父監督程序取消 Root 結果
+
+## 結論
+
+Source4ada65a14378b9c8fdec55871e196bfe81fd56cf／run44206460914/job134473538252/push attempt1：functional15及匿名3/10/20 PASS；fresh40 INCONCLUSIVE，剩餘12legs未通過或未執行。不是本輪40人註冊成功或Local60證據；M52 finalgate未執行，不能宣稱其真機修復完成。
+
+## 已定位與未知
+
+registration-observations停before_send Root資料核對，elapsed752.658ms、completed0/Authcreatednull/ownershipKnownfalse，尚未到browser entry／OTP／logout。Node firstSignal PARENT_SIGNAL at3526.052ms先於journeyfail3545.946與finally3546.028；外層process SIGKILL/elapsed4651.866ms/stderrBytes0/residue0/sourceFrozen true。candidate health0samples/stale，不作有效health或網站失敗證據。不同程序的Python elapsed與Node performance原點不同，不直接相減。
+
+Source可證父run_child在1490s deadline、stdout>65536/stderr>8192、cancelled時stop；cancelled來自父SIGINT/SIGTERM或inventory.track Exception。另BaseException與自然exit後residue也有cleanup stop。原觀測未保存首個分支／stdout實際累計／track stage/code/errno；SIGKILL與residue0不能區分它們。4.65s不支持deadline，stderr0不支持stderr overflow；不能據此確認exec/PID race、UID0或OOM。原部分正常ENOENT/ESRCH已skip，不能把任意程序變動說成缺陷。
+
+## 實際證據
+
+artifact14384362874 ZIP42687536B/SHA9805707b0ffb228cd68419bf0bc5631ac835bdebab9200945dabf3ecead4903e；cipher42687398B/SHA0840c2646cd455fe9bd921bc154acd0398548d7847a49bcd9e397df1943da37a。Root真age核833files213185327B，outermanifest9f347cd2fd171ac6544c3ff55bf10854c4d6835d2996b5cc760d8a638801f3cb；cold780files／8自然stop/roleproof／2DB127tables census ORDER_ONLY equal／31roles／3volumes全部hash與portablemetadata核，未restore。另25bootstraplogs30940B保runtime/gcp-vm5。第一次Root日誌下載僅本機父目錄未建而exit1，建立新owned evidence目錄後唯讀下載成功；無業務重跑。
+
+executionProfile1b022690d520aee8396efaed1caf3e8bb8dadea1ff08a76584c4e0b1672881da綁Source/job；Root business recompute核functional15與3legs，fresh40保INCONCLUSIVE。.git/gcp-vm5-root-first-review.json保Root結果，不讀取／上傳private keys、rawlogs或測試個資。
+
+## 下一步與成本
+
+真job00:37:15UTC completed/failure；runner25自動移除、repo0。Root已正常停止VM5並由GoogleConsole核已停止（截圖.git/gcp-vm5-stopped-20261118.jpg），保100GBdisk；磁碟保留仍計費，帳單仍有延遲、不宣稱費用0。M53僅補父端完整closed first-stop sideband，原guard、signal、時限、清理順序與權威receipt不改；同一agent離線、Root唯一review。首因未辨明前不改遊戲或放寬安全檢查；不復活舊Local、不自動rerun舊job。US150、不升paid、Hosted/Production操作0；Local完整矩陣未過，不部署Staging。

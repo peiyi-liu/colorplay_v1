@@ -243,9 +243,12 @@ draft -> lobby -> question_open -> question_feedback
 draft/lobby/question states -> cancelled
 ```
 
-- Private topic 是 `live-session:<sessionId>`；`realtime.messages` RLS 只允許 host 與 active participants 加入核准 channel。
+- Shared private topic 是 `live-session:<sessionId>`；`realtime.messages` RLS 只允許 host 與 active participants 接收。加入／roster 與所有 phase transition 保持送往此 topic，學生的入場人數顯示保持不變。
+- 作答／逾時提交的中途 `answered_count` aggregate 改送 `live-host-progress:<sessionId>`；此獨立 private topic 只允許該 session 的 owning host 接收，student／outsider／其他 host／anon 拒絕，authenticated clients 不得發送 broadcast 或 Presence。最後一份答案觸發的關題／feedback 仍送 shared topic。此路由不改答案、計分、冪等性、transaction、state version 或關題規則。
+- Host 的 shared 與 progress channel 屬於同一連線生命週期：兩者均完成 ACK 才顯示 connected；任一失敗沿用同一既有 retry／manual reconnect／cleanup budget。progress 訂閱只在 authoritative state 確認 `isHost` 後建立，不能因 role 讀取完成重建正常 shared channel。兩 topic 的事件沿用同一單調版本 reconcile／read coordinator；未知、過期 session／generation callback 不可更新目前 query。
 - Student 可接收 committed public state 與發佈 Presence，不可廣播 host transition。Outsider 不可 subscribe。
 - Realtime payload 只含 `state_version`、public question/options、server deadline、aggregate counts、phase、result-ready；不含 pre-close correct answer、individual answer、Email、secret 或 reward mutation。
+- 平台 `realtime.send` 可能補入 UUID `id` 作傳輸 metadata；此欄不參與授權、版本排序、計數、去重或後端 idempotency。Host 作答進度只接受原四個業務鍵，或四鍵加合法 UUID `id`，其他未知鍵仍拒絕；真 stored wire 必須驗其 `id` 與 `realtime.messages.id` 相符。
 - Transaction commit 後才 broadcast。Refresh/reconnect 一律呼叫 `get_live_session_state` 並按 `state_version` reconcile。
 - `submit_live_answer` 驗 Auth/membership/open question/option/server deadline，lock row，以 idempotency 寫一筆 authoritative answer，再發 safe aggregate。
 - `finalize_live_session` lock session、驗 host、計 score/rank/reward/achievement/assignment/progress/audit，同一 transaction 完成；任何失敗全部 rollback。

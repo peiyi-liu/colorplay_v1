@@ -1,3 +1,4 @@
+import { classifyReadFailure } from '../../../lib/query/read-failure';
 import { z } from 'zod';
 
 import { LiveRepositoryError, type LiveRepositoryErrorCode } from '../types';
@@ -40,4 +41,28 @@ export const parseWith = <Schema extends z.ZodType>(
     throw new LiveRepositoryError('INVALID_RESPONSE');
   }
   return parsed.data;
+};
+
+export const toLiveActivityReadError = (
+  error: unknown,
+  status?: number,
+): LiveRepositoryError => {
+  const message: unknown =
+    typeof error === 'object' && error !== null
+      ? Object.getOwnPropertyDescriptor(error, 'message')?.value
+      : undefined;
+  const legacy = toRepositoryError(
+    typeof message === 'string' && message.length <= 256 ? message : '',
+  );
+  if (legacy.code !== 'UNAVAILABLE' && ![401, 403, 429].includes(status ?? 0))
+    return legacy;
+  const codes = {
+    AUTH: 'AUTH_REQUIRED',
+    PERMISSION: 'NOT_FOUND',
+    RATE_LIMIT: 'RATE_LIMITED',
+    VALIDATION: 'VALIDATION',
+    NOT_FOUND: 'NOT_FOUND',
+    UNAVAILABLE: 'UNAVAILABLE',
+  } as const;
+  return new LiveRepositoryError(codes[classifyReadFailure({ error, status })]);
 };

@@ -1,13 +1,18 @@
 .live-presenter:is(
-    [data-projector-phase='question'],
-    [data-projector-phase='paused'],
-    [data-projector-phase='reveal']
-  ) {
+  [data-projector-phase='question'],
+  [data-projector-phase='paused'],
+  [data-projector-phase='reveal']
+) {
   min-height: 100dvh;
   overflow: hidden;
   padding: 0;
   background:
-    linear-gradient(180deg, rgb(1 7 22 / 60%), rgb(1 7 22 / 28%) 48%, rgb(1 7 22 / 82%)),
+    linear-gradient(
+      180deg,
+      rgb(1 7 22 / 60%),
+      rgb(1 7 22 / 28%) 48%,
+      rgb(1 7 22 / 82%)
+    ),
     url('../assets/live-projector-night-village.webp') center / cover no-repeat,
     #020817;
 }

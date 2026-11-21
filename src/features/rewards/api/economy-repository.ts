@@ -1,3 +1,4 @@
+import { classifyReadFailure } from '../../../lib/query/read-failure';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 
@@ -54,13 +55,23 @@ export function createEconomyRepository(
 ): EconomyRepository {
   return {
     async getSummary() {
-      const { data, error } = await client.rpc('get_my_economy_summary');
+      const { data, error, status } = await client.rpc(
+        'get_my_economy_summary',
+      );
 
       if (error) {
+        if (error.message.includes('AUTH_REQUIRED'))
+          throw new EconomyRepositoryError('AUTH_REQUIRED');
+        const codes = {
+          AUTH: 'AUTH_REQUIRED',
+          PERMISSION: 'PERMISSION_DENIED',
+          RATE_LIMIT: 'RATE_LIMITED',
+          VALIDATION: 'INVALID_INPUT',
+          NOT_FOUND: 'NOT_FOUND',
+          UNAVAILABLE: 'UNAVAILABLE',
+        } as const;
         throw new EconomyRepositoryError(
-          error.message.includes('AUTH_REQUIRED')
-            ? 'AUTH_REQUIRED'
-            : 'UNAVAILABLE',
+          codes[classifyReadFailure({ error, status })],
         );
       }
 

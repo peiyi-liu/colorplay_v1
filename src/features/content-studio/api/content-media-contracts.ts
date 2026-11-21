@@ -20,6 +20,13 @@ export const contentMediaBeginWireSchema = z.strictObject({
   token: z.string().min(1),
 });
 
+export const contentMediaAbortWireSchema = z.strictObject({
+  action: z.literal('abort'),
+  outcome: z.literal('ok'),
+  request_id: uuidSchema,
+  run_id: uuidSchema,
+});
+
 export const contentMediaVariantWireSchema = z.strictObject({
   bytes: z.number().int().positive(),
   height: z.number().int().positive().max(4096),

@@ -190,17 +190,21 @@ describe('teacher content repository', () => {
   });
 
   it('lists published subtopics as filter options', async () => {
-    const order = vi.fn().mockResolvedValue({
-      data: [
-        {
-          id: '23000000-0000-0000-0000-000000000001',
-          stable_code: 'sheet-3-1-all',
-          title: '3-1 色彩三要素與色名的表示',
-        },
-      ],
-      error: null,
-    });
-    const select = vi.fn(() => ({ order }));
+    const order = vi
+      .fn<(...args: unknown[]) => Promise<unknown>>()
+      .mockResolvedValue({
+        data: [
+          {
+            id: '23000000-0000-0000-0000-000000000001',
+            stable_code: 'sheet-3-1-all',
+            title: '3-1 色彩三要素與色名的表示',
+          },
+        ],
+        error: null,
+      });
+    const select = vi.fn(() => ({
+      order: (...args: unknown[]) => ({ retry: () => order(...args) }),
+    }));
     const from = vi.fn(() => ({ select }));
     const repository = createTeacherContentRepository({
       from,

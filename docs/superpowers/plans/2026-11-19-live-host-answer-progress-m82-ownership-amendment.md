@@ -1,0 +1,7 @@
+# M82 ownership 補充：functional Host 雙ACK
+
+原brief與baseline保持不改。實作前確認 functional 的 scripts/concurrency/teacher-live.ts 另有Host等待caller；default helper保留Student只等shared，因此該caller亦須固定要求HOST_PROGRESS，不能只修capacity路徑。
+
+Root核准第18個owned檔 scripts/concurrency/teacher-live.ts：只在既有Host waitForSubscriptionAck呼叫的signal之後新增一行固定第三參數 HOST_PROGRESS，其餘bytes保持不變；該檔仍≤500行。不得依route猜Host authority或放寬default Student模式。新helper既有雙ACK行為測試須涵蓋Host模式，受影響functional contracts納final union，不因單行接線另造鏡像實作測試。
+
+Root會對新檔做精確單行inverse，原20021 protected baseline只豁免這一個已完整保存before hash的owned檔；其餘保護不變。原Source/功能/DB/預算/Cloud/Hosted禁令不變。Root唯一一輪review尚未開始，真DB仍NOT_RUN。

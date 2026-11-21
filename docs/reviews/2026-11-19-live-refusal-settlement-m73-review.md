@@ -1,0 +1,25 @@
+# M73 — Live拒絕單次決定與清理狀態鎖存審查
+
+結論：Root唯一一輪review接受，0 findings；task級完成。58files1042 PASS、必要檢查全0。此修正尚待新Native完整matrix，沒有將VM17原INCONCLUSIVE改為PASS。
+
+## 變更與AC
+
+VM17已證私人訂閱明確拒絕後，原removeChannel的CLOSED覆寫explicit，導致OUTSIDER_REFUSAL錯判。現在首terminal只決定一次，明確拒絕只允許自有移除期間正常CLOSED；另以sticky joinedEver/contradiction拒絕任何操作完成前曾SUBSCRIBED或未知矛盾。未知首因不能被後來denial洗成成功。
+
+對應AC-SEC-005的越權負向測試工具判定及既定60人計畫；不等於該AC完整產品／Hosted驗收。沒有改產品權限、permissionclassifier、後端容量或SLO。
+
+## 範圍與審查
+
+唯一Source：scripts/concurrency/capacity-live-gate.ts（283行/9218B/a2b9c62d222d638e0e64623c5048428ec7145c40613f63817c67341bc64841bf）；新tests/contracts/whole-site-capacity-live-refusal.test.ts（374行/12264B/8134a29cb8ee311354b9c41f4f95172c28d76d6acbd56b0c4815f7a4a69d2074）。
+
+Root讀actualdiff/factory/caller及新test，核單次決定、同步/microtask/reentry未授權SUBSCRIBED、unknown/CLOSED首因、duplicate明確denial、badremove/原throwidentity/abort/原20s、正向fault/notify、診斷throw隔離與完成後scope。within/wait/close等subscribe以外prefix/suffix byteinverse，原移除一次/ok要求/原deadline與所有舊testbytes保留。完成移除並返回之後任意晚到callback不能回溯改已settledPromise；沒有宣稱持續監控保證。
+
+## 命令與證據
+
+真factory同步及microtask remove CLOSED兩case先RED（exit1/2failed），修正後GREEN。final原57files1001加新41＝58files1042 PASS；pnpm typecheck/lint、受影響format/import/diff/static均exit0。先前focused3/91是追加abortcases前歷史值；lint初兩async narrowing warning失敗保留，修正只重讀原stopped值，沒有放寬規則。不重跑未受影響Python81/產品1771，不冒稱新產品驗證。
+
+packet .git/m73-live-refusal/validation-final.json SHA c941ca1439b9c989b63d83e16d70109ba91b724b0fc03fb358e986705a25fa5b（37records/14checks）；Root直接2299distinctpaths核bytes/mode/blob。2034nonowned/nondoc tracked、2224immutable current、Original9/prefix、M69四與歷史Native資料保。baseline共2225inputs中唯一ownedgate原值改核base638 Git bytes/SHA/mode＋subscribe外inverse，current核finalfreeze；原baseline未改，沒有聲稱2225current不變。Rootfinal .git/m73-root-review-final.json SHA eb93d14aa98e1e55a099f1367638d9edeef31b631297fbd3bac50b1473d68af7。
+
+## 風險與下一步
+
+本task fakeSDK只證工具邏輯，不保證真Native下一階段成功。Root保存新exactSource後，fresh12CPU VM18單次原15leg矩陣，門檻與全部診斷不變。十七舊VM全STOPPED/repo0；VM18僅offline12CPU32G/startup12ba75512072e948a2b7a5bb03567461a48acebcfd86e8807d4538b3864cb98e，8bootstrap+4courierfakePASS、尚未Create。US150/noPaid、永久清理Owner仍pending；Original G8 STOPPED85／Hosted0／Production禁。

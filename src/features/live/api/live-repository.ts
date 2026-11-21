@@ -3,7 +3,11 @@ import { z } from 'zod';
 
 import type { Database } from '../../../types/database';
 import { type LiveRepository } from '../types';
-import { parseWith, toRepositoryError } from './live-repository-errors';
+import {
+  parseWith,
+  toRepositoryError,
+  toLiveActivityReadError,
+} from './live-repository-errors';
 import { mapActivity, mapState } from './live-repository-mappers';
 import {
   activityRowSchema,
@@ -62,13 +66,14 @@ export function createLiveRepository(
     },
 
     async listMyActivities() {
-      const { data, error } = await client
+      const { data, error, status } = await client
         .from('live_activities')
         .select(
           'id, title, quiz_template_id, question_time_limit_seconds, status, rules_version, question_display, section_id',
         )
-        .order('created_at', { ascending: false });
-      if (error) throw toRepositoryError(error.message);
+        .order('created_at', { ascending: false })
+        .retry(false);
+      if (error) throw toLiveActivityReadError(error, status);
       return parseWith(z.array(activityRowSchema), data).map((row) =>
         mapActivity({
           activity_id: row.id,
