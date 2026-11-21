@@ -3,14 +3,21 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import { capacityFixture } from './helpers/whole-site-capacity';
 import { parseCapacityScope } from '../../scripts/concurrency/capacity-scope';
-import { createCapacityProtocolActor } from '../../scripts/concurrency/capacity-protocol';
+import {
+  createCapacityProtocolActor,
+  createLocalDiagnosticProtocolActor,
+} from '../../scripts/concurrency/capacity-protocol';
 const required = <T>(value: T | null | undefined): T => {
   if (value === null || value === undefined)
     throw new Error('SYNTHETIC_FIXTURE_MISSING');
   return value;
 };
 
-const fixture = async (transport: typeof fetch, now?: () => number) => {
+const fixture = async (
+  transport: typeof fetch,
+  now?: () => number,
+  extra: object = {},
+) => {
   const f = await capacityFixture(),
     scope = parseCapacityScope(f.input, f.proof),
     signal = new AbortController();
@@ -30,7 +37,12 @@ const fixture = async (transport: typeof fetch, now?: () => number) => {
     1,
     signal.signal,
     () => `op-${String(++id).padStart(6, '0')}`,
-    { transport, businessActive: () => true, ...(now ? { now } : {}) },
+    {
+      transport,
+      businessActive: () => true,
+      ...(now ? { now } : {}),
+      ...extra,
+    },
   );
   return { actor, scope, signal };
 };
@@ -113,4 +125,107 @@ describe('capacity protocol physical HTTP boundary', () => {
     expect(calls).toBe(1);
     consoleError.mockRestore();
   });
+});
+
+it('observes the original HTTP body boundary without extra physical reads', async () => {
+  const rows: unknown[] = [];
+  const body = Promise.withResolvers<Uint8Array>();
+  let calls = 0;
+  const f = await fixture(
+    async () => {
+      await Promise.resolve();
+      calls++;
+      return new Response(
+        new ReadableStream({
+          async start(controller) {
+            controller.enqueue(await body.promise);
+            controller.close();
+          },
+        }),
+      );
+    },
+    undefined,
+    {
+      onPhysicalObservation: (row: unknown) => {
+        rows.push(row);
+      },
+    },
+  );
+  const task = f.actor.client.rpc('get_student_chapter_map');
+  const settled = Promise.resolve(task);
+  await vi.waitFor(() => {
+    expect(calls).toBe(1);
+  });
+  expect(rows).toContainEqual(
+    expect.objectContaining({ phase: 'HEADERS', ordinal: 1 }),
+  );
+  expect(rows).not.toContainEqual(
+    expect.objectContaining({ phase: 'BODY_END' }),
+  );
+  body.resolve(new TextEncoder().encode('[]'));
+  await settled;
+  expect(rows).toContainEqual(
+    expect.objectContaining({
+      phase: 'BODY_END',
+      ordinal: 1,
+      status: 200,
+      bytes: 2,
+      endpoint: 'PUBLISHED_CONTENT',
+    }),
+  );
+  expect(calls).toBe(1);
+  expect(JSON.stringify(rows)).not.toMatch(
+    /https?:|authorization|token|synthetic/iu,
+  );
+  await f.actor.close();
+});
+
+it('diagnostic factory never admits a copied scope and confines real fetches to Local', async () => {
+  const f = await fixture(async () => {
+    await Promise.resolve();
+    return Response.json([]);
+  });
+  expect(() =>
+    createCapacityProtocolActor(
+      { ...f.scope },
+      syntheticSecrets.anonKey,
+      f.actor.identity,
+      1,
+      f.signal.signal,
+      () => 'op-000001',
+    ),
+  ).toThrow();
+  let physical = 0;
+  const actor = createLocalDiagnosticProtocolActor(
+    syntheticSecrets.anonKey,
+    f.actor.identity,
+    1,
+    f.signal.signal,
+    () => 'op-000001',
+    {
+      transport: async (input) => {
+        await Promise.resolve();
+        expect(
+          typeof input === 'string'
+            ? input
+            : input instanceof URL
+              ? input.href
+              : input.url,
+        ).toMatch(/^http:\/\/127\.0\.0\.1:58321\//u);
+        physical++;
+        return Response.json([]);
+      },
+      onPhysicalObservation: () => {
+        throw Error('SYNTHETIC_OBSERVER');
+      },
+    },
+  );
+  const value = await actor.client.rpc('get_student_chapter_map');
+  expect(value.error).toBeNull();
+  expect(physical).toBe(1);
+  expect(actor.physicalObservationAvailable()).toBe(false);
+  await actor.close();
+  await actor.client.rpc('get_student_chapter_map');
+  expect(physical).toBe(1);
+  await f.actor.close();
 });

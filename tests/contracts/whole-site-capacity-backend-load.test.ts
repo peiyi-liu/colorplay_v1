@@ -1,7 +1,10 @@
 import { expect, it, vi, type Mock } from 'vitest';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../../src/types/database';
-import { runCapacityGameLoad } from '../../scripts/concurrency/capacity-game-load';
+import {
+  runCapacityGameLoad,
+  runLocalDiagnosticNodeGameLoad,
+} from '../../scripts/concurrency/capacity-game-load';
 import { readCapacityTeacherDuringLoad } from '../../scripts/concurrency/capacity-game';
 import type { CapacityGameActor } from '../../scripts/concurrency/capacity-live-game';
 import { capacityFixture } from './helpers/whole-site-capacity';
@@ -427,3 +430,52 @@ it.each([false, true])(
     else await expect(task).resolves.toHaveLength(3);
   },
 );
+
+it('Node diagnostic entry requires no scope and preserves 30 teacher reads and owned settlement', async () => {
+  const f = await fixture();
+  const { scope, ...node } = f.options;
+  void scope;
+  const task = runLocalDiagnosticNodeGameLoad(node, {
+    student: f.student,
+    teacher: readCapacityTeacherDuringLoad,
+  });
+  const settled = Promise.allSettled([task]);
+  try {
+    await f.teacherSecond.promise;
+    f.core.resolve(undefined);
+    await vi.waitFor(() => {
+      expect(f.counts.progress).toBe(2);
+    });
+    f.teacherGate.resolve(undefined);
+    await vi.waitFor(() => {
+      expect(f.counts.teacher).toBe(30);
+    });
+  } finally {
+    releaseAll(f);
+    await settled;
+  }
+  await expect(task).resolves.toHaveLength(3);
+  expect(f.summaries.size).toBe(2);
+  expect([...f.summaries.values()]).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        stopReason: 'TEACHER_DONE',
+        coreComplete: true,
+      }),
+    ]),
+  );
+});
+it('scope-free Node entry rejects even one Page before any student action', async () => {
+  const f = await fixture();
+  const { scope, ...node } = f.options;
+  void scope;
+  Object.assign(node.actors[0] ?? {}, { page: {} });
+  await expect(
+    runLocalDiagnosticNodeGameLoad(node, {
+      student: f.student,
+      teacher: readCapacityTeacherDuringLoad,
+    }),
+  ).rejects.toThrow('CAPACITY_EVIDENCE_INVALID');
+  expect(f.student).not.toHaveBeenCalled();
+  expect(f.counts.progress).toBe(0);
+});

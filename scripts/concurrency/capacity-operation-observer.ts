@@ -52,8 +52,9 @@ export const capacityOperationEndpoints: Record<
   leaderboard: ['get_classroom_leaderboard'],
   teacher_dashboard: ['teacher_classroom_overview'],
 };
+// Pure URL classification only; this function does not admit a capacity scope.
 export const capacityOperationForRequest = (
-  scope: CapacityScope,
+  scope: Pick<CapacityScope, 'supabaseUrl'>,
   url: string,
   method: string,
 ): CapacityOperation | null => {

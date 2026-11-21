@@ -24,6 +24,32 @@ export interface CapacityPhysicalAttempt {
   finishedAtMs: number | null;
   status: number | null;
 }
+export interface CapacityPhysicalObservation {
+  actorIndex: number;
+  ordinal: number;
+  phase: 'SEND' | 'HEADERS' | 'BODY_END' | 'FAILED';
+  endpoint:
+    | 'PUBLISHED_CONTENT'
+    | 'SUBMIT_ANSWER'
+    | 'FINALIZE_QUIZ'
+    | 'LEADERBOARD'
+    | 'TEACHER_DASHBOARD'
+    | 'PROGRESS'
+    | 'ECONOMY'
+    | 'OTHER';
+  sentAtMs: number;
+  headersAtMs: number | null;
+  bodyEndAtMs: number | null;
+  status: number | null;
+  bytes: number | null;
+}
+interface ProtocolOptions {
+  transport?: typeof fetch;
+  now?: () => number;
+  businessActive?: () => boolean;
+  onLoginRequest?: (at: number) => void;
+  onPhysicalObservation?: (row: Readonly<CapacityPhysicalObservation>) => void;
+}
 export const createCapacityProtocolActor = (
   scope: CapacityScope,
   anonKey: string,
@@ -31,15 +57,60 @@ export const createCapacityProtocolActor = (
   actorIndex: number,
   signal: AbortSignal,
   nextId: () => string,
-  options: {
-    transport?: typeof fetch;
-    now?: () => number;
-    businessActive?: () => boolean;
-    onLoginRequest?: (at: number) => void;
-  } = {},
+  options: ProtocolOptions = {},
 ) => {
   requireCapacityScope(scope);
   if (sha256(anonKey) !== scope.anonKeySha256) return capacityFailure();
+  return buildProtocolActor(
+    scope.supabaseUrl,
+    scope.planId,
+    anonKey,
+    identity,
+    actorIndex,
+    signal,
+    nextId,
+    options,
+  );
+};
+// Root-only diagnostic configuration. This does not construct any CapacityScope.
+export const createLocalDiagnosticProtocolActor = (
+  anonKey: string,
+  identity: CapacityPrivateActor,
+  actorIndex: number,
+  signal: AbortSignal,
+  nextId: () => string,
+  options: ProtocolOptions = {},
+) => {
+  if (
+    !anonKey ||
+    !Number.isSafeInteger(actorIndex) ||
+    actorIndex < 0 ||
+    actorIndex > 59 ||
+    !identity.userId ||
+    identity.role !== (actorIndex === 0 ? 'teacher' : 'student')
+  )
+    return capacityFailure();
+  return buildProtocolActor(
+    'http://127.0.0.1:58321',
+    'local-diagnostic-none',
+    anonKey,
+    identity,
+    actorIndex,
+    signal,
+    nextId,
+    options,
+  );
+};
+const buildProtocolActor = (
+  supabaseUrl: CapacityScope['supabaseUrl'],
+  storagePrefix: string,
+  anonKey: string,
+  identity: CapacityPrivateActor,
+  actorIndex: number,
+  signal: AbortSignal,
+  nextId: () => string,
+  options: ProtocolOptions,
+) => {
   const now = options.now ?? (() => performance.now()),
     bounded = createBoundedFetch(options.transport ?? fetch);
   const samples: OperationSample[] = [],
@@ -53,6 +124,14 @@ export const createCapacityProtocolActor = (
     closed = false;
   const pending = new Set<Promise<Response>>();
   const physicalObservers = new Set<() => void>();
+  let observationAvailable = true;
+  const emit = (row: CapacityPhysicalObservation) => {
+    try {
+      options.onPhysicalObservation?.(Object.freeze({ ...row }));
+    } catch {
+      observationAvailable = false;
+    }
+  };
   const aborted = () => combined.aborted;
   const transport: typeof fetch = (input, init) => {
     const task = (async () => {
@@ -64,7 +143,7 @@ export const createCapacityProtocolActor = (
             ? input.href
             : input.url,
       );
-      if (url.origin !== scope.supabaseUrl || url.username || url.password)
+      if (url.origin !== supabaseUrl || url.username || url.password)
         return capacityFailure();
       const requestAt = now();
       physicalRequests++;
@@ -72,7 +151,7 @@ export const createCapacityProtocolActor = (
       if (url.pathname === '/functions/v1/auth-login')
         options.onLoginRequest?.(requestAt);
       const op = capacityOperationForRequest(
-        scope,
+        { supabaseUrl },
         url.href,
         init?.method ?? (input instanceof Request ? input.method : 'GET'),
       );
@@ -82,6 +161,24 @@ export const createCapacityProtocolActor = (
         status: null,
       };
       if (active?.operation === op) active.attempts.push(attempt);
+      const row: CapacityPhysicalObservation = {
+        actorIndex,
+        ordinal: physicalRequests,
+        phase: 'SEND',
+        endpoint: op
+          ? (op.toUpperCase() as CapacityPhysicalObservation['endpoint'])
+          : url.pathname === '/rest/v1/review_progress'
+            ? 'PROGRESS'
+            : url.pathname === '/rest/v1/rpc/get_my_economy_summary'
+              ? 'ECONOMY'
+              : 'OTHER',
+        sentAtMs: requestAt,
+        headersAtMs: null,
+        bodyEndAtMs: null,
+        status: null,
+        bytes: null,
+      };
+      emit(row);
       try {
         const response = await bounded(input, {
           ...init,
@@ -91,10 +188,18 @@ export const createCapacityProtocolActor = (
             ...(init?.signal ? [init.signal] : []),
           ]),
         });
+        row.phase = 'HEADERS';
+        row.headersAtMs = options.onPhysicalObservation ? now() : null;
+        row.status = response.status;
+        emit(row);
         const bytes = await response.arrayBuffer();
         if (bytes.byteLength > 4 * 1024 * 1024) return capacityFailure();
         attempt.status = response.status;
         attempt.finishedAtMs = now();
+        row.phase = 'BODY_END';
+        row.bodyEndAtMs = attempt.finishedAtMs;
+        row.bytes = bytes.byteLength;
+        emit(row);
         return new Response(bytes, {
           status: response.status,
           headers: response.headers,
@@ -102,6 +207,10 @@ export const createCapacityProtocolActor = (
       } catch {
         attempt.status = aborted() ? 504 : 503;
         attempt.finishedAtMs = now();
+        row.phase = 'FAILED';
+        row.bodyEndAtMs = attempt.finishedAtMs;
+        row.status = attempt.status;
+        emit(row);
         return Response.json(
           {
             message: aborted() ? 'CAPACITY_TIMEOUT' : 'CAPACITY_UNAVAILABLE',
@@ -114,12 +223,12 @@ export const createCapacityProtocolActor = (
     void task.finally(() => pending.delete(task)).catch(() => undefined);
     return task;
   };
-  const client = createClient<Database>(scope.supabaseUrl, anonKey, {
+  const client = createClient<Database>(supabaseUrl, anonKey, {
     auth: {
       autoRefreshToken: false,
       detectSessionInUrl: false,
       persistSession: false,
-      storageKey: `${scope.planId}-${identity.alias}-${randomUUID()}`,
+      storageKey: `${storagePrefix}-${identity.alias}-${randomUUID()}`,
     },
     global: { fetch: transport },
   });
@@ -243,6 +352,7 @@ export const createCapacityProtocolActor = (
     },
     samples: () => samples.map((s) => structuredClone(s)),
     requestCount: () => physicalRequests,
+    physicalObservationAvailable: () => observationAvailable,
     observePhysical: (listener: () => void) => {
       physicalObservers.add(listener);
       return () => {

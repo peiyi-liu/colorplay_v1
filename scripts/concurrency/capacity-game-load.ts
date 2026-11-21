@@ -31,12 +31,33 @@ export interface CapacityGameLoadOptions {
   continueProtocolReads?: true;
   reviewReadiness?: CapacityReviewReadinessObservation;
 }
-export const runCapacityGameLoad = async (
+interface GameLoadPorts {
+  student: typeof runCapacityStudentGame;
+  teacher: typeof readCapacityTeacherDuringLoad;
+}
+export const runCapacityGameLoad = (
   options: CapacityGameLoadOptions,
-  ports: {
-    student: typeof runCapacityStudentGame;
-    teacher: typeof readCapacityTeacherDuringLoad;
-  } = {
+  ports?: GameLoadPorts,
+) => runGameLoad(options, ports);
+
+export const runLocalDiagnosticNodeGameLoad = (
+  options: Omit<
+    CapacityGameLoadOptions,
+    'scope' | 'continueProtocolReads' | 'reviewReadiness'
+  >,
+  ports?: GameLoadPorts,
+) => {
+  if (
+    'scope' in options ||
+    options.actors.some((actor) => actor.page !== undefined)
+  )
+    return Promise.reject(new Error('CAPACITY_EVIDENCE_INVALID'));
+  return runGameLoad({ ...options, continueProtocolReads: true }, ports);
+};
+
+const runGameLoad = async (
+  options: Omit<CapacityGameLoadOptions, 'scope'> & { scope?: CapacityScope },
+  ports: GameLoadPorts = {
     student: runCapacityStudentGame,
     teacher: readCapacityTeacherDuringLoad,
   },
@@ -228,6 +249,7 @@ export const runCapacityGameLoad = async (
     };
     let dispose: () => void;
     if (actor.page) {
+      if (!scope) return Promise.reject(new Error('CAPACITY_EVIDENCE_INVALID'));
       const page = actor.page;
       const request = (value: Request) => {
         try {
