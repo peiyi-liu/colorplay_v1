@@ -1,3 +1,5 @@
+import { installColdEntryPageObserver } from './capacity-cold-entry-observer';
+import type { ColdEntryActor } from './capacity-cold-entry-diagnostics';
 import { createOnboardingLogout } from './capacity-onboarding-logout';
 import { createOnboardingConsolePairing } from './capacity-onboarding-console';
 import {
@@ -81,6 +83,7 @@ export const createCapacityRequestObserver = async (
   actorIndex: number,
   signal: AbortSignal,
   observeSend?: (value: SendPulse) => void,
+  coldEntry?: ColdEntryActor,
 ) => {
   requireCapacityScope(scope);
   if (
@@ -96,6 +99,7 @@ export const createCapacityRequestObserver = async (
   } catch {
     return capacityFailure();
   }
+  const cold = installColdEntryPageObserver(page, scope.appUrl, coldEntry);
   const diagnostic = createRegistrationFirstReason();
   const onboarding = createOnboardingLogout(scope.supabaseUrl, (id) =>
     cdp.send('Network.getResponseBody', { requestId: id }),
@@ -142,6 +146,7 @@ export const createCapacityRequestObserver = async (
     code: Parameters<typeof diagnostic.note>[0] = 'ACTION_CANCEL',
   ) => {
     if (action && !action.done) {
+      cold?.cancel(action.phase);
       action.done = true;
       clearTimeout(action.timer);
       action.reject();
@@ -246,6 +251,7 @@ export const createCapacityRequestObserver = async (
           return;
         }
         action.started = value.timestamp * 1000;
+        cold?.request(action.phase, action.started);
         notify(
           action,
           'REQUEST',
@@ -273,6 +279,7 @@ export const createCapacityRequestObserver = async (
       }
       if (action && !action.done && action.generation === generation) {
         action.status = value.response.status;
+        cold?.response(action.phase, action.status);
         if (value.response.status < 200 || value.response.status >= 300)
           terminate(action, 'ACTION_RESPONSE');
       }
@@ -298,6 +305,7 @@ export const createCapacityRequestObserver = async (
           terminate(action, 'ACTION_FINISH');
           return;
         }
+        cold?.finished(action.phase, value.timestamp * 1000);
         action.done = true;
         clearTimeout(action.timer);
         actionsCompleted++;
@@ -362,6 +370,7 @@ export const createCapacityRequestObserver = async (
   signal.addEventListener('abort', aborted, { once: true });
   const dispose = async () => {
     disposed = true;
+    cold?.dispose();
     available = false;
     onboarding.cancel('DISPOSE');
     consolePair.dispose();
@@ -396,6 +405,7 @@ export const createCapacityRequestObserver = async (
     return capacityFailure();
   }
   const observer = {
+    ...(coldEntry ? { coldEntry } : {}),
     arm: (phase: CapacityActionPhase) => {
       if (
         !available ||
@@ -409,6 +419,7 @@ export const createCapacityRequestObserver = async (
         return capacityFailure();
       }
       generation++;
+      cold?.arm(phase);
       onboarding.arm(phase, generation);
       consolePair.arm(phase, generation);
       let resolve: (value: CapacityActionObservation) => void = () => undefined,

@@ -2,6 +2,7 @@ import type { NativeCapacityActor } from '../../scripts/concurrency/capacity-bro
 import { describe, it, expect, vi } from 'vitest';
 import {
   runCapacityEntryBarrier,
+  capacityEntryUi,
   loginCapacityActor,
   type CapacityEntryOptions,
   type CapacityEntryUi,
@@ -231,3 +232,77 @@ describe('native blank-entry coordinator and separate real-network barrier', () 
     expect(click).not.toHaveBeenCalled();
   });
 });
+
+it('actual landing retains goto and load/heading order while exposing passive phase notes', async () => {
+  const order: string[] = [];
+  const note = vi.fn((kind: string) => {
+    order.push(kind);
+  });
+  const page = {
+    url: () => 'about:blank',
+    goto: vi.fn(async () => {
+      order.push('GOTO');
+      await Promise.resolve();
+    }),
+    getByRole: vi.fn(() => ({
+      waitFor: vi.fn(async () => {
+        order.push('HEADING');
+        await Promise.resolve();
+      }),
+    })),
+  };
+  const actor = {
+    page,
+    observer: { coldEntry: { note } },
+  } as unknown as NativeCapacityActor;
+  const h = await setup();
+  await capacityEntryUi.landing(actor, h.scope);
+  expect(order).toEqual([
+    'GOTO_ENTER',
+    'GOTO',
+    'GOTO_FULFILLED',
+    'HEADING',
+    'HEADING_FULFILLED',
+  ]);
+  expect(page.goto).toHaveBeenCalledExactlyOnceWith(h.scope.appUrl);
+});
+
+it.each(['diagnostic', 'goto', 'heading', 'getter'] as const)(
+  'actual landing preserves business and original error when %s fails',
+  async (mode) => {
+    const original = Error('ORIGINAL_LANDING');
+    const goto = vi.fn(() =>
+      mode === 'goto' ? Promise.reject(original) : Promise.resolve(),
+    );
+    const waitFor = vi.fn(() =>
+      mode === 'heading' ? Promise.reject(original) : Promise.resolve(),
+    );
+    const observer = {
+      coldEntry: {
+        note: () => {
+          throw Error('PRIVATE_DIAGNOSTIC');
+        },
+      },
+    };
+    const actor = {
+      page: { url: () => 'about:blank', goto, getByRole: () => ({ waitFor }) },
+      observer,
+    };
+    if (mode === 'getter')
+      Object.defineProperty(actor, 'observer', {
+        get: () => {
+          throw Error('PRIVATE_GETTER');
+        },
+      });
+    const h = await setup(),
+      work = capacityEntryUi.landing(
+        actor as unknown as NativeCapacityActor,
+        h.scope,
+      );
+    if (mode === 'goto' || mode === 'heading')
+      await expect(work).rejects.toBe(original);
+    else await expect(work).resolves.toBeUndefined();
+    expect(goto).toHaveBeenCalledExactlyOnceWith(h.scope.appUrl);
+    expect(waitFor).toHaveBeenCalledTimes(mode === 'goto' ? 0 : 1);
+  },
+);

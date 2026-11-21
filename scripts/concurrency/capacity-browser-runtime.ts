@@ -1,3 +1,7 @@
+import {
+  createCapacityColdEntryDiagnostics,
+  type ColdEntryJournal,
+} from './capacity-cold-entry-diagnostics';
 import { installReviewReadinessSlot } from '../../src/features/learning/lib/review-readiness-diagnostics';
 import {
   createRegistrationFirstReason,
@@ -139,7 +143,12 @@ export const createNativeCapacityBrowser = (
   signal: AbortSignal,
   ports?: NativeCapacityBrowserPorts,
   generator?: GeneratorObserver,
+  entryActorsExpected?: number,
 ) => {
+  const coldEntry =
+    entryActorsExpected === undefined
+      ? undefined
+      : createCapacityColdEntryDiagnostics(entryActorsExpected);
   const diagnostic = createRegistrationFirstReason();
   const nativeSource = ports === undefined;
   const activePorts = ports ?? {
@@ -330,6 +339,7 @@ export const createNativeCapacityBrowser = (
                   /* Passive only. */
                 }
               },
+              coldEntry?.register(actorIndex),
             ),
         );
         observers.add(observer);
@@ -432,6 +442,8 @@ export const createNativeCapacityBrowser = (
   return {
     start,
     createActor,
+    finishColdEntry: (journal: ColdEntryJournal) =>
+      coldEntry?.finish(journal, resourcesClosed) ?? Promise.resolve(),
     close,
     identity: () => {
       if (!server?.process().pid) return capacityFailure();

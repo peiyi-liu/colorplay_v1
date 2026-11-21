@@ -9,7 +9,9 @@ const setup = async () => {
   const h = await capacityFixture(),
     scope = parseCapacityScope(h.input, h.proof),
     cdp = Object.assign(new EventEmitter(), {
-      send: vi.fn(() => Promise.resolve()),
+      send: vi.fn<(method: string, params?: object) => Promise<unknown>>(() =>
+        Promise.resolve(),
+      ),
       detach: vi.fn(() => Promise.resolve()),
     }),
     page = Object.assign(new EventEmitter(), { isClosed: () => false }),
@@ -368,4 +370,64 @@ it('distinguishes action timeout, parent abort and deliberate dispose with origi
     expect(vi.getTimerCount()).toBe(0);
     vi.useRealTimers();
   }
+});
+
+import { createCapacityColdEntryDiagnostics } from '../../scripts/concurrency/capacity-cold-entry-diagnostics';
+it('actual observer preserves Document evidence and passively seals entry before unrelated navigation', async () => {
+  const h = await setup(),
+    frame = {},
+    child = {};
+  Object.assign(h.page, {
+    mainFrame: () => frame,
+    url: () => h.scope.appUrl + '/',
+  });
+  const diagnostics = createCapacityColdEntryDiagnostics(1);
+  const port = diagnostics.register(0);
+  const observer = await createCapacityRequestObserver(
+    h.scope,
+    h.context as unknown as BrowserContext,
+    h.page as unknown as Page,
+    0,
+    h.signal.signal,
+    undefined,
+    port,
+  );
+  const token = observer.arm('entry');
+  observer.coldEntry?.note('GOTO_ENTER');
+  h.page.emit('framenavigated', child);
+  h.page.emit('framenavigated', frame);
+  h.cdp.emit('Network.requestWillBeSent', {
+    requestId: 'PRIVATE_ENTRY',
+    timestamp: 10,
+    type: 'Document',
+    request: { url: h.scope.appUrl + '/', method: 'GET' },
+  });
+  h.cdp.emit('Network.responseReceived', {
+    requestId: 'PRIVATE_ENTRY',
+    response: { status: 200 },
+  });
+  h.page.emit('domcontentloaded');
+  h.page.emit('load');
+  observer.coldEntry?.note('GOTO_FULFILLED');
+  observer.coldEntry?.note('HEADING_FULFILLED');
+  h.cdp.emit('Network.loadingFinished', {
+    requestId: 'PRIVATE_ENTRY',
+    timestamp: 10.2,
+  });
+  expect((await token.finished).requestAtMs).toBe(10000);
+  const before = diagnostics.snapshot(false);
+  expect(before.collection).toBe('OBSERVED');
+  expect(
+    before.actors[0]?.events.filter((e) => e.kind === 'FRAME_COMMITTED'),
+  ).toHaveLength(1);
+  h.page.emit('framenavigated', frame);
+  h.page.emit('load');
+  await observer.dispose();
+  expect(diagnostics.snapshot(false)).toEqual(before);
+  expect(JSON.stringify(before)).not.toMatch(/PRIVATE_ENTRY|http|frameId/);
+  expect(h.cdp.send.mock.calls.map((c) => c[0])).toEqual([
+    'Network.enable',
+    'Log.enable',
+  ]);
+  expect(h.page.eventNames()).toHaveLength(0);
 });

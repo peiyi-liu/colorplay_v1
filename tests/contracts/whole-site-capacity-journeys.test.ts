@@ -246,9 +246,14 @@ it.each([
     const browser = nativeBrowser.createNativeCapacityBrowser(
       f.runtime.scope,
       f.signal.signal,
+      undefined,
+      undefined,
+      3,
     );
     await browser.start();
     const actor = await browser.createActor(1);
+    actor.observer.coldEntry?.arm();
+    actor.observer.coldEntry?.note('GOTO_ENTER');
     const owner = questionObservation.createCapacityLiveQuestionObservation(
       f.runtime.scope,
       f.signal.signal,
@@ -292,7 +297,17 @@ it.each([
       isHost: false,
     } as LiveSessionState)({ wait: 'MODE_TEXT', state: 'FAILED' });
     expect(owner.pending()).toBe(1);
-    const write = vi.fn((name: string) => {
+    const write = vi.fn((name: string, value: unknown) => {
+      if (name === 'cold-entry-diagnostics') {
+        trace.push('ENTRY_WRITE');
+        expect(value).toMatchObject({
+          collection: 'PARTIAL',
+          sealed: true,
+          resourcesClosed: mode !== 'close-fails',
+        });
+        if (mode === 'writer-fails')
+          return Promise.reject(Error('PRIVATE_ENTRY_WRITER'));
+      }
       if (name === 'capacity-live-diagnostics') {
         trace.push('WRITE');
         expect(owner.pending()).toBe(0);
@@ -367,6 +382,12 @@ it.each([
       write.mock.calls.filter(([name]) => name === 'capacity-live-diagnostics'),
     ).toHaveLength(1);
     expect(owner.pending()).toBe(0);
+    expect(trace.indexOf('BROWSER_CLOSE')).toBeLessThan(
+      trace.indexOf('ENTRY_WRITE'),
+    );
+    expect(
+      write.mock.calls.filter(([name]) => name === 'cold-entry-diagnostics'),
+    ).toHaveLength(1);
     expect(
       write.mock.calls.filter(
         ([name]) => name === 'cold-entry-network-diagnostics',

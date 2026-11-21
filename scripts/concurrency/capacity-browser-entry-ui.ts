@@ -1,3 +1,4 @@
+import { coldEntryNote } from './capacity-cold-entry-observer';
 import { z } from 'zod';
 import {
   capacityFailure,
@@ -65,10 +66,23 @@ export const loginFields = async (
 export const capacityEntryUi: CapacityEntryUi = {
   landing: async (actor, scope) => {
     if (actor.page.url() !== 'about:blank') return capacityFailure();
-    await actor.page.goto(scope.appUrl);
-    await actor.page
-      .getByRole('heading', { name: 'ColorPlay', exact: true })
-      .waitFor({ state: 'visible' });
+    coldEntryNote(actor, 'GOTO_ENTER');
+    try {
+      await actor.page.goto(scope.appUrl);
+      coldEntryNote(actor, 'GOTO_FULFILLED');
+    } catch (error) {
+      coldEntryNote(actor, 'GOTO_REJECTED');
+      throw error;
+    }
+    try {
+      await actor.page
+        .getByRole('heading', { name: 'ColorPlay', exact: true })
+        .waitFor({ state: 'visible' });
+      coldEntryNote(actor, 'HEADING_FULFILLED');
+    } catch (error) {
+      coldEntryNote(actor, 'HEADING_REJECTED');
+      throw error;
+    }
   },
   ready: async (actor, scope, identity, registration, step) => {
     step?.('LANDING_CTA');

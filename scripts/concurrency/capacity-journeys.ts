@@ -119,6 +119,7 @@ export const createCapacityJourneys = (
           signal,
           undefined,
           generator?.observe,
+          leg.actors,
         )
       : null;
   const clients: ReturnType<typeof createCapacityProtocolActor>[] = [],
@@ -623,6 +624,11 @@ export const createCapacityJourneys = (
         originalFailed = false;
         return health;
       } finally {
+        try {
+          await native?.finishColdEntry(runtime.journal);
+        } catch {
+          /* Optional diagnostics never replace the original stop result. */
+        }
         await reviewReadiness
           ?.finish(runtime.journal, native?.snapshot().resourcesClosed === true)
           .catch(() => undefined);
